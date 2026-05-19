@@ -1,1 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meu dia · Dieta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --surface: #f8faf3;
+    --surface-dim: #d9dbd4;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f2f4ed;
+    --surface-container: #edefe8;
+    --surface-container-high: #e7e9e2;
+    --surface-container-highest: #e1e3dc;
+    --on-surface: #191c18;
+    --on-surface-variant: #424846;
+    --inverse-on-surface: #eff2eb;
+    --outline: #727876;
+    --outline-variant: #c1c8c5;
+    --primary: #001612;
+    --on-primary: #ffffff;
+    --primary-container: #122b26;
+    --secondary: #4c6700;
+    --voltz: #bff443;
+    --voltz-dim: #a4d724;
+    --tertiary-container: #002459;
+    --on-tertiary-container: #4c8afe;
+    --error: #ba1a1a;
+    --error-container: #ffdad6;
+    --on-error-container: #93000a;
 
+    --r-sm: 0.25rem;
+    --r: 0.5rem;
+    --r-md: 0.75rem;
+    --r-lg: 1rem;
+    --r-xl: 1.5rem;
+    --r-full: 9999px;
+    --tint-shadow: 0 8px 28px -12px rgba(0, 22, 18, 0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--surface); }
+  body {
+    font-family: 'Hanken Grotesk', sans-serif;
+    font-size: 16px; line-height: 1.5;
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 5rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; top: -20%; right: -25%;
+    width: 70vw; height: 70vw; max-width: 720px; max-height: 720px;
+    background: radial-gradient(circle, rgba(191,244,67,0.32) 0%, rgba(191,244,67,0) 68%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ""; position: fixed; bottom: -25%; left: -20%;
+    width: 60vw; height: 60vw; max-width: 600px; max-height: 600px;
+    background: radial-gradient(circle, rgba(0,22,18,0.07) 0%, rgba(0,22,18,0) 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 2.5rem 1.25rem 0; position: relative; z-index: 1; }
+
+  header { margin-bottom: 2rem; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; line-height: 1.2; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--secondary); margin-bottom: 0.6rem;
+  }
+  h1 {
+    font-family: 'Newsreader', serif; font-weight: 600;
+    font-size: 40px; line-height: 1.2; letter-spacing: -0.02em;
+    color: var(--on-surface);
+  }
+  .day-sub {
+    font-size: 18px; line-height: 1.6; color: var(--on-surface-variant);
+    margin-top: 0.5rem;
+  }
+
+  .sec-label {
+    font-size: 14px; font-weight: 600; line-height: 1.2; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--on-surface-variant);
+    margin: 2rem 0 0.85rem;
+  }
+  .sec-label .tag {
+    text-transform: none; letter-spacing: 0; color: var(--secondary); font-weight: 600;
+  }
+
+  .train-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .train-opt {
+    background: linear-gradient(160deg, var(--surface-container-lowest), var(--surface-container));
+    border: 0.5px solid var(--outline-variant);
+    border-radius: var(--r-xl); padding: 20px;
+    cursor: pointer; user-select: none;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.1s;
+  }
+  .train-opt:hover { box-shadow: var(--tint-shadow); }
+  .train-opt:active { transform: scale(0.99); }
+  .train-opt.on {
+    border-color: var(--voltz-dim);
+    background: linear-gradient(160deg, #f4fbdf, var(--surface-container));
+    box-shadow: var(--tint-shadow);
+  }
+  .t-top { display: flex; align-items: center; gap: 10px; }
+  .t-glyph {
+    width: 36px; height: 36px; border-radius: var(--r-md); flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    background: var(--surface-container-high);
+  }
+  .train-opt.on .t-glyph { background: var(--voltz); }
+  .t-name { font-weight: 600; font-size: 16px; line-height: 1.25; }
+  .t-meta { font-size: 14px; color: var(--on-surface-variant); margin-top: 2px; }
+  .t-detail { margin-top: 14px; display: none; }
+  .train-opt.on .t-detail { display: block; }
+  .t-detail label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--outline); display: block; margin-bottom: 5px;
+  }
+
+  .targets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat {
+    background: linear-gradient(180deg, var(--surface-container-lowest), var(--surface-dim));
+    border-radius: var(--r-lg); padding: 16px 14px;
+  }
+  .stat .s-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--outline);
+  }
+  .stat .s-val {
+    font-family: 'Newsreader', serif; font-weight: 600;
+    font-size: 28px; line-height: 1.1; letter-spacing: -0.01em; margin-top: 4px;
+  }
+  .stat .s-val small { font-size: 13px; color: var(--outline); font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; }
+  .track {
+    height: 6px; background: var(--surface-container-highest);
+    border-radius: var(--r-full); margin: 9px 0 6px; overflow: hidden;
+  }
+  .track > i {
+    display: block; height: 100%; border-radius: var(--r-full);
+    background: linear-gradient(90deg, var(--voltz-dim), var(--voltz));
+    transition: width 0.4s ease;
+  }
+  .track > i.over { background: var(--error); }
+  .s-left { font-size: 14px; color: var(--on-surface-variant); }
+  .s-left.over { color: var(--error); }
+
+  .day-banner {
+    margin-top: 12px; border-radius: var(--r-xl); padding: 18px 22px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: var(--inverse-on-surface);
+    font-size: 16px; line-height: 1.55;
+  }
+  .day-banner strong { color: var(--voltz); font-weight: 600; }
+
+  /* ---- editor de macros ---- */
+  #macroEditor { margin-top: 10px; }
+  .editor-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 2px 4px;
+  }
+  .editor-status { font-size: 14px; color: var(--outline); flex: 1; min-width: 160px; }
+  .ghost-sm {
+    font-family: 'Hanken Grotesk', sans-serif; font-weight: 600; font-size: 13px;
+    background: transparent; color: var(--secondary);
+    border: 0.5px solid var(--outline-variant); border-radius: var(--r);
+    padding: 7px 14px; cursor: pointer; transition: all 0.14s;
+  }
+  .ghost-sm:hover { border-color: var(--voltz-dim); background: rgba(191,244,67,0.14); }
+  .ghost-sm:active { transform: scale(0.98); }
+  .editor-panel {
+    background: linear-gradient(180deg, var(--surface-container-lowest), var(--surface-container));
+    border: 0.5px solid var(--voltz-dim); border-radius: var(--r-xl);
+    padding: 18px 20px;
+  }
+  .editor-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .editor-row label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--outline); display: flex; flex-direction: column; gap: 5px;
+  }
+  .editor-row input {
+    width: 100%; font-family: 'Hanken Grotesk', sans-serif; font-size: 16px; font-weight: 500;
+    background: var(--surface-dim); color: var(--on-surface);
+    border: none; border-bottom: 1.5px solid var(--outline-variant);
+    border-radius: var(--r) var(--r) 0 0; padding: 10px 12px;
+    text-transform: none; letter-spacing: 0;
+  }
+  .editor-row input:focus { outline: none; border-bottom-color: var(--voltz-dim); }
+  .editor-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .editor-hint { font-size: 13px; color: var(--outline); margin-top: 10px; }
+
+  .meal {
+    background: linear-gradient(180deg, var(--surface-container-lowest), var(--surface-container-low));
+    border-radius: var(--r-xl); overflow: hidden;
+    border: 0.5px solid transparent;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .meal + .meal { margin-top: 12px; }
+  .meal.decided { border-color: var(--voltz-dim); }
+  .meal.open { box-shadow: var(--tint-shadow); }
+  .meal-head {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px; cursor: pointer; user-select: none;
+  }
+  .meal-glyph {
+    width: 42px; height: 42px; border-radius: var(--r-md); flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: var(--surface-container-high);
+  }
+  .meal.decided .meal-glyph { background: var(--voltz); }
+  .meal-info { flex: 1; min-width: 0; }
+  .meal-name {
+    font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 9px;
+  }
+  .meal-summary {
+    font-size: 14px; color: var(--outline); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chev { color: var(--outline); transition: transform 0.22s; flex: none; font-size: 20px; }
+  .meal.open .chev { transform: rotate(180deg); }
+
+  .badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: var(--r-full);
+  }
+  .badge.todo { background: var(--surface-container-highest); color: var(--on-surface-variant); }
+  .badge.done { background: rgba(191,244,67,0.45); color: var(--secondary); }
+  .badge.changed { background: rgba(76,138,254,0.18); color: var(--tertiary-container); }
+  .badge.skip { background: var(--surface-container-high); color: var(--outline); }
+
+  .meal-body { display: none; padding: 0 22px 22px; }
+  .meal.open .meal-body { display: block; }
+  .field-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--outline); margin-bottom: 4px;
+  }
+  .sugg { font-size: 16px; margin-bottom: 8px; }
+  .macro-line { font-size: 14px; color: var(--on-surface-variant); margin-bottom: 12px; }
+  .note {
+    font-size: 14px; color: var(--outline); font-style: italic;
+    margin-bottom: 12px; padding-left: 12px; border-left: 2px solid var(--voltz);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 14px;
+    border-radius: var(--r); cursor: pointer; transition: all 0.14s;
+    padding: 10px 18px; border: 0.5px solid var(--outline-variant);
+    background: var(--surface-container-lowest); color: var(--on-surface);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  button:hover:not(:disabled) { border-color: var(--outline); }
+  button:active:not(:disabled) { transform: scale(0.98); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  button.primary {
+    background: var(--primary); color: var(--voltz);
+    border-color: var(--primary); font-weight: 600;
+  }
+  button.primary:hover:not(:disabled) { background: var(--primary-container); }
+  button.secondary {
+    background: var(--voltz); color: var(--primary);
+    border-color: var(--voltz-dim); font-weight: 600;
+  }
+  button.on { background: var(--voltz); color: var(--primary); border-color: var(--voltz-dim); }
+
+  textarea, input[type=number] {
+    font-family: 'Hanken Grotesk', sans-serif; font-size: 16px;
+    background: var(--surface-dim); color: var(--on-surface);
+    border: none; border-bottom: 1.5px solid var(--outline-variant);
+    border-radius: var(--r) var(--r) 0 0; padding: 12px 14px;
+    transition: border-color 0.16s;
+  }
+  textarea { width: 100%; resize: vertical; line-height: 1.5; }
+  input[type=number] { width: 84px; }
+  textarea:focus, input[type=number]:focus {
+    outline: none; border-bottom-color: var(--voltz-dim);
+  }
+  .edit-area { margin-top: 14px; display: none; }
+  .edit-area.show { display: block; }
+
+  .plan-card {
+    background: linear-gradient(180deg, var(--surface-container-lowest), var(--surface-dim));
+    border-radius: var(--r-lg); padding: 16px 18px; margin-top: 10px;
+  }
+  .plan-card .pc-name { font-weight: 600; font-size: 16px; }
+  .plan-card .pc-desc { font-size: 15px; color: var(--on-surface-variant); margin: 3px 0 7px; }
+  .plan-card .pc-macros { font-size: 13px; color: var(--outline); }
+
+  .msg { font-size: 15px; color: var(--outline); padding: 10px 2px; }
+  .msg.err { color: var(--error); }
+
+  .foot {
+    font-size: 13px; line-height: 1.6; color: var(--outline);
+    margin-top: 2.5rem; padding-top: 1.25rem;
+    border-top: 0.5px solid var(--outline-variant);
+  }
+  .setup-warn {
+    display: none; margin-bottom: 1.25rem;
+    background: var(--error-container); color: var(--on-error-container);
+    border-radius: var(--r-lg); padding: 14px 18px; font-size: 14px;
+  }
+  @media (max-width: 460px) {
+    .wrap { padding-top: 1.75rem; }
+    h1 { font-size: 32px; }
+    .targets { grid-template-columns: 1fr 1fr; }
+    .train-grid { grid-template-columns: 1fr; }
+    .editor-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Dieta · ciclo de calorias</div>
+    <h1>Meu dia</h1>
+    <div class="day-sub" id="daySub">Comece marcando se você vai treinar hoje.</div>
+  </header>
+
+  <div class="setup-warn" id="setupWarn"></div>
+
+  <div class="sec-label">Treino de hoje</div>
+  <div class="train-grid" id="trainGrid"></div>
+
+  <div class="sec-label">Meta do dia <span class="tag" id="strategyTag"></span></div>
+  <div class="targets" id="targets"></div>
+  <div class="day-banner" id="dayBanner"></div>
+  <div id="macroEditor"></div>
+
+  <div class="sec-label">Refeições</div>
+  <div id="meals"></div>
+
+  <div class="btn-row" style="margin-top:1.25rem;">
+    <button class="primary" id="recalcBtn">Recalcular o dia com a IA</button>
+    <button id="resetBtn">Recomeçar</button>
+  </div>
+  <div id="suggestBox"></div>
+
+  <div class="foot">
+    A IA estima os macros a partir das suas descrições — são aproximações, não medições exatas.
+    O motor de ciclo de calorias usa estimativas de gasto energético que variam por pessoa,
+    intensidade e metabolismo. Este app é uma ferramenta de apoio e não substitui orientação
+    de nutricionista ou educador físico.
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ====== CONFIG: PERFIL E ESTRATÉGIA ====== */
+const PROFILE = { age: 43, sex: "male", height: 163, weight: 72 };
+
+/* Alvo de calorias num dia de descanso (base do ciclo de calorias).
+   Os dias de treino somam a energia do treino por cima deste valor. */
+const REST_TARGET = 1600;
+
+const REFEED_RATIO = 0.65;   /* fração da energia do treino devolvida como comida */
+const PROTEIN_PER_KG = 2.1;
+const FAT_PER_KG = 0.6;
+
+const WORKOUTS = {
+  yoga: { label: "Hot yoga",   glyph: "\u{1F9D8}", kcal: () => 320 },
+  run:  { label: "Corrida",    glyph: "\u{1F3C3}", kcal: (o) => Math.round((o.km || 5) * 75) },
+  lift: { label: "Musculação", glyph: "\u{1F3CB}", kcal: (o) => Math.round((o.min || 40) * 5) }
+};
+
+/* ====== ESTADO ====== */
+const training = { yoga: false, run: false, lift: false, runKm: 5, liftMin: 40 };
+
+const MEALS = [
+  { id:"cafe",    name:"Café da manhã",   glyph:"\u2615",    suggestion:"2 ovos e 1 fatia de pão integral" },
+  { id:"lanche1", name:"Lanche da manhã", glyph:"\u{1F95B}", suggestion:"1 scoop de whey isolado" },
+  { id:"almoco",  name:"Almoço",          glyph:"\u{1F37D}", suggestion:"Peito de frango grelhado com salada" },
+  { id:"lanche2", name:"Lanche da tarde", glyph:"\u{1F353}", suggestion:"1 scoop de whey isolado com fruta" },
+  { id:"jantar",  name:"Jantar",          glyph:"\u{1F32F}", suggestion:"1 wrap de frango com salada e queijo" },
+  { id:"ceia",    name:"Ceia",            glyph:"\u{1F319}", suggestion:"1 iogurte grego com fruta" }
+];
+
+const mealState = {};
+MEALS.forEach(m => {
+  mealState[m.id] = { status:"pending", open:false, eaten:null, desc:m.suggestion, busy:false, note:"" };
+});
+
+/* Override manual das metas. Quando override.on === true, o painel usa estes
+   valores em vez do cálculo do ciclo de calorias. */
+const override = { on: false, kcal: 0, protein: 0, carb: 0, fat: 0 };
+let macroEditorOpen = false;
+
+/* ====== MOTOR DE CICLO DE CALORIAS ====== */
+function workoutKcal() {
+  let total = 0;
+  if (training.yoga) total += WORKOUTS.yoga.kcal();
+  if (training.run)  total += WORKOUTS.run.kcal({ km: training.runKm });
+  if (training.lift) total += WORKOUTS.lift.kcal({ min: training.liftMin });
+  return total;
+}
+
+/* Metas calculadas pelo ciclo de calorias: base 1600 + parte da energia do treino. */
+function computedTargets() {
+  const wk = workoutKcal();
+  const refeed = Math.round(wk * REFEED_RATIO);
+  const kcal = REST_TARGET + refeed;
+  const protein = Math.round(PROFILE.weight * PROTEIN_PER_KG);
+  const fat = Math.round(PROFILE.weight * FAT_PER_KG);
+  const carb = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  return { kcal, protein, carb, fat, wk, refeed };
+}
+
+/* Metas em uso: as calculadas, ou as do override se estiver ativo. */
+function dayTargets() {
+  const c = computedTargets();
+  if (override.on) {
+    return {
+      kcal: override.kcal, protein: override.protein,
+      carb: override.carb, fat: override.fat,
+      wk: c.wk, refeed: c.refeed, edited: true
+    };
+  }
+  return { ...c, edited: false };
+}
+
+function consumed() {
+  const t = { kcal:0, p:0, c:0, g:0 };
+  MEALS.forEach(m => {
+    const s = mealState[m.id];
+    if ((s.status === "confirmed" || s.status === "changed") && s.eaten) {
+      t.kcal += s.eaten.kcal; t.p += s.eaten.p; t.c += s.eaten.c; t.g += s.eaten.g;
+    }
+  });
+  return t;
+}
+
+const r = v => Math.round(v);
+const r1 = v => Math.round(v * 10) / 10;
+
+/* ====== IA ======
+   Chama /api/chat — a Pages Function (functions/api/chat.js) que guarda a
+   chave de API no servidor. A chave NUNCA fica neste arquivo. */
+async function callClaude(prompt, maxTokens) {
+  const res = await fetch("/app/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens || 700,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error("API " + res.status);
+  const data = await res.json();
+  return data.content.filter(b => b.type === "text").map(b => b.text).join("\n");
+}
+function parseJSON(txt) {
+  const c = txt.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const s = c.indexOf("{"), e = c.lastIndexOf("}");
+  return JSON.parse(s >= 0 ? c.slice(s, e + 1) : c);
+}
+async function estimateMacros(mealName, desc) {
+  const prompt = `Você é um nutricionista que estima macros de refeições em português do Brasil. `
+    + `Refeição (${mealName}): "${desc}". `
+    + `Estime calorias, proteína, carboidrato e gordura totais da porção descrita. `
+    + `Responda APENAS com JSON, sem markdown, sem texto extra: `
+    + `{"kcal":number,"p":number,"c":number,"g":number,"note":"observação curta sobre suposições feitas"}`;
+  const out = await callClaude(prompt, 400);
+  const m = parseJSON(out);
+  return {
+    vals: { kcal:Number(m.kcal)||0, p:Number(m.p)||0, c:Number(m.c)||0, g:Number(m.g)||0 },
+    note: m.note || ""
+  };
+}
+
+/* ====== RENDER: TREINO ====== */
+function renderTraining() {
+  const grid = document.getElementById("trainGrid");
+  const rest = !training.yoga && !training.run && !training.lift;
+  let html = `<div class="train-opt ${rest ? "on" : ""}" data-rest="1">
+    <div class="t-top">
+      <div class="t-glyph">\u{1F6CB}</div>
+      <div><div class="t-name">Dia de descanso</div>
+      <div class="t-meta">Sem treino \u00b7 déficit maior</div></div>
+    </div></div>`;
+  ["yoga","run","lift"].forEach(key => {
+    const w = WORKOUTS[key];
+    const on = training[key];
+    let detail = "";
+    if (key === "run") {
+      detail = `<div class="t-detail"><label>Distância (km)</label>
+        <input type="number" min="1" max="42" step="1" value="${training.runKm}" data-km="1" /></div>`;
+    } else if (key === "lift") {
+      detail = `<div class="t-detail"><label>Duração (min)</label>
+        <input type="number" min="10" max="120" step="5" value="${training.liftMin}" data-min="1" /></div>`;
+    }
+    const kc = key === "run" ? WORKOUTS.run.kcal({ km: training.runKm })
+             : key === "lift" ? WORKOUTS.lift.kcal({ min: training.liftMin })
+             : w.kcal();
+    html += `<div class="train-opt ${on ? "on" : ""}" data-key="${key}">
+      <div class="t-top">
+        <div class="t-glyph">${w.glyph}</div>
+        <div><div class="t-name">${w.label}</div>
+        <div class="t-meta">\u2248 ${kc} kcal${on ? " \u00b7 ativo" : ""}</div></div>
+      </div>${detail}</div>`;
+  });
+  grid.innerHTML = html;
+
+  grid.querySelectorAll(".train-opt").forEach(el => {
+    el.addEventListener("click", e => {
+      if (e.target.tagName === "INPUT") return;
+      if (el.dataset.rest) training.yoga = training.run = training.lift = false;
+      else training[el.dataset.key] = !training[el.dataset.key];
+      renderAll();
+    });
+  });
+  grid.querySelectorAll("input[data-km]").forEach(inp => {
+    inp.addEventListener("click", e => e.stopPropagation());
+    inp.addEventListener("change", e => {
+      const v = parseInt(e.target.value, 10);
+      training.runKm = isNaN(v) || v < 1 ? 1 : v;
+      renderAll();
+    });
+  });
+  grid.querySelectorAll("input[data-min]").forEach(inp => {
+    inp.addEventListener("click", e => e.stopPropagation());
+    inp.addEventListener("change", e => {
+      const v = parseInt(e.target.value, 10);
+      training.liftMin = isNaN(v) || v < 10 ? 10 : v;
+      renderAll();
+    });
+  });
+}
+
+/* ====== RENDER: METAS ====== */
+function renderTargets() {
+  const tg = dayTargets();
+  const t = consumed();
+  document.getElementById("strategyTag").textContent =
+    tg.edited ? "metas editadas" : "ciclo de calorias";
+
+  const cards = [
+    { label:"Calorias", goal:tg.kcal, val:t.kcal, unit:"" },
+    { label:"Proteína", goal:tg.protein, val:t.p, unit:"g" },
+    { label:"Carbo",    goal:tg.carb, val:t.c, unit:"g" },
+    { label:"Gordura",  goal:tg.fat, val:t.g, unit:"g" }
+  ];
+  document.getElementById("targets").innerHTML = cards.map(c => {
+    const left = c.goal - c.val;
+    const pct = c.goal > 0 ? Math.min(100, Math.max(0, (c.val / c.goal) * 100)) : 0;
+    const over = left < 0;
+    const leftTxt = over ? `${r(Math.abs(left))}${c.unit} acima` : `faltam ${r(left)}${c.unit}`;
+    return `<div class="stat">
+      <div class="s-label">${c.label}</div>
+      <div class="s-val">${r(c.val)}<small> / ${c.goal}${c.unit}</small></div>
+      <div class="track"><i class="${over ? "over" : ""}" style="width:${pct}%"></i></div>
+      <div class="s-left ${over ? "over" : ""}">${leftTxt}</div>
+    </div>`;
+  }).join("");
+
+  let banner;
+  if (tg.edited) {
+    banner = `Metas <strong>editadas manualmente</strong> para hoje: ${tg.kcal} kcal, `
+      + `${tg.protein}g proteína, ${tg.carb}g carbo, ${tg.fat}g gordura. `
+      + `O cálculo automático do ciclo de calorias está pausado — use "voltar ao calculado" para retomá-lo.`;
+  } else if (tg.wk === 0) {
+    banner = `Hoje é <strong>dia de descanso</strong>. Alvo base de <strong>${REST_TARGET} kcal</strong>, `
+      + `com proteína alta para preservar músculo e carbo mais controlado.`;
+  } else {
+    const parts = [];
+    if (training.yoga) parts.push("hot yoga");
+    if (training.run)  parts.push(`corrida ${training.runKm} km`);
+    if (training.lift) parts.push(`musculação ${training.liftMin} min`);
+    banner = `Hoje: <strong>${parts.join(" + ")}</strong> (\u2248 ${tg.wk} kcal). `
+      + `Sobre a base de ${REST_TARGET} kcal, o treino libera +${tg.refeed} kcal — `
+      + `alvo de <strong>${tg.kcal} kcal</strong>, com o extra concentrado em carboidrato.`;
+  }
+  document.getElementById("dayBanner").innerHTML = banner;
+  document.getElementById("daySub").textContent = tg.edited
+    ? "Metas editadas para hoje."
+    : tg.wk === 0
+      ? "Dia de descanso — base de 1600 kcal, carbo controlado."
+      : "Dia de treino — mais energia liberada, foco no carboidrato.";
+
+  renderMacroEditor();
+}
+
+/* ====== EDITOR MANUAL DE MACROS ====== */
+function renderMacroEditor() {
+  const host = document.getElementById("macroEditor");
+  const tg = dayTargets();
+  if (!macroEditorOpen) {
+    host.innerHTML = `<div class="editor-bar">
+      <span class="editor-status">${tg.edited ? "Metas editadas manualmente" : "Metas calculadas pelo ciclo de calorias"}</span>
+      <button class="ghost-sm" id="openEditor">${tg.edited ? "Ajustar metas" : "Editar metas"}</button>
+      ${tg.edited ? `<button class="ghost-sm" id="resetEditor">Voltar ao calculado</button>` : ""}
+    </div>`;
+    document.getElementById("openEditor").addEventListener("click", () => {
+      macroEditorOpen = true; renderMacroEditor();
+    });
+    const rb = document.getElementById("resetEditor");
+    if (rb) rb.addEventListener("click", () => {
+      override.on = false;
+      macroEditorOpen = false;
+      renderTargets();
+    });
+    return;
+  }
+
+  host.innerHTML = `<div class="editor-panel">
+    <div class="editor-row">
+      <label>Calorias <input type="number" min="0" step="10" id="ed-kcal" value="${tg.kcal}"></label>
+      <label>Proteína (g) <input type="number" min="0" step="1" id="ed-p" value="${tg.protein}"></label>
+      <label>Carbo (g) <input type="number" min="0" step="1" id="ed-c" value="${tg.carb}"></label>
+      <label>Gordura (g) <input type="number" min="0" step="1" id="ed-g" value="${tg.fat}"></label>
+    </div>
+    <div class="editor-actions">
+      <button class="secondary" id="saveEditor">Salvar metas do dia</button>
+      <button class="ghost-sm" id="cancelEditor">Cancelar</button>
+    </div>
+    <div class="editor-hint">Estes valores valem só para hoje. Sem mexer, o app calcula sozinho pelo treino do dia.</div>
+  </div>`;
+
+  const num = (id) => {
+    const v = parseInt(document.getElementById(id).value, 10);
+    return isNaN(v) || v < 0 ? 0 : v;
+  };
+  document.getElementById("saveEditor").addEventListener("click", () => {
+    override.kcal = num("ed-kcal");
+    override.protein = num("ed-p");
+    override.carb = num("ed-c");
+    override.fat = num("ed-g");
+    override.on = true;
+    macroEditorOpen = false;
+    renderTargets();
+  });
+  document.getElementById("cancelEditor").addEventListener("click", () => {
+    macroEditorOpen = false; renderMacroEditor();
+  });
+}
+
+/* ====== RENDER: REFEIÇÕES ====== */
+function badge(status) {
+  if (status === "confirmed") return `<span class="badge done">confirmada</span>`;
+  if (status === "changed")   return `<span class="badge changed">alterada</span>`;
+  if (status === "skipped")   return `<span class="badge skip">pulada</span>`;
+  return `<span class="badge todo">a confirmar</span>`;
+}
+
+function renderMeals() {
+  document.getElementById("meals").innerHTML = MEALS.map(m => {
+    const s = mealState[m.id];
+    const decided = s.status === "confirmed" || s.status === "changed";
+    let summary;
+    if (s.status === "skipped") summary = "Refeição pulada";
+    else if (decided && s.eaten) summary = `${r(s.eaten.kcal)} kcal \u00b7 P ${r1(s.eaten.p)} \u00b7 C ${r1(s.eaten.c)} \u00b7 G ${r1(s.eaten.g)}`;
+    else summary = m.suggestion;
+
+    const macroLine = (decided && s.eaten)
+      ? `<div class="macro-line">${r(s.eaten.kcal)} kcal &nbsp;\u00b7&nbsp; P ${r1(s.eaten.p)}g &nbsp;\u00b7&nbsp; C ${r1(s.eaten.c)}g &nbsp;\u00b7&nbsp; G ${r1(s.eaten.g)}g</div>`
+      : "";
+
+    return `<div class="meal ${s.open ? "open" : ""} ${decided ? "decided" : ""}">
+      <div class="meal-head" data-head="${m.id}">
+        <div class="meal-glyph">${m.glyph}</div>
+        <div class="meal-info">
+          <div class="meal-name">${m.name} ${badge(s.status)}</div>
+          <div class="meal-summary">${summary}</div>
+        </div>
+        <span class="chev">\u2304</span>
+      </div>
+      <div class="meal-body">
+        <div class="field-label">Sugestão do cardápio</div>
+        <div class="sugg">${m.suggestion}</div>
+        ${s.status === "changed" ? `<div class="field-label">Você comeu</div><div class="sugg">${s.desc}</div>` : ""}
+        ${macroLine}
+        ${s.note ? `<div class="note">${s.note}</div>` : ""}
+        <div class="btn-row">
+          <button class="${s.status === "confirmed" ? "on" : ""}" data-confirm="${m.id}" ${s.busy ? "disabled" : ""}>\u2713 Confirmar</button>
+          <button data-change="${m.id}" ${s.busy ? "disabled" : ""}>\u270E Alterar</button>
+          <button class="${s.status === "skipped" ? "on" : ""}" data-skip="${m.id}" ${s.busy ? "disabled" : ""}>\u2192 Pulei</button>
+        </div>
+        <div class="edit-area" id="edit-${m.id}">
+          <div class="field-label">Descreva o que você comeu de verdade</div>
+          <textarea id="ta-${m.id}" rows="2" placeholder="Ex: comi um prato de macarrão à bolonhesa">${s.status === "changed" ? s.desc : ""}</textarea>
+          <div style="margin-top:8px;">
+            <button class="secondary" data-save="${m.id}" ${s.busy ? "disabled" : ""}>${s.busy ? "Calculando…" : "Calcular esta refeição"}</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  bindMeals();
+}
+
+function bindMeals() {
+  document.querySelectorAll("[data-head]").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.head;
+      mealState[id].open = !mealState[id].open;
+      renderMeals();
+    });
+  });
+  document.querySelectorAll("[data-confirm]").forEach(el => {
+    el.addEventListener("click", async () => {
+      const id = el.dataset.confirm;
+      const m = MEALS.find(x => x.id === id);
+      const s = mealState[id];
+      s.busy = true; renderMeals();
+      try {
+        if (!s.eaten || s.status !== "confirmed") {
+          const macros = await estimateMacros(m.name, m.suggestion);
+          s.eaten = macros.vals; s.note = macros.note;
+        }
+        s.status = "confirmed"; s.desc = m.suggestion;
+        s.busy = false; s.open = false;
+        renderMeals(); renderTargets();
+      } catch (err) {
+        s.busy = false; s.note = "Não consegui calcular agora — tente de novo.";
+        renderMeals();
+      }
+    });
+  });
+  document.querySelectorAll("[data-skip]").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.skip;
+      const s = mealState[id];
+      s.status = s.status === "skipped" ? "pending" : "skipped";
+      s.open = false;
+      renderMeals(); renderTargets();
+    });
+  });
+  document.querySelectorAll("[data-change]").forEach(el => {
+    el.addEventListener("click", () => {
+      const box = document.getElementById("edit-" + el.dataset.change);
+      box.classList.toggle("show");
+      if (box.classList.contains("show")) document.getElementById("ta-" + el.dataset.change).focus();
+    });
+  });
+  document.querySelectorAll("[data-save]").forEach(el => {
+    el.addEventListener("click", async () => {
+      const id = el.dataset.save;
+      const m = MEALS.find(x => x.id === id);
+      const s = mealState[id];
+      const txt = document.getElementById("ta-" + id).value.trim();
+      if (!txt) { document.getElementById("ta-" + id).focus(); return; }
+      s.busy = true; renderMeals();
+      try {
+        const macros = await estimateMacros(m.name, txt);
+        s.eaten = macros.vals; s.note = macros.note;
+        s.desc = txt; s.status = "changed";
+        s.busy = false; s.open = false;
+        renderMeals(); renderTargets();
+      } catch (err) {
+        s.busy = false; s.note = "Não consegui calcular agora — tente de novo.";
+        renderMeals();
+      }
+    });
+  });
+}
+
+/* ====== RECALCULAR O DIA ====== */
+document.getElementById("recalcBtn").addEventListener("click", async () => {
+  const box = document.getElementById("suggestBox");
+  const btn = document.getElementById("recalcBtn");
+  const pending = MEALS.filter(m => mealState[m.id].status === "pending");
+  if (pending.length === 0) {
+    box.innerHTML = `<div class="msg">Todas as refeições já foram decididas. Veja o resultado no painel de metas.</div>`;
+    return;
+  }
+  const tg = dayTargets();
+  const t = consumed();
+  const rest = { kcal:tg.kcal-t.kcal, p:tg.protein-t.p, c:tg.carb-t.c, g:tg.fat-t.g };
+  btn.disabled = true;
+  box.innerHTML = `<div class="msg">Recalculando o restante do dia com a IA…</div>`;
+  try {
+    const eaten = MEALS.filter(m => mealState[m.id].status === "confirmed" || mealState[m.id].status === "changed")
+      .map(m => `${m.name}: ${mealState[m.id].desc}`).join("; ") || "nada ainda";
+    const skipped = MEALS.filter(m => mealState[m.id].status === "skipped").map(m => m.name).join(", ");
+    const wkDesc = tg.wk === 0 ? "dia de descanso, sem treino"
+      : `treino hoje gastando cerca de ${tg.wk} kcal`;
+    const prompt = `Homem de 43 anos em dieta de emagrecimento com estratégia de ciclo de calorias. `
+      + `Hoje é ${wkDesc}. Metas do dia: ${tg.kcal} kcal, ${tg.protein}g proteína, ${tg.carb}g carbo, ${tg.fat}g gordura. `
+      + `Já comeu: ${eaten}. ` + (skipped ? `Pulou: ${skipped}. ` : "")
+      + `Faltam estas refeições: ${pending.map(m => m.name).join(", ")}. `
+      + `Sobram para distribuir entre elas: ${r(rest.kcal)} kcal, ${r1(rest.p)}g proteína, ${r1(rest.c)}g carbo, ${r1(rest.g)}g gordura. `
+      + `Costuma comer frango, wrap de frango, sushi, whey isolado, ovos, iogurte grego, frutas, salada. `
+      + `Em dia de treino, priorize carboidrato nas refeições próximas ao treino. `
+      + `Para CADA refeição que falta, sugira o que comer com porções concretas. `
+      + `Responda APENAS com JSON, sem markdown: `
+      + `{"refeicoes":[{"nome":"...","sugestao":"porções concretas","kcal":number,"p":number,"c":number,"g":number}]}`;
+    const out = await callClaude(prompt, 1100);
+    const data = parseJSON(out);
+    const refs = data.refeicoes || [];
+    box.innerHTML = `<div class="sec-label">Plano ajustado para fechar o dia</div>`
+      + refs.map(rf => `<div class="plan-card">
+        <div class="pc-name">${rf.nome}</div>
+        <div class="pc-desc">${rf.sugestao}</div>
+        <div class="pc-macros">${r(rf.kcal)} kcal \u00b7 P ${r1(rf.p)}g \u00b7 C ${r1(rf.c)}g \u00b7 G ${r1(rf.g)}g</div>
+      </div>`).join("");
+  } catch (err) {
+    box.innerHTML = `<div class="msg err">Não consegui recalcular agora. Verifique a conexão com a API e tente de novo.</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  MEALS.forEach(m => {
+    mealState[m.id] = { status:"pending", open:false, eaten:null, desc:m.suggestion, busy:false, note:"" };
+  });
+  override.on = false;
+  macroEditorOpen = false;
+  document.getElementById("suggestBox").innerHTML = "";
+  renderAll();
+});
+
+/* ====== INIT ====== */
+function renderAll() {
+  renderTraining();
+  renderTargets();
+  renderMeals();
+}
+function checkEnv() {
+  if (location.protocol === "file:") {
+    const w = document.getElementById("setupWarn");
+    w.style.display = "block";
+    w.textContent = "Você abriu o app direto do arquivo. A IA precisa da Pages "
+      + "Function rodando — faça o deploy no Cloudflare Pages (veja o LEIA-ME).";
+  }
+}
+renderAll();
+checkEnv();
+</script>
+</body>
+</html>

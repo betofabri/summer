@@ -43,10 +43,6 @@ async function handleChat(request, env) {
   }
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
-  /* O Gemini 2.5 Flash usa parte do orçamento de tokens para raciocínio
-     interno antes da resposta final. Por isso damos uma folga generosa:
-     o pedido do app pode mandar um valor, mas garantimos um mínimo alto
-     para a resposta nunca ser cortada no meio do JSON. */
   const requested = body.max_tokens || 700;
   const maxTokens = Math.min(Math.max(requested, 2000), 4000);
 
@@ -56,9 +52,16 @@ async function handleChat(request, env) {
     .filter(m => m && m.role === "user")
     .map(m => ({ role: "user", parts: [{ text: String(m.content || "") }] }));
 
+  /* thinkingConfig com thinkingBudget 0 DESLIGA o raciocínio interno do
+     Gemini 2.5 Flash. Sem isso, o "pensamento" consome quase todo o
+     orçamento de tokens e a resposta final sai cortada no meio do JSON.
+     Para estimar macros não é preciso raciocínio extenso. */
   const geminiBody = {
     contents: contents,
-    generationConfig: { maxOutputTokens: maxTokens }
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      thinkingConfig: { thinkingBudget: 0 }
+    }
   };
 
   const endpoint =

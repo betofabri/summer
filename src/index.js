@@ -43,7 +43,12 @@ async function handleChat(request, env) {
   }
 
   const messages = Array.isArray(body.messages) ? body.messages : [];
-  const maxTokens = Math.min(body.max_tokens || 700, 1500);
+  /* O Gemini 2.5 Flash usa parte do orçamento de tokens para raciocínio
+     interno antes da resposta final. Por isso damos uma folga generosa:
+     o pedido do app pode mandar um valor, mas garantimos um mínimo alto
+     para a resposta nunca ser cortada no meio do JSON. */
+  const requested = body.max_tokens || 700;
+  const maxTokens = Math.min(Math.max(requested, 2000), 4000);
 
   /* Traduz as mensagens do formato do app para o formato do Gemini.
      O app envia uma mensagem de usuário; o Gemini espera "contents". */
@@ -94,10 +99,21 @@ async function handleChat(request, env) {
 
   let text = "";
   try {
-    const parts = geminiData.candidates[0].content.parts;
+    const candidate = geminiData.candidates[0];
+    const parts = candidate.content.parts;
     text = parts.map(p => p.text || "").join("");
+    /* finishReason "MAX_TOKENS" significa que a resposta foi cortada por
+       falta de espaço. Avisamos de forma clara em vez de devolver um
+       JSON quebrado que o app não consegue interpretar. */
+    if (candidate.finishReason === "MAX_TOKENS") {
+      return json({ error: "A resposta da IA foi cortada. Tente de novo." }, 502);
+    }
   } catch (e) {
     text = "";
+  }
+
+  if (!text) {
+    return json({ error: "A IA não retornou uma resposta utilizável." }, 502);
   }
 
   return json({ content: [{ type: "text", text: text }] }, 200);

@@ -47,15 +47,31 @@ async function handleChat(request, env) {
   const maxTokens = Math.min(Math.max(requested, 2000), 4000);
 
   /* Traduz as mensagens do formato do app para o formato do Gemini.
-     O app envia uma mensagem de usuário; o Gemini espera "contents". */
+     Cada mensagem de usuário pode ter:
+       - content: texto
+       - image: { mimeType, data }  (data = base64 sem o prefixo data:)
+     O Gemini aceita texto e imagem juntos em "parts". */
   const contents = messages
     .filter(m => m && m.role === "user")
-    .map(m => ({ role: "user", parts: [{ text: String(m.content || "") }] }));
+    .map(m => {
+      const parts = [];
+      if (m.content) {
+        parts.push({ text: String(m.content) });
+      }
+      if (m.image && m.image.data) {
+        parts.push({
+          inlineData: {
+            mimeType: m.image.mimeType || "image/jpeg",
+            data: m.image.data
+          }
+        });
+      }
+      return { role: "user", parts: parts };
+    });
 
   /* thinkingConfig com thinkingBudget 0 DESLIGA o raciocínio interno do
      Gemini 2.5 Flash. Sem isso, o "pensamento" consome quase todo o
-     orçamento de tokens e a resposta final sai cortada no meio do JSON.
-     Para estimar macros não é preciso raciocínio extenso. */
+     orçamento de tokens e a resposta final sai cortada no meio do JSON. */
   const geminiBody = {
     contents: contents,
     generationConfig: {

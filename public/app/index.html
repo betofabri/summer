@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Meu dia · Dieta</title>
+<title>Always Summer App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
   :root {
     --surface: #f8faf3;
@@ -106,11 +107,21 @@
     box-shadow: var(--tint-shadow);
   }
   .t-top { display: flex; align-items: center; gap: 10px; }
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal; font-style: normal; line-height: 1;
+    letter-spacing: normal; text-transform: none; display: inline-block;
+    white-space: nowrap; word-wrap: normal; direction: ltr;
+    -webkit-font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+  }
   .t-glyph {
     width: 36px; height: 36px; border-radius: var(--r-md); flex: none;
-    display: flex; align-items: center; justify-content: center; font-size: 18px;
-    background: var(--surface-container-high);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-container-high); color: var(--primary);
   }
+  .t-glyph .material-symbols-outlined { font-size: 20px; }
   .train-opt.on .t-glyph { background: var(--voltz); }
   .t-name { font-weight: 600; font-size: 16px; line-height: 1.25; }
   .t-meta { font-size: 14px; color: var(--on-surface-variant); margin-top: 2px; }
@@ -209,9 +220,10 @@
   }
   .meal-glyph {
     width: 42px; height: 42px; border-radius: var(--r-md); flex: none;
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-    background: var(--surface-container-high);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-container-high); color: var(--primary);
   }
+  .meal-glyph .material-symbols-outlined { font-size: 22px; }
   .meal.decided .meal-glyph { background: var(--voltz); }
   .meal-info { flex: 1; min-width: 0; }
   .meal-name {
@@ -247,6 +259,7 @@
   }
 
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-ico { font-size: 17px; vertical-align: -3px; }
   button {
     font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 14px;
     border-radius: var(--r); cursor: pointer; transition: all 0.14s;
@@ -304,6 +317,57 @@
     background: var(--error-container); color: var(--on-error-container);
     border-radius: var(--r-lg); padding: 14px 18px; font-size: 14px;
   }
+
+  /* ---- abas e barra de navegação fixa ---- */
+  body { padding-bottom: 7rem; }   /* espaço para a barra flutuante não cobrir conteúdo */
+  .tab-panel[hidden] { display: none; }
+
+  /* ---- upload de foto do cardápio ---- */
+  .photo-drop {
+    border: 1.5px dashed var(--outline-variant);
+    border-radius: var(--r-xl);
+    background: linear-gradient(180deg, var(--surface-container-lowest), var(--surface-container));
+    padding: 32px 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.16s, background 0.16s;
+  }
+  .photo-drop:hover { border-color: var(--voltz-dim); }
+  .photo-drop:active { transform: scale(0.99); }
+
+  .tab-bar {
+    position: fixed; z-index: 50;
+    left: 50%; transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: calc(100% - 32px); max-width: 420px;
+    display: flex; justify-content: space-around; align-items: center;
+    gap: 6px; padding: 8px;
+    background: rgba(248, 250, 243, 0.82);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 0.5px solid rgba(193, 200, 197, 0.4);
+    border-radius: var(--r-full);
+    box-shadow: 0 10px 30px -8px rgba(0, 22, 18, 0.22),
+                0 2px 8px -2px rgba(0, 22, 18, 0.12);
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; background: transparent; border: none; cursor: pointer;
+    padding: 9px 8px; border-radius: var(--r-full);
+    transition: background 0.2s, color 0.2s;
+    color: var(--on-surface-variant);
+  }
+  .tab-btn:active { transform: scale(0.92); }
+  .tab-btn .tab-ico { font-size: 23px; }
+  .tab-btn .tab-label {
+    font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+  }
+  .tab-btn.active {
+    background: var(--secondary-container);
+    color: var(--on-secondary-container);
+  }
+  .tab-btn.active .tab-ico {
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+
   @media (max-width: 460px) {
     .wrap { padding-top: 1.75rem; }
     h1 { font-size: 32px; }
@@ -317,29 +381,69 @@
 <div class="wrap">
 
   <header>
-    <div class="eyebrow">Dieta · ciclo de calorias</div>
-    <h1>Meu dia</h1>
+    <div class="eyebrow">nutriAi</div>
+    <h1>ALWAYS SUMMER APP</h1>
     <div class="day-sub" id="daySub">Comece marcando se você vai treinar hoje.</div>
   </header>
 
   <div class="setup-warn" id="setupWarn"></div>
 
-  <div class="sec-label">Treino de hoje</div>
-  <div class="train-grid" id="trainGrid"></div>
+  <!-- ABA: ALIMENTAÇÃO -->
+  <section class="tab-panel" id="panel-food">
+    <div class="sec-label">Meta do dia <span class="tag" id="strategyTag"></span></div>
+    <div class="targets" id="targets"></div>
+    <div class="day-banner" id="dayBanner"></div>
+    <div id="macroEditor"></div>
 
-  <div class="sec-label">Meta do dia <span class="tag" id="strategyTag"></span></div>
-  <div class="targets" id="targets"></div>
-  <div class="day-banner" id="dayBanner"></div>
-  <div id="macroEditor"></div>
+    <div class="sec-label">Refeições</div>
+    <div id="meals"></div>
 
-  <div class="sec-label">Refeições</div>
-  <div id="meals"></div>
+    <div class="btn-row" style="margin-top:1.25rem;">
+      <button class="primary" id="recalcBtn">Recalcular o dia com a IA</button>
+      <button id="resetBtn">Recomeçar</button>
+    </div>
+    <div id="suggestBox"></div>
+  </section>
 
-  <div class="btn-row" style="margin-top:1.25rem;">
-    <button class="primary" id="recalcBtn">Recalcular o dia com a IA</button>
-    <button id="resetBtn">Recomeçar</button>
-  </div>
-  <div id="suggestBox"></div>
+  <!-- ABA: TREINOS -->
+  <section class="tab-panel" id="panel-train" hidden>
+    <div class="sec-label">Treino de hoje</div>
+    <div class="train-grid" id="trainGrid"></div>
+    <div class="sec-label">Impacto no dia</div>
+    <div class="day-banner" id="dayBannerTrain"></div>
+  </section>
+
+  <!-- ABA: CARDÁPIO (FOTO) -->
+  <section class="tab-panel" id="panel-menu" hidden>
+    <div class="sec-label">Foto de cardápio</div>
+    <p class="day-sub" style="font-size:15px;margin-bottom:1rem;">
+      Tire ou envie a foto de um cardápio. A IA lê as opções e sugere quais pratos
+      cabem no que ainda falta da sua dieta hoje.
+    </p>
+
+    <input type="file" id="menuFile" accept="image/*" capture="environment" hidden />
+    <div class="photo-drop" id="photoDrop">
+      <span class="material-symbols-outlined" style="font-size:38px;color:var(--outline);">photo_camera</span>
+      <div style="font-weight:600;margin-top:6px;">Tirar ou escolher foto</div>
+      <div style="font-size:13px;color:var(--outline);">Toque para abrir a câmera ou a galeria</div>
+    </div>
+
+    <div id="menuPreviewWrap" hidden style="margin-top:14px;">
+      <img id="menuPreview" alt="Cardápio enviado" style="width:100%;border-radius:var(--r-xl);display:block;" />
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="primary" id="menuAnalyzeBtn"><span class="material-symbols-outlined btn-ico">auto_awesome</span> Analisar cardápio</button>
+        <button id="menuClearBtn"><span class="material-symbols-outlined btn-ico">close</span> Trocar foto</button>
+      </div>
+    </div>
+
+    <div id="menuResult"></div>
+
+    <p style="font-size:13px;color:var(--outline);line-height:1.6;margin-top:1.25rem;">
+      A IA estima os macros dos pratos a partir do nome e da descrição no cardápio —
+      restaurantes raramente informam valores nutricionais, então estas são
+      aproximações para orientar a escolha, não medições exatas.
+    </p>
+  </section>
 
   <div class="foot">
     A IA estima os macros a partir das suas descrições — são aproximações, não medições exatas.
@@ -350,36 +454,53 @@
 
 </div>
 
+<!-- BARRA DE NAVEGAÇÃO FIXA -->
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="food" type="button">
+    <span class="material-symbols-outlined tab-ico">restaurant</span>
+    <span class="tab-label">Dieta</span>
+  </button>
+  <button class="tab-btn" data-tab="menu" type="button">
+    <span class="material-symbols-outlined tab-ico">photo_camera</span>
+    <span class="tab-label">Foto</span>
+  </button>
+  <button class="tab-btn" data-tab="train" type="button">
+    <span class="material-symbols-outlined tab-ico">fitness_center</span>
+    <span class="tab-label">Treinos</span>
+  </button>
+</nav>
+
 <script>
 "use strict";
 
 /* ====== CONFIG: PERFIL E ESTRATÉGIA ====== */
 const PROFILE = { age: 43, sex: "male", height: 163, weight: 72 };
 
-/* Alvo de calorias num dia de descanso (base do ciclo de calorias).
-   Os dias de treino somam a energia do treino por cima deste valor. */
-const REST_TARGET = 1600;
+/* Metas de um dia de descanso (base do ciclo de calorias).
+   Os dias de treino somam a energia do treino por cima destes valores. */
+const REST_TARGET = 1800;       /* kcal num dia de descanso */
+const BASE_PROTEIN = 160;       /* g de proteína (alvo) */
+const BASE_CARB = 145;          /* g de carboidrato (alvo) */
+const BASE_FAT = 64;            /* g de gordura (alvo) */
 
-const REFEED_RATIO = 0.65;   /* fração da energia do treino devolvida como comida */
-const PROTEIN_PER_KG = 2.1;
-const FAT_PER_KG = 0.6;
+const REFEED_RATIO = 0.65;      /* fração da energia do treino devolvida como comida */
 
 const WORKOUTS = {
-  yoga: { label: "Hot yoga",   glyph: "\u{1F9D8}", kcal: () => 320 },
-  run:  { label: "Corrida",    glyph: "\u{1F3C3}", kcal: (o) => Math.round((o.km || 5) * 75) },
-  lift: { label: "Musculação", glyph: "\u{1F3CB}", kcal: (o) => Math.round((o.min || 40) * 5) }
+  yoga: { label: "Hot yoga",   glyph: "self_improvement", kcal: () => 320 },
+  run:  { label: "Corrida",    glyph: "directions_run",   kcal: (o) => Math.round((o.km || 5) * 75) },
+  lift: { label: "Musculação", glyph: "fitness_center",   kcal: (o) => Math.round((o.min || 40) * 5) }
 };
 
 /* ====== ESTADO ====== */
 const training = { yoga: false, run: false, lift: false, runKm: 5, liftMin: 40 };
 
 const MEALS = [
-  { id:"cafe",    name:"Café da manhã",   glyph:"\u2615",    suggestion:"2 ovos e 1 fatia de pão integral" },
-  { id:"lanche1", name:"Lanche da manhã", glyph:"\u{1F95B}", suggestion:"1 scoop de whey isolado" },
-  { id:"almoco",  name:"Almoço",          glyph:"\u{1F37D}", suggestion:"Peito de frango grelhado com salada" },
-  { id:"lanche2", name:"Lanche da tarde", glyph:"\u{1F353}", suggestion:"1 scoop de whey isolado com fruta" },
-  { id:"jantar",  name:"Jantar",          glyph:"\u{1F32F}", suggestion:"1 wrap de frango com salada e queijo" },
-  { id:"ceia",    name:"Ceia",            glyph:"\u{1F319}", suggestion:"1 iogurte grego com fruta" }
+  { id:"cafe",    name:"Café da manhã",   glyph:"local_cafe",    suggestion:"2 ovos mexidos em 1 colher de chá de azeite e 1 fatia de pão integral" },
+  { id:"lanche1", name:"Lanche da manhã", glyph:"nutrition",     suggestion:"1 scoop de whey isolado e um punhado de castanhas (15g)" },
+  { id:"almoco",  name:"Almoço",          glyph:"restaurant",    suggestion:"120g de peito de frango grelhado, 5 colheres de arroz integral e salada de folhas com 1 colher de sopa de azeite" },
+  { id:"lanche2", name:"Lanche da tarde", glyph:"grocery",       suggestion:"1 scoop de whey isolado e 1 banana" },
+  { id:"jantar",  name:"Jantar",          glyph:"dinner_dining", suggestion:"1 wrap de frango com salada, 30g de queijo mussarela e 1/4 de abacate" },
+  { id:"ceia",    name:"Ceia",            glyph:"bedtime",       suggestion:"1 iogurte grego YoPRO com kiwi e maçã" }
 ];
 
 const mealState = {};
@@ -401,14 +522,17 @@ function workoutKcal() {
   return total;
 }
 
-/* Metas calculadas pelo ciclo de calorias: base 1600 + parte da energia do treino. */
+/* Metas calculadas pelo ciclo de calorias: base fixa (1800 kcal, 160P/145C/64G)
+   nos dias de descanso. Em dias de treino, parte da energia gasta volta como
+   comida — concentrada em carboidrato — mantendo proteína e gordura estáveis. */
 function computedTargets() {
   const wk = workoutKcal();
   const refeed = Math.round(wk * REFEED_RATIO);
   const kcal = REST_TARGET + refeed;
-  const protein = Math.round(PROFILE.weight * PROTEIN_PER_KG);
-  const fat = Math.round(PROFILE.weight * FAT_PER_KG);
-  const carb = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  const protein = BASE_PROTEIN;
+  const fat = BASE_FAT;
+  /* o extra de calorias do treino entra todo como carboidrato */
+  const carb = BASE_CARB + Math.round(refeed / 4);
   return { kcal, protein, carb, fat, wk, refeed };
 }
 
@@ -440,16 +564,25 @@ const r = v => Math.round(v);
 const r1 = v => Math.round(v * 10) / 10;
 
 /* ====== IA ======
-   Chama /api/chat — a Pages Function (functions/api/chat.js) que guarda a
-   chave de API no servidor. A chave NUNCA fica neste arquivo. */
-async function callClaude(prompt, maxTokens) {
+   Chama /app/api/chat — o Worker que guarda a chave de API no servidor.
+   A chave NUNCA fica neste arquivo.
+   O parâmetro pode ser:
+     - uma string (texto puro), ou
+     - um objeto { text, image: {mimeType, data} } para enviar foto. */
+async function callClaude(input, maxTokens) {
+  let userMessage;
+  if (typeof input === "string") {
+    userMessage = { role: "user", content: input };
+  } else {
+    userMessage = { role: "user", content: input.text || "" };
+    if (input.image) userMessage.image = input.image;
+  }
   const res = await fetch("/app/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens || 700,
-      messages: [{ role: "user", content: prompt }]
+      messages: [userMessage]
     })
   });
   if (!res.ok) throw new Error("API " + res.status);
@@ -481,7 +614,7 @@ function renderTraining() {
   const rest = !training.yoga && !training.run && !training.lift;
   let html = `<div class="train-opt ${rest ? "on" : ""}" data-rest="1">
     <div class="t-top">
-      <div class="t-glyph">\u{1F6CB}</div>
+      <div class="t-glyph"><span class="material-symbols-outlined">weekend</span></div>
       <div><div class="t-name">Dia de descanso</div>
       <div class="t-meta">Sem treino \u00b7 déficit maior</div></div>
     </div></div>`;
@@ -501,7 +634,7 @@ function renderTraining() {
              : w.kcal();
     html += `<div class="train-opt ${on ? "on" : ""}" data-key="${key}">
       <div class="t-top">
-        <div class="t-glyph">${w.glyph}</div>
+        <div class="t-glyph"><span class="material-symbols-outlined">${w.glyph}</span></div>
         <div><div class="t-name">${w.label}</div>
         <div class="t-meta">\u2248 ${kc} kcal${on ? " \u00b7 ativo" : ""}</div></div>
       </div>${detail}</div>`;
@@ -578,10 +711,12 @@ function renderTargets() {
       + `alvo de <strong>${tg.kcal} kcal</strong>, com o extra concentrado em carboidrato.`;
   }
   document.getElementById("dayBanner").innerHTML = banner;
+  const bannerTrain = document.getElementById("dayBannerTrain");
+  if (bannerTrain) bannerTrain.innerHTML = banner;
   document.getElementById("daySub").textContent = tg.edited
     ? "Metas editadas para hoje."
     : tg.wk === 0
-      ? "Dia de descanso — base de 1600 kcal, carbo controlado."
+      ? ""
       : "Dia de treino — mais energia liberada, foco no carboidrato.";
 
   renderMacroEditor();
@@ -664,7 +799,7 @@ function renderMeals() {
 
     return `<div class="meal ${s.open ? "open" : ""} ${decided ? "decided" : ""}">
       <div class="meal-head" data-head="${m.id}">
-        <div class="meal-glyph">${m.glyph}</div>
+        <div class="meal-glyph"><span class="material-symbols-outlined">${m.glyph}</span></div>
         <div class="meal-info">
           <div class="meal-name">${m.name} ${badge(s.status)}</div>
           <div class="meal-summary">${summary}</div>
@@ -678,10 +813,14 @@ function renderMeals() {
         ${macroLine}
         ${s.note ? `<div class="note">${s.note}</div>` : ""}
         <div class="btn-row">
-          <button class="${s.status === "confirmed" ? "on" : ""}" data-confirm="${m.id}" ${s.busy ? "disabled" : ""}>\u2713 Confirmar</button>
-          <button data-change="${m.id}" ${s.busy ? "disabled" : ""}>\u270E Alterar</button>
-          <button class="${s.status === "skipped" ? "on" : ""}" data-skip="${m.id}" ${s.busy ? "disabled" : ""}>\u2192 Pulei</button>
+          <button class="${s.status === "confirmed" ? "on" : ""}" data-confirm="${m.id}" ${s.busy ? "disabled" : ""}><span class="material-symbols-outlined btn-ico">check</span> Confirmar</button>
+          <button data-change="${m.id}" ${s.busy ? "disabled" : ""}><span class="material-symbols-outlined btn-ico">edit</span> Alterar</button>
+          <button class="${s.status === "skipped" ? "on" : ""}" data-skip="${m.id}" ${s.busy ? "disabled" : ""}><span class="material-symbols-outlined btn-ico">arrow_forward</span> Pulei</button>
         </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button data-equiv="${m.id}" ${s.busy ? "disabled" : ""}><span class="material-symbols-outlined btn-ico">swap_horiz</span> Sugerir prato equivalente</button>
+        </div>
+        <div id="equiv-${m.id}"></div>
         <div class="edit-area" id="edit-${m.id}">
           <div class="field-label">Descreva o que você comeu de verdade</div>
           <textarea id="ta-${m.id}" rows="2" placeholder="Ex: comi um prato de macarrão à bolonhesa">${s.status === "changed" ? s.desc : ""}</textarea>
@@ -759,6 +898,41 @@ function bindMeals() {
       }
     });
   });
+
+  /* Sugerir um prato equivalente, com os mesmos macros da refeição atual. */
+  document.querySelectorAll("[data-equiv]").forEach(el => {
+    el.addEventListener("click", async () => {
+      const id = el.dataset.equiv;
+      const m = MEALS.find(x => x.id === id);
+      const s = mealState[id];
+      const box = document.getElementById("equiv-" + id);
+      /* a refeição de referência: o que a pessoa comeu, ou a sugestão padrão */
+      const refDesc = (s.status === "changed" && s.desc) ? s.desc : m.suggestion;
+      el.disabled = true;
+      box.innerHTML = `<div class="msg">Pensando numa alternativa equivalente…</div>`;
+      try {
+        const prompt = `Refeição de referência (${m.name}): "${refDesc}". `
+          + `Primeiro estime os macros dessa refeição. `
+          + `Depois sugira UMA refeição alternativa, diferente, que tenha macros `
+          + `o mais próximo possível dos da referência (mesma faixa de calorias, `
+          + `proteína, carboidrato e gordura). Troque a proteína e os acompanhamentos `
+          + `por outros que façam sentido para a mesma hora do dia. `
+          + `Responda APENAS com JSON, sem markdown: `
+          + `{"alternativa":"descrição com porções concretas","kcal":number,"p":number,"c":number,"g":number}`;
+        const out = await callClaude(prompt, 700);
+        const data = parseJSON(out);
+        box.innerHTML = `<div class="plan-card">
+          <div class="field-label">Alternativa equivalente</div>
+          <div class="pc-desc" style="margin-top:4px;">${data.alternativa || ""}</div>
+          <div class="pc-macros">${r(data.kcal)} kcal · P ${r1(data.p)}g · C ${r1(data.c)}g · G ${r1(data.g)}g</div>
+        </div>`;
+      } catch (err) {
+        box.innerHTML = `<div class="msg err">Não consegui sugerir agora. Tente de novo.</div>`;
+      } finally {
+        el.disabled = false;
+      }
+    });
+  });
 }
 
 /* ====== RECALCULAR O DIA ====== */
@@ -817,6 +991,101 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   renderAll();
 });
 
+/* ====== NAVEGAÇÃO POR ABAS ====== */
+function switchTab(tab) {
+  const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train" };
+  Object.keys(panels).forEach(key => {
+    document.getElementById(panels[key]).hidden = (key !== tab);
+  });
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+/* ====== ABA CARDÁPIO: FOTO ====== */
+let menuImage = null;   /* { mimeType, data }  — data em base64 sem prefixo */
+
+document.getElementById("photoDrop").addEventListener("click", () => {
+  document.getElementById("menuFile").click();
+});
+
+document.getElementById("menuFile").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;            /* data:image/jpeg;base64,XXXX */
+    const comma = dataUrl.indexOf(",");
+    const meta = dataUrl.slice(0, comma);
+    menuImage = {
+      mimeType: (meta.match(/data:(.*?);/) || [])[1] || "image/jpeg",
+      data: dataUrl.slice(comma + 1)
+    };
+    document.getElementById("menuPreview").src = dataUrl;
+    document.getElementById("menuPreviewWrap").hidden = false;
+    document.getElementById("photoDrop").hidden = true;
+    document.getElementById("menuResult").innerHTML = "";
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("menuClearBtn").addEventListener("click", () => {
+  menuImage = null;
+  document.getElementById("menuFile").value = "";
+  document.getElementById("menuPreviewWrap").hidden = true;
+  document.getElementById("photoDrop").hidden = false;
+  document.getElementById("menuResult").innerHTML = "";
+});
+
+document.getElementById("menuAnalyzeBtn").addEventListener("click", async () => {
+  if (!menuImage) return;
+  const btn = document.getElementById("menuAnalyzeBtn");
+  const box = document.getElementById("menuResult");
+  const tg = dayTargets();
+  const t = consumed();
+  const rest = { kcal:tg.kcal-t.kcal, p:tg.protein-t.p, c:tg.carb-t.c, g:tg.fat-t.g };
+  btn.disabled = true;
+  box.innerHTML = `<div class="msg">Lendo o cardápio e cruzando com sua dieta…</div>`;
+  try {
+    const prompt = `Esta imagem é a foto de um cardápio de restaurante. `
+      + `Leia os pratos disponíveis. Para cada prato relevante, estime os macros `
+      + `(calorias, proteína, carbo, gordura) de uma porção típica. `
+      + `Hoje ainda faltam, para fechar minha dieta: ${r(rest.kcal)} kcal, `
+      + `${r1(rest.p)}g proteína, ${r1(rest.c)}g carbo, ${r1(rest.g)}g gordura. `
+      + `Escolha os 2 ou 3 pratos do cardápio que melhor encaixam no que falta, `
+      + `e explique em uma frase por que cada um cabe. `
+      + `Se o cardápio não estiver legível, diga isso no campo "aviso". `
+      + `Responda APENAS com JSON, sem markdown: `
+      + `{"aviso":"texto ou vazio","opcoes":[{"prato":"nome do cardápio","kcal":number,"p":number,"c":number,"g":number,"porque":"motivo curto"}]}`;
+    const out = await callClaude({ text: prompt, image: menuImage }, 1500);
+    const data = parseJSON(out);
+    let html = "";
+    if (data.aviso) {
+      html += `<div class="note" style="margin-top:14px;">${data.aviso}</div>`;
+    }
+    const ops = data.opcoes || [];
+    if (ops.length) {
+      html += `<div class="sec-label">Pratos que encaixam hoje</div>`;
+      html += ops.map(o => `<div class="plan-card">
+        <div class="pc-name">${o.prato}</div>
+        <div class="pc-desc">${o.porque || ""}</div>
+        <div class="pc-macros">${r(o.kcal)} kcal · P ${r1(o.p)}g · C ${r1(o.c)}g · G ${r1(o.g)}g</div>
+      </div>`).join("");
+    } else if (!data.aviso) {
+      html += `<div class="msg">Nenhum prato do cardápio encaixou bem no que falta hoje.</div>`;
+    }
+    box.innerHTML = html;
+  } catch (err) {
+    box.innerHTML = `<div class="msg err">Não consegui analisar o cardápio agora. Tente uma foto mais nítida ou tente de novo.</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 /* ====== INIT ====== */
 function renderAll() {
   renderTraining();
@@ -827,8 +1096,8 @@ function checkEnv() {
   if (location.protocol === "file:") {
     const w = document.getElementById("setupWarn");
     w.style.display = "block";
-    w.textContent = "Você abriu o app direto do arquivo. A IA precisa da Pages "
-      + "Function rodando — faça o deploy no Cloudflare Pages (veja o LEIA-ME).";
+    w.textContent = "Você abriu o app direto do arquivo. A IA precisa do Worker "
+      + "rodando — faça o deploy no Cloudflare (veja o LEIA-ME).";
   }
 }
 renderAll();

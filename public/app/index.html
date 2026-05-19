@@ -75,7 +75,11 @@
     background: radial-gradient(circle, rgba(0,22,18,0.07) 0%, rgba(0,22,18,0) 70%);
     pointer-events: none; z-index: 0;
   }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 2.5rem 1.25rem 0; position: relative; z-index: 1; }
+  .wrap {
+    max-width: 640px; margin: 0 auto;
+    padding: calc(2.5rem + env(safe-area-inset-top)) 1.25rem 0;
+    position: relative; z-index: 1;
+  }
 
   header { margin-bottom: 2rem; }
   .eyebrow {
@@ -332,6 +336,44 @@
   body { padding-bottom: 7rem; }   /* espaço para a barra flutuante não cobrir conteúdo */
   .tab-panel[hidden] { display: none; }
 
+  /* ---- barra compacta de macros (sticky no topo ao rolar) ---- */
+  .macro-mini {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 45;
+    padding: calc(env(safe-area-inset-top) + 8px) 14px 8px;
+    background: rgba(248, 250, 243, 0.9);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-bottom: 0.5px solid rgba(193, 200, 197, 0.4);
+    transform: translateY(-100%);
+    transition: transform 0.25s ease;
+    pointer-events: none;
+  }
+  .macro-mini.show { transform: translateY(0); }
+  .macro-mini-inner {
+    max-width: 640px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  }
+  .mini-stat { min-width: 0; }
+  .mini-stat .ms-top {
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .mini-stat .ms-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--outline);
+  }
+  .mini-stat .ms-val {
+    font-size: 14px; font-weight: 600; color: var(--on-surface);
+  }
+  .mini-stat .ms-val.over { color: var(--error); }
+  .mini-track {
+    height: 4px; background: var(--surface-container-highest);
+    border-radius: var(--r-full); margin-top: 4px; overflow: hidden;
+  }
+  .mini-track > i {
+    display: block; height: 100%; border-radius: var(--r-full);
+    background: linear-gradient(90deg, var(--voltz-dim), var(--voltz));
+  }
+  .mini-track > i.over { background: var(--error); }
+
   /* ---- upload de foto do cardápio ---- */
   .photo-drop {
     border: 1.5px dashed var(--outline-variant);
@@ -379,7 +421,7 @@
   }
 
   @media (max-width: 460px) {
-    .wrap { padding-top: 1.75rem; }
+    .wrap { padding-top: calc(1.75rem + env(safe-area-inset-top)); }
     h1 { font-size: 32px; }
     .targets { grid-template-columns: 1fr 1fr; }
     .train-grid { grid-template-columns: 1fr; }
@@ -388,6 +430,12 @@
 </style>
 </head>
 <body>
+
+<!-- BARRA COMPACTA DE MACROS — aparece ao rolar a aba Dieta -->
+<div class="macro-mini" id="macroMini" aria-hidden="true">
+  <div class="macro-mini-inner" id="macroMiniInner"></div>
+</div>
+
 <div class="wrap">
 
   <header>
@@ -431,7 +479,7 @@
       cabem no que ainda falta da sua dieta hoje.
     </p>
 
-    <input type="file" id="menuFile" accept="image/*" capture="environment" hidden />
+    <input type="file" id="menuFile" accept="image/*" hidden />
     <div class="photo-drop" id="photoDrop">
       <span class="material-symbols-outlined" style="font-size:38px;color:var(--outline);">photo_camera</span>
       <div style="font-weight:600;margin-top:6px;">Tirar ou escolher foto</div>
@@ -454,13 +502,6 @@
       aproximações para orientar a escolha, não medições exatas.
     </p>
   </section>
-
-  <div class="foot">
-    A IA estima os macros a partir das suas descrições — são aproximações, não medições exatas.
-    O motor de ciclo de calorias usa estimativas de gasto energético que variam por pessoa,
-    intensidade e metabolismo. Este app é uma ferramenta de apoio e não substitui orientação
-    de nutricionista ou educador físico.
-  </div>
 
 </div>
 
@@ -728,6 +769,20 @@ function renderTargets() {
     : tg.wk === 0
       ? ""
       : "Dia de treino — mais energia liberada, foco no carboidrato.";
+
+  /* barra compacta (sticky) — mesmos dados, formato condensado */
+  const miniLabels = { Calorias: "kcal", Proteína: "P", Carbo: "C", Gordura: "G" };
+  document.getElementById("macroMiniInner").innerHTML = cards.map(c => {
+    const pct = c.goal > 0 ? Math.min(100, Math.max(0, (c.val / c.goal) * 100)) : 0;
+    const over = (c.goal - c.val) < 0;
+    return `<div class="mini-stat">
+      <div class="ms-top">
+        <span class="ms-label">${miniLabels[c.label]}</span>
+        <span class="ms-val ${over ? "over" : ""}">${r(c.val)}/${c.goal}</span>
+      </div>
+      <div class="mini-track"><i class="${over ? "over" : ""}" style="width:${pct}%"></i></div>
+    </div>`;
+  }).join("");
 
   renderMacroEditor();
 }
@@ -1002,7 +1057,10 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 });
 
 /* ====== NAVEGAÇÃO POR ABAS ====== */
+let currentTab = "food";
+
 function switchTab(tab) {
+  currentTab = tab;
   const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train" };
   Object.keys(panels).forEach(key => {
     document.getElementById(panels[key]).hidden = (key !== tab);
@@ -1011,10 +1069,19 @@ function switchTab(tab) {
     btn.classList.toggle("active", btn.dataset.tab === tab);
   });
   window.scrollTo(0, 0);
+  updateMacroMini();
 }
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
+
+/* Mostra a barra compacta de macros só na aba Dieta, depois de rolar um pouco. */
+function updateMacroMini() {
+  const mini = document.getElementById("macroMini");
+  const show = (currentTab === "food") && (window.scrollY > 220);
+  mini.classList.toggle("show", show);
+}
+window.addEventListener("scroll", updateMacroMini, { passive: true });
 
 /* ====== ABA CARDÁPIO: FOTO ====== */
 let menuImage = null;   /* { mimeType, data }  — data em base64 sem prefixo */

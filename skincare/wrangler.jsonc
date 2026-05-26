@@ -4,6 +4,12 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-05-25",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "betofabri.com/summer/skincare/*",
+      "zone_name": "betofabri.com"
+    }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

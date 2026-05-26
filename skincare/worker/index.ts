@@ -163,6 +163,12 @@ export default {
           "Gemini está sobrecarregado agora. Tenta de novo em alguns segundos.",
         );
       }
+      if (message === "AI_PARSE_ERROR") {
+        return err(
+          502,
+          "A IA respondeu em formato inválido. Tenta de novo.",
+        );
+      }
       return err(500, message);
     }
   },

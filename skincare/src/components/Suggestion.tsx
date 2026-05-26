@@ -54,9 +54,10 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
     <div className="space-y-6">
       <section
         aria-label="Sugestão da noite"
-        className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
+        className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
       >
-        <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
+        <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.16em] font-bold">
+          <span className="w-1 h-1 rounded-full bg-[--color-primary]" />
           Sugestão para esta noite
         </div>
 
@@ -74,14 +75,14 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
                   aria-pressed={isSelected}
                   onClick={() => toggle(p.id)}
                   disabled={applied}
-                  className={`press w-full text-left rounded-[--radius-md] border min-h-14 px-4 py-3 flex items-center gap-4 ${
+                  className={`press w-full text-left rounded-[--radius-md] border-2 min-h-[64px] px-4 py-3 flex items-center gap-4 ${
                     isSelected
-                      ? "bg-[--color-primary-soft] border-[--color-primary]"
-                      : "bg-[--color-surface-2] border-[--color-border] opacity-60"
+                      ? "bg-[--color-surface] border-[--color-primary] shadow-lift"
+                      : "bg-[--color-surface-2] border-[--color-border] opacity-50"
                   }`}
                 >
                   <span
-                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
                       isSelected
                         ? "bg-[--color-primary] text-white"
                         : "bg-[--color-border] text-[--color-text-3]"
@@ -114,7 +115,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
         type="button"
         onClick={handleApply}
         disabled={selected.size === 0 || applying || applied}
-        className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
+        className="press shadow-elevated w-full min-h-[56px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-bold tracking-tight disabled:opacity-40 disabled:shadow-none"
       >
         {applied ? "Aplicado" : applying ? "Salvando…" : "Marcar como aplicado"}
       </button>

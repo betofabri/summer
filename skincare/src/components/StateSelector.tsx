@@ -8,11 +8,31 @@ interface Props {
 }
 
 const SELECTED_FILL: Record<string, string> = {
-  good: "bg-[--color-success] border-[--color-success] text-white",
-  warn: "bg-[--color-warning] border-[--color-warning] text-white",
-  bad: "bg-[--color-danger] border-[--color-danger] text-white",
-  default: "bg-[--color-primary] border-[--color-primary] text-white",
+  good: "bg-[--color-success] border-[--color-success] text-white shadow-elevated",
+  warn: "bg-[--color-warning] border-[--color-warning] text-white shadow-elevated",
+  bad: "bg-[--color-danger] border-[--color-danger] text-white shadow-elevated",
+  default:
+    "bg-[--color-primary] border-[--color-primary] text-white shadow-elevated",
 };
+
+function CheckIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 8.5l3.5 3.5L13 4.5" />
+    </svg>
+  );
+}
 
 export function StateSelector({
   value,
@@ -21,8 +41,8 @@ export function StateSelector({
   onPostShaveChange,
 }: Props) {
   return (
-    <fieldset className="space-y-6 border-0 p-0 m-0">
-      <legend className="block text-xs font-semibold text-[--color-text-2] uppercase tracking-[0.08em] mb-4">
+    <fieldset className="space-y-5 border-0 p-0 m-0">
+      <legend className="text-xs font-bold text-[--color-text-2] uppercase tracking-[0.08em] mb-1">
         Como está sua pele hoje
       </legend>
 
@@ -41,13 +61,16 @@ export function StateSelector({
               role="radio"
               aria-checked={active}
               onClick={() => onChange(s.id)}
-              className={`press min-h-12 px-4 rounded-[--radius-md] border-2 text-sm font-semibold text-center shadow-sm ${
+              className={`press relative min-h-[60px] px-4 py-3 rounded-[--radius-md] border-2 text-base font-semibold ${
                 active
-                  ? `${fill} shadow-md`
-                  : "bg-[--color-surface] border-[--color-border] text-[--color-text]"
+                  ? fill
+                  : "bg-[--color-surface] border-[--color-border] text-[--color-text] shadow-card"
               }`}
             >
-              {s.label}
+              {active ? (
+                <CheckIcon className="absolute left-3 top-1/2 -translate-y-1/2" />
+              ) : null}
+              <span className={active ? "pl-5" : ""}>{s.label}</span>
             </button>
           );
         })}
@@ -58,21 +81,21 @@ export function StateSelector({
         role="switch"
         aria-checked={postShave}
         onClick={() => onPostShaveChange(!postShave)}
-        className={`press w-full min-h-12 px-4 rounded-[--radius-md] border-2 flex items-center justify-between gap-3 ${
+        className={`press w-full min-h-[60px] px-5 rounded-[--radius-md] border-2 flex items-center justify-between gap-3 ${
           postShave
-            ? "bg-[--color-warning] border-[--color-warning] text-white shadow-md"
-            : "bg-[--color-surface] border-[--color-border] text-[--color-text]"
+            ? "bg-[--color-warning] border-[--color-warning] text-white shadow-elevated"
+            : "bg-[--color-surface] border-[--color-border] text-[--color-text] shadow-card"
         }`}
       >
-        <span className="text-sm font-semibold">Fiz a barba hoje</span>
+        <span className="text-base font-semibold">Fiz a barba hoje</span>
         <span
-          className={`relative w-11 h-6 rounded-full transition-colors ${
-            postShave ? "bg-white/30" : "bg-[--color-border-strong]"
+          className={`relative w-12 h-7 rounded-full transition-colors ${
+            postShave ? "bg-white/25" : "bg-[--color-border-strong]"
           }`}
           aria-hidden="true"
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
+            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all ${
               postShave ? "left-[22px]" : "left-0.5"
             }`}
           />

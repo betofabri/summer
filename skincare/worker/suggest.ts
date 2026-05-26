@@ -179,7 +179,8 @@ export async function suggest(
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 512,
+      maxOutputTokens: 2048,
+      thinkingConfig: { thinkingBudget: 0 },
       responseMimeType: "application/json",
       responseSchema: {
         type: "OBJECT",
@@ -198,19 +199,40 @@ export async function suggest(
   };
 
   const data = await callGeminiWithRetry(url, body);
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const candidate = data.candidates?.[0];
+  const finishReason = candidate?.finishReason;
+  const text = candidate?.content?.parts?.[0]?.text;
+
   if (!text) {
-    throw new Error("Empty response from Gemini");
+    console.error("Empty Gemini text", { finishReason, candidate });
+    throw new Error("AI_PARSE_ERROR");
   }
 
-  return JSON.parse(text) as SuggestResponse;
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+  }
+
+  try {
+    return JSON.parse(cleaned) as SuggestResponse;
+  } catch (parseErr) {
+    console.error("Gemini JSON parse failed", {
+      finishReason,
+      raw: cleaned.slice(0, 400),
+      error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+    });
+    throw new Error("AI_PARSE_ERROR");
+  }
 }
 
 const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_ATTEMPTS = 4;
 
 interface GeminiResponse {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> };
+    finishReason?: string;
+  }>;
 }
 
 async function callGeminiWithRetry(

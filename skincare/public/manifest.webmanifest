@@ -4,7 +4,7 @@
   "start_url": "/summer/skincare/",
   "scope": "/summer/skincare/",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#ffffff",
+  "background_color": "#f5f6f8",
+  "theme_color": "#f5f6f8",
   "orientation": "portrait"
 }

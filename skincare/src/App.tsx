@@ -104,24 +104,25 @@ export default function App() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-6 pt-10 pb-16">
-      <header className="flex items-start justify-between mb-10">
-        <div className="space-y-1">
-          <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
+    <div className="max-w-md mx-auto px-6 pt-12 pb-16">
+      <header className="flex items-start justify-between mb-12">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 text-[--color-text-3] text-[11px] uppercase tracking-[0.16em] font-bold">
+            <span className="w-1 h-1 rounded-full bg-[--color-primary]" />
             Boa noite
           </div>
-          <h1 className="font-display text-[30px] leading-[1.15] font-semibold text-[--color-text]">
+          <h1 className="font-display text-[36px] leading-[1.1] font-bold text-[--color-text]">
             {formatDate(boot.today_date)}
           </h1>
         </div>
         <button
           onClick={() => setShowHistory(true)}
-          className="press min-w-11 min-h-11 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
+          className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
           aria-label="Histórico"
         >
           <svg
-            width="18"
-            height="18"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -191,14 +192,28 @@ export default function App() {
             <button
               onClick={handleSuggest}
               disabled={!state}
-              className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
+              className="press shadow-elevated w-full min-h-[56px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-bold tracking-tight disabled:opacity-40 disabled:shadow-none"
             >
               Sugerir tratamento
             </button>
           </>
         ) : phase === "suggesting" ? (
-          <div className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-16 text-center">
-            <div className="text-[--color-text-2] text-base">
+          <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-16 flex flex-col items-center gap-4">
+            <div className="flex gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full bg-[--color-primary] animate-pulse"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-[--color-primary] animate-pulse"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-[--color-primary] animate-pulse"
+                style={{ animationDelay: "300ms" }}
+              />
+            </div>
+            <div className="text-[--color-text-2] text-base font-medium">
               Pensando na melhor rotina…
             </div>
           </div>
@@ -210,15 +225,30 @@ export default function App() {
           />
         ) : phase === "done" ? (
           <div className="space-y-6">
-            <div className="bg-[--color-success-soft] border border-[--color-success]/30 rounded-[--radius-lg] px-6 py-10 text-center space-y-2">
-              <div className="text-[--color-success] text-base font-semibold">
+            <div className="shadow-card bg-[--color-success-soft] border-2 border-[--color-success]/30 rounded-[--radius-lg] px-6 py-12 text-center space-y-3">
+              <div className="inline-flex w-12 h-12 items-center justify-center rounded-full bg-[--color-success] text-white shadow-elevated">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 8.5l3.5 3.5L13 4.5" />
+                </svg>
+              </div>
+              <div className="font-display text-xl font-bold text-[--color-success]">
                 Rotina registrada
               </div>
               <div className="text-[--color-text-2] text-sm">Até amanhã.</div>
             </div>
             <button
               onClick={handleReset}
-              className="press w-full min-h-11 text-[--color-text-2] text-sm font-medium"
+              className="press w-full min-h-11 text-[--color-text-2] text-sm font-semibold"
             >
               Editar
             </button>

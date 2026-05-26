@@ -29,7 +29,7 @@ export function YesterdayCard({ yesterday, routine, products }: Props) {
     return (
       <section
         aria-label="Estado de ontem"
-        className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6"
+        className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6"
       >
         <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold mb-2">
           Ontem
@@ -50,7 +50,7 @@ export function YesterdayCard({ yesterday, routine, products }: Props) {
   return (
     <section
       aria-label="Estado de ontem"
-      className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
+      className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
     >
       <div className="flex items-baseline justify-between">
         <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">

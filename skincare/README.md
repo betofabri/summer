@@ -68,6 +68,19 @@ npm run deploy
 
 Vai ficar em `https://skincare.<seu-subdomain>.workers.dev`. Abre no iPhone → Compartilhar → Adicionar à Tela de Início pra virar PWA.
 
+### 5. (Opcional) Servir em `betofabri.com/summer/skincare/*`
+
+No painel Cloudflare → Workers & Pages → `skincare` worker → **Settings → Triggers → Routes** → Add Route:
+
+```
+Route:  betofabri.com/summer/skincare/*
+Zone:   betofabri.com
+```
+
+Como esta rota é mais específica que `betofabri.com/summer/*` (o app de dieta), o Cloudflare resolve ela primeiro — o app de dieta continua intacto.
+
+⚠️ O worker do skincare hoje espera os paths sem prefixo (`/api/bootstrap`, `/`). Se você mapear pra `betofabri.com/summer/skincare/*`, o path que chega no worker vai ser `/summer/skincare/api/bootstrap`. Pra funcionar, ou (a) configura **Transform Rules** removendo o prefixo, ou (b) ajusta o worker pra reconhecer o prefixo. Avisa que eu adapto.
+
 ## Desenvolvimento local
 
 ```bash

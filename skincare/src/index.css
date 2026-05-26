@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #07070a;
+  --color-surface: #101015;
+  --color-surface-2: #16161d;
+  --color-border: #23232c;
+  --color-border-strong: #2e2e38;
+  --color-text: #f4f4f6;
+  --color-muted: #8a8a93;
+  --color-dim: #5a5a64;
+  --color-accent: #c9a875;
+  --color-accent-dim: #6b5a40;
+  --color-good: #6ec890;
+  --color-warn: #e8a466;
+  --color-bad: #e26a6a;
+
+  --font-sans: "Inter", "SF Pro Text", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter", "SF Pro Display", system-ui, sans-serif;
+}
+
+@layer base {
+  html, body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01", "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .ring-soft {
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+
+  .ring-strong {
+    box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  }
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://rsms.me/inter/font-files/InterVariable.woff2") format("woff2");
+}

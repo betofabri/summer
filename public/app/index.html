@@ -524,6 +524,14 @@
 <script>
 "use strict";
 
+/* Base do app detectada em runtime: serve para o app funcionar tanto em
+   /app/... quanto em /summer/app/... sem precisar de recompilar. */
+const APP_BASE = (() => {
+  const m = location.pathname.match(/^(.*\/app)(\/|$)/);
+  return m ? m[1] + "/" : "/app/";
+})();
+const API_CHAT_URL = APP_BASE + "api/chat";
+
 /* ====== CONFIG: PERFIL E ESTRATÉGIA ====== */
 const PROFILE = { age: 43, sex: "male", height: 163, weight: 72 };
 
@@ -628,7 +636,7 @@ async function callClaude(input, maxTokens) {
     userMessage = { role: "user", content: input.text || "" };
     if (input.image) userMessage.image = input.image;
   }
-  const res = await fetch("/app/api/chat", {
+  const res = await fetch(API_CHAT_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

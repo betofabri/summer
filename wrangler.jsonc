@@ -7,9 +7,12 @@
     "enabled": true
   },
   "main": "src/index.js",
+  "routes": [
+    { "pattern": "betofabri.com/summer/*", "zone_name": "betofabri.com" }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/app/api/*"]
+    "run_worker_first": ["/app/api/*", "/summer/*"]
   }
 }

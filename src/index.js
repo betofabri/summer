@@ -4,13 +4,16 @@
  *  - POST /app/api/chat  -> proxy seguro para a API do Gemini (o app de dieta).
  *  - Qualquer outra rota -> serve os arquivos estáticos (env.ASSETS).
  *
+ * O app é servido em dois lugares:
+ *   - summer.roberto-fabri.workers.dev/app/...   (workers.dev original)
+ *   - betofabri.com/summer/app/...               (route no domínio próprio)
+ *
+ * Quando o request chega pelo segundo, o pathname começa com /summer/.
+ * Aqui retiramos esse prefixo antes de qualquer outro processamento, de modo
+ * que o resto da lógica (e os assets) só precisa conhecer o path "/app/...".
+ *
  * A chave de API NUNCA aparece aqui. É lida de env.GEMINI_API_KEY,
  * um Secret configurado no painel do Cloudflare.
- *
- * O app (index.html) continua chamando /app/api/chat e enviando mensagens no
- * formato { messages: [{role, content}] }. Este Worker traduz esse formato
- * para o formato do Gemini e traduz a resposta de volta, de modo que o app
- * não precisa saber qual IA está por trás.
  */
 
 const GEMINI_MODEL = "gemini-2.5-flash";
@@ -18,6 +21,16 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/summer" || url.pathname === "/summer/") {
+      url.pathname = "/summer/app/";
+      return Response.redirect(url.toString(), 302);
+    }
+
+    if (url.pathname.startsWith("/summer/")) {
+      url.pathname = url.pathname.slice("/summer".length);
+      request = new Request(url, request);
+    }
 
     if (url.pathname === "/app/api/chat") {
       if (request.method !== "POST") {

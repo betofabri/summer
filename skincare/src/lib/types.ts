@@ -1,10 +1,4 @@
-export type SkinState =
-  | "calma"
-  | "oleosa"
-  | "irritada"
-  | "acne_ativa"
-  | "vermelhidao"
-  | "ressecada";
+export type SkinState = "normal" | "oleosa" | "irritada" | "acne_ativa";
 
 export type Category =
   | "tratamento_acne"
@@ -62,12 +56,10 @@ export interface HistoryEntry {
 }
 
 export const SKIN_STATES: Array<{ id: SkinState; label: string; tone: string }> = [
-  { id: "calma", label: "Calma", tone: "good" },
+  { id: "normal", label: "Normal", tone: "good" },
   { id: "oleosa", label: "Oleosa", tone: "default" },
-  { id: "acne_ativa", label: "Acne ativa", tone: "warn" },
-  { id: "vermelhidao", label: "Vermelhidão", tone: "warn" },
   { id: "irritada", label: "Irritada", tone: "bad" },
-  { id: "ressecada", label: "Ressecada", tone: "default" },
+  { id: "acne_ativa", label: "Com Acne", tone: "warn" },
 ];
 
 export const CATEGORY_LABELS: Record<Category, string> = {

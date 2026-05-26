@@ -55,12 +55,10 @@ async function authorized(
 }
 
 const VALID_STATES: SkinState[] = [
-  "calma",
+  "normal",
   "oleosa",
   "irritada",
   "acne_ativa",
-  "vermelhidao",
-  "ressecada",
 ];
 
 const PREFIX = "/summer/skincare";

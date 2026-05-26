@@ -1,10 +1,4 @@
-export type SkinState =
-  | "calma"
-  | "oleosa"
-  | "irritada"
-  | "acne_ativa"
-  | "vermelhidao"
-  | "ressecada";
+export type SkinState = "normal" | "oleosa" | "irritada" | "acne_ativa";
 
 export type Category =
   | "tratamento_acne"

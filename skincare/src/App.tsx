@@ -193,7 +193,7 @@ export default function App() {
               disabled={!state}
               className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
             >
-              Sugerir rotina
+              Sugerir tratamento
             </button>
           </>
         ) : phase === "suggesting" ? (

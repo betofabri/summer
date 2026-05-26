@@ -8,27 +8,21 @@ interface Props {
 }
 
 const STATE_LABELS: Record<SkinState, string> = {
-  calma: "Calma",
+  normal: "Normal",
   oleosa: "Oleosa",
   irritada: "Irritada",
-  acne_ativa: "Acne ativa",
-  vermelhidao: "Vermelhidão",
-  ressecada: "Ressecada",
+  acne_ativa: "Com Acne",
 };
 
 const STATE_CHIP: Record<SkinState, string> = {
-  calma:
+  normal:
     "bg-[--color-success-soft] text-[--color-success] border border-[--color-success]/30",
   oleosa:
     "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
-  acne_ativa:
-    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
-  vermelhidao:
-    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
   irritada:
     "bg-[--color-danger-soft] text-[--color-danger] border border-[--color-danger]/30",
-  ressecada:
-    "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
+  acne_ativa:
+    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
 };
 
 export function HistoryView({ products, onClose }: Props) {

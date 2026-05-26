@@ -96,17 +96,14 @@ function filterCandidates(
     candidates = candidates.filter((p) => !p.actives.includes("retinol"));
   }
 
-  if (ctx.state === "vermelhidao" || ctx.state === "ressecada") {
-    constraints.push(
-      "Foco em reparo — priorizar hidratação, evitar ativos agressivos",
-    );
-    candidates = candidates.filter(
-      (p) => p.intensity <= 2 && !p.actives.includes("retinol"),
-    );
-  }
-
   if (ctx.state === "acne_ativa") {
     constraints.push("Acne ativa — spot treatment + tratamento focal ok");
+  }
+
+  if (ctx.state === "oleosa") {
+    constraints.push(
+      "Oleosa — priorizar controle de oleosidade (salicílico, niacinamida + zinco)",
+    );
   }
 
   return { candidates, constraints };

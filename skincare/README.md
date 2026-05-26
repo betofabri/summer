@@ -7,7 +7,7 @@ App pessoal de skincare. Você abre à noite, diz como a pele está, e o app sug
 - **Frontend** — React + Vite + TS + Tailwind v4 (PWA)
 - **Backend** — Cloudflare Worker único, serve API + assets
 - **DB** — D1 (SQLite) com 3 tabelas: `products`, `daily_log`, `routine_log`
-- **AI** — Claude Haiku 4.5 escolhe a rotina a partir da lista já filtrada por regras determinísticas
+- **AI** — Gemini 2.5 Flash escolhe a rotina a partir da lista já filtrada por regras determinísticas
 
 ## Como o motor funciona
 
@@ -17,10 +17,10 @@ App pessoal de skincare. Você abre à noite, diz como a pele está, e o app sug
    - Retinol nos últimos 2 dias → remove retinol
    - Pós-barba ou pele irritada → só hidratação/calmantes
    - Vermelhidão/ressecada → só intensidade baixa, sem retinol
-3. Claude recebe a lista filtrada + contexto e devolve uma rotina ordenada de 2-4 produtos
+3. Gemini recebe a lista filtrada + contexto e devolve uma rotina ordenada de 2-4 produtos
 4. Você confirma o que aplicou e o app salva no `routine_log`
 
-Conflitos perigosos nunca chegam no Claude — são bloqueados antes.
+Conflitos perigosos nunca chegam no Gemini — são bloqueados antes.
 
 ## Setup (rodar uma vez)
 
@@ -49,15 +49,15 @@ npm run db:apply:local
 # Você vai precisar dele pra entrar no app no celular.
 npx wrangler secret put ACCESS_TOKEN
 
-# Sua API key da Anthropic (pega em console.anthropic.com)
-npx wrangler secret put ANTHROPIC_API_KEY
+# Sua API key do Gemini (pega em aistudio.google.com/apikey)
+npx wrangler secret put GEMINI_API_KEY
 ```
 
 Pra dev local, cria `.dev.vars`:
 
 ```
 ACCESS_TOKEN=qualquer-string-aleatoria
-ANTHROPIC_API_KEY=sk-ant-...
+GEMINI_API_KEY=AIza...
 ```
 
 ### 4. Deploy
@@ -117,7 +117,7 @@ npx wrangler d1 execute skincare-db --remote --command "INSERT INTO products VAL
 ```
 worker/         API + lógica de sugestão
   index.ts      rotas
-  suggest.ts    filtro de conflitos + chamada Claude
+  suggest.ts    filtro de conflitos + chamada Gemini
   db.ts         queries D1
   types.ts      tipos compartilhados
 src/            React app

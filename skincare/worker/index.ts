@@ -10,7 +10,7 @@ import { suggest } from "./suggest.ts";
 import type { SkinState, SuggestRequest } from "./types.ts";
 
 interface AppEnv extends Env {
-  ANTHROPIC_API_KEY: string;
+  GEMINI_API_KEY: string;
   ACCESS_TOKEN: string;
 }
 
@@ -130,7 +130,7 @@ export default {
         if (!VALID_STATES.includes(body.skin_state)) {
           return err(400, "invalid skin_state");
         }
-        const result = await suggest(env.DB, env.ANTHROPIC_API_KEY, body);
+        const result = await suggest(env.DB, env.GEMINI_API_KEY, body);
         const id = await saveRoutine(
           env.DB,
           todayDate(),

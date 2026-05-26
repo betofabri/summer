@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type {
   Active,
   Product,
@@ -175,39 +174,51 @@ export async function suggest(
     };
   }
 
-  const client = new Anthropic({ apiKey });
   const prompt = buildPrompt(candidates, ctx, constraints, request.notes);
 
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 512,
-    messages: [{ role: "user", content: prompt }],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: {
-          type: "object",
-          properties: {
-            product_ids: {
-              type: "array",
-              items: { type: "string", enum: candidates.map((c) => c.id) },
-              minItems: 1,
-              maxItems: 4,
-            },
-            reasoning: { type: "string" },
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const body = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 512,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          product_ids: {
+            type: "ARRAY",
+            items: { type: "STRING", enum: candidates.map((c) => c.id) },
+            minItems: 1,
+            maxItems: 4,
           },
-          required: ["product_ids", "reasoning"],
-          additionalProperties: false,
+          reasoning: { type: "STRING" },
         },
+        required: ["product_ids", "reasoning"],
       },
     },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Empty response from Claude");
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 200)}`);
   }
 
-  const parsed = JSON.parse(textBlock.text) as SuggestResponse;
+  const data = (await res.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error("Empty response from Gemini");
+  }
+
+  const parsed = JSON.parse(text) as SuggestResponse;
   return parsed;
 }

@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "skincare-db",
-      "database_id": "REPLACE_WITH_DATABASE_ID"
+      "database_id": "a7b39351-4234-4bf8-ad3f-b3d17733eabb"
     }
   ],
   "observability": {

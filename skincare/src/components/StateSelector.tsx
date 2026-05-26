@@ -7,12 +7,11 @@ interface Props {
   onPostShaveChange: (v: boolean) => void;
 }
 
-const SELECTED_TONE: Record<string, string> = {
-  good: "bg-[--color-success-soft] border-[--color-success] text-[--color-success]",
-  warn: "bg-[--color-warning-soft] border-[--color-warning] text-[--color-warning]",
-  bad: "bg-[--color-danger-soft] border-[--color-danger] text-[--color-danger]",
-  default:
-    "bg-[--color-primary-soft] border-[--color-primary] text-[--color-primary]",
+const SELECTED_FILL: Record<string, string> = {
+  good: "bg-[--color-success] border-[--color-success] text-white",
+  warn: "bg-[--color-warning] border-[--color-warning] text-white",
+  bad: "bg-[--color-danger] border-[--color-danger] text-white",
+  default: "bg-[--color-primary] border-[--color-primary] text-white",
 };
 
 export function StateSelector({
@@ -22,7 +21,7 @@ export function StateSelector({
   onPostShaveChange,
 }: Props) {
   return (
-    <fieldset className="space-y-6">
+    <fieldset className="space-y-6 border-0 p-0 m-0">
       <legend className="block text-xs font-semibold text-[--color-text-2] uppercase tracking-[0.08em] mb-4">
         Como está sua pele hoje
       </legend>
@@ -34,7 +33,7 @@ export function StateSelector({
       >
         {SKIN_STATES.map((s) => {
           const active = value === s.id;
-          const tone = SELECTED_TONE[s.tone] ?? SELECTED_TONE.default;
+          const fill = SELECTED_FILL[s.tone] ?? SELECTED_FILL.default;
           return (
             <button
               key={s.id}
@@ -42,10 +41,10 @@ export function StateSelector({
               role="radio"
               aria-checked={active}
               onClick={() => onChange(s.id)}
-              className={`press min-h-12 px-4 rounded-[--radius-md] border text-sm font-semibold text-center ${
+              className={`press min-h-12 px-4 rounded-[--radius-md] border-2 text-sm font-semibold text-center shadow-sm ${
                 active
-                  ? tone
-                  : "bg-[--color-surface] border-[--color-border] text-[--color-text-2]"
+                  ? `${fill} shadow-md`
+                  : "bg-[--color-surface] border-[--color-border] text-[--color-text]"
               }`}
             >
               {s.label}
@@ -59,21 +58,21 @@ export function StateSelector({
         role="switch"
         aria-checked={postShave}
         onClick={() => onPostShaveChange(!postShave)}
-        className={`press w-full min-h-12 px-4 rounded-[--radius-md] border flex items-center justify-between gap-3 ${
+        className={`press w-full min-h-12 px-4 rounded-[--radius-md] border-2 flex items-center justify-between gap-3 ${
           postShave
-            ? "bg-[--color-warning-soft] border-[--color-warning] text-[--color-warning]"
-            : "bg-[--color-surface] border-[--color-border] text-[--color-text-2]"
+            ? "bg-[--color-warning] border-[--color-warning] text-white shadow-md"
+            : "bg-[--color-surface] border-[--color-border] text-[--color-text]"
         }`}
       >
         <span className="text-sm font-semibold">Fiz a barba hoje</span>
         <span
           className={`relative w-11 h-6 rounded-full transition-colors ${
-            postShave ? "bg-[--color-warning]" : "bg-[--color-border-strong]"
+            postShave ? "bg-white/30" : "bg-[--color-border-strong]"
           }`}
           aria-hidden="true"
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
+            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
               postShave ? "left-[22px]" : "left-0.5"
             }`}
           />

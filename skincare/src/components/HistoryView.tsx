@@ -16,13 +16,19 @@ const STATE_LABELS: Record<SkinState, string> = {
   ressecada: "Ressecada",
 };
 
-const STATE_TONES: Record<SkinState, string> = {
-  calma: "text-[--color-good]",
-  oleosa: "text-[--color-text]",
-  acne_ativa: "text-[--color-warn]",
-  vermelhidao: "text-[--color-warn]",
-  irritada: "text-[--color-bad]",
-  ressecada: "text-[--color-muted]",
+const STATE_CHIP: Record<SkinState, string> = {
+  calma:
+    "bg-[--color-success-soft] text-[--color-success] border border-[--color-success]/30",
+  oleosa:
+    "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
+  acne_ativa:
+    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
+  vermelhidao:
+    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
+  irritada:
+    "bg-[--color-danger-soft] text-[--color-danger] border border-[--color-danger]/30",
+  ressecada:
+    "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
 };
 
 export function HistoryView({ products, onClose }: Props) {
@@ -36,72 +42,92 @@ export function HistoryView({ products, onClose }: Props) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-[--color-bg] z-50 overflow-y-auto">
-      <div className="max-w-md mx-auto px-5 pt-6 pb-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-semibold tracking-tight">Histórico</h2>
+    <div
+      role="dialog"
+      aria-label="Histórico"
+      className="fixed inset-0 bg-[--color-bg] z-50 overflow-y-auto"
+    >
+      <div className="max-w-md mx-auto px-6 pt-10 pb-16">
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="font-display text-2xl font-semibold text-[--color-text]">
+            Histórico
+          </h2>
           <button
             onClick={onClose}
-            className="text-[--color-muted] text-[14px] py-1.5 px-3 rounded-full ring-soft active:scale-95 transition"
+            className="press min-h-11 px-5 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-medium"
           >
             Fechar
           </button>
         </div>
 
         {entries === null ? (
-          <div className="text-[--color-dim] text-[14px]">Carregando…</div>
+          <div className="text-[--color-text-3] text-sm">Carregando…</div>
         ) : entries.length === 0 ? (
-          <div className="text-[--color-dim] text-[14px]">
-            Nenhum registro ainda.
+          <div className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-8 text-center">
+            <p className="text-[--color-text-2] text-sm">
+              Nenhum registro ainda.
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <ul className="space-y-4">
             {entries.map((e) => {
               const usedProducts =
                 e.routine?.product_ids
                   .map((id) => productById.get(id))
                   .filter((p): p is Product => Boolean(p)) ?? [];
               return (
-                <div
+                <li
                   key={e.daily.date}
-                  className="rounded-2xl bg-[--color-surface] ring-soft px-4 py-4 space-y-3"
+                  className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-5 space-y-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] tabular-nums text-[--color-dim]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-[--color-text-3] font-medium">
                       {e.daily.date.slice(8, 10)}/{e.daily.date.slice(5, 7)}
                     </span>
-                    <span
-                      className={`text-[13px] font-medium ${STATE_TONES[e.daily.skin_state]}`}
-                    >
-                      {STATE_LABELS[e.daily.skin_state]}
-                      {e.daily.post_shave ? " · pós-barba" : ""}
-                    </span>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATE_CHIP[e.daily.skin_state]}`}
+                      >
+                        {STATE_LABELS[e.daily.skin_state]}
+                      </span>
+                      {e.daily.post_shave ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30">
+                          Pós-barba
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
+
                   {usedProducts.length > 0 ? (
-                    <div className="space-y-1">
+                    <ul className="space-y-1.5">
                       {usedProducts.map((p) => (
-                        <div
+                        <li
                           key={p.id}
-                          className="text-[13px] text-[--color-muted]"
+                          className="text-sm text-[--color-text-2] flex items-center gap-3"
                         >
-                          {p.name}
-                        </div>
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-[--color-primary]"
+                            aria-hidden="true"
+                          />
+                          <span>{p.name}</span>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   ) : (
-                    <div className="text-[12px] text-[--color-dim]">
-                      Sem rotina aplicada
-                    </div>
+                    <p className="text-sm text-[--color-text-3]">
+                      Sem rotina aplicada.
+                    </p>
                   )}
+
                   {e.routine?.reasoning ? (
-                    <div className="text-[12px] text-[--color-dim] italic pt-1 border-t border-[--color-border]">
+                    <p className="text-xs text-[--color-text-3] italic pt-3 border-t border-[--color-border]">
                       {e.routine.reasoning}
-                    </div>
+                    </p>
                   ) : null}
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </div>
     </div>

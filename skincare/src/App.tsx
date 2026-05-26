@@ -85,38 +85,38 @@ export default function App() {
 
   if (!boot) {
     return (
-      <div className="min-h-dvh flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center px-6">
         {bootError ? (
-          <div className="text-center space-y-3 px-6">
-            <div className="text-[--color-bad] text-[14px]">{bootError}</div>
+          <div className="text-center space-y-4 max-w-sm">
+            <div className="text-[--color-danger] text-base">{bootError}</div>
             <button
               onClick={load}
-              className="text-[--color-muted] text-[13px] underline"
+              className="press min-h-11 px-6 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] text-[--color-text] text-sm font-medium border border-[--color-border]"
             >
               Tentar novamente
             </button>
           </div>
         ) : (
-          <div className="text-[--color-dim] text-[13px]">Carregando…</div>
+          <div className="text-[--color-text-3] text-sm">Carregando…</div>
         )}
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto px-5 pt-8 pb-12">
-      <header className="flex items-center justify-between mb-8">
-        <div>
-          <div className="text-[--color-dim] text-[11px] uppercase tracking-[0.18em]">
+    <div className="max-w-md mx-auto px-6 pt-10 pb-16">
+      <header className="flex items-start justify-between mb-10">
+        <div className="space-y-1">
+          <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
             Boa noite
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight mt-0.5">
+          <h1 className="font-display text-[30px] leading-[1.15] font-semibold text-[--color-text]">
             {formatDate(boot.today_date)}
           </h1>
         </div>
         <button
           onClick={() => setShowHistory(true)}
-          className="w-10 h-10 rounded-full bg-[--color-surface] ring-soft flex items-center justify-center active:scale-95 transition"
+          className="press min-w-11 min-h-11 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
           aria-label="Histórico"
         >
           <svg
@@ -125,11 +125,11 @@ export default function App() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
-            className="text-[--color-muted]"
+            strokeWidth="1.75"
+            aria-hidden="true"
           >
             <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 2" strokeLinecap="round" />
+            <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </header>
@@ -140,7 +140,7 @@ export default function App() {
         products={boot.products}
       />
 
-      <div className="mt-7 space-y-7">
+      <div className="mt-10 space-y-8">
         {phase === "input" ? (
           <>
             <StateSelector
@@ -151,44 +151,54 @@ export default function App() {
             />
 
             <details className="group">
-              <summary className="text-[--color-dim] text-[12px] cursor-pointer list-none flex items-center gap-1.5 select-none">
+              <summary className="text-[--color-text-3] text-sm font-medium cursor-pointer list-none inline-flex items-center gap-2 select-none">
                 <span>Nota opcional</span>
                 <svg
-                  width="10"
-                  height="10"
+                  width="12"
+                  height="12"
                   viewBox="0 0 12 12"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="group-open:rotate-180 transition"
+                  strokeWidth="1.75"
+                  className="group-open:rotate-180 transition-transform"
+                  aria-hidden="true"
                 >
-                  <path d="M3 5l3 3 3-3" strokeLinecap="round" />
+                  <path
+                    d="M3 5l3 3 3-3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </summary>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Algo específico hoje?"
-                rows={2}
-                className="mt-2 w-full bg-[--color-surface] ring-soft rounded-2xl px-4 py-3 text-[14px] text-[--color-text] placeholder:text-[--color-dim] focus:outline-none focus:ring-1 focus:ring-[--color-accent] transition resize-none"
+                rows={3}
+                className="press mt-3 w-full bg-[--color-surface] border border-[--color-border] rounded-[--radius-md] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
               />
             </details>
 
             {error ? (
-              <div className="text-[--color-bad] text-[13px]">{error}</div>
+              <div
+                role="alert"
+                className="bg-[--color-danger-soft] border border-[--color-danger]/30 rounded-[--radius-md] px-4 py-3 text-sm text-[--color-danger]"
+              >
+                {error}
+              </div>
             ) : null}
 
             <button
               onClick={handleSuggest}
               disabled={!state}
-              className="w-full bg-[--color-accent] text-[--color-bg] font-medium rounded-2xl py-3.5 active:scale-[0.98] transition disabled:opacity-30 disabled:active:scale-100"
+              className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
             >
               Sugerir rotina
             </button>
           </>
         ) : phase === "suggesting" ? (
-          <div className="rounded-3xl bg-[--color-surface] ring-soft px-5 py-12 text-center">
-            <div className="text-[--color-muted] text-[14px]">
+          <div className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-16 text-center">
+            <div className="text-[--color-text-2] text-base">
               Pensando na melhor rotina…
             </div>
           </div>
@@ -199,18 +209,16 @@ export default function App() {
             onApplied={handleApplied}
           />
         ) : phase === "done" ? (
-          <div className="space-y-5">
-            <div className="rounded-3xl bg-[--color-surface] ring-soft px-5 py-8 text-center space-y-2">
-              <div className="text-[--color-accent] text-[15px] font-medium">
+          <div className="space-y-6">
+            <div className="bg-[--color-success-soft] border border-[--color-success]/30 rounded-[--radius-lg] px-6 py-10 text-center space-y-2">
+              <div className="text-[--color-success] text-base font-semibold">
                 Rotina registrada
               </div>
-              <div className="text-[--color-dim] text-[13px]">
-                Até amanhã.
-              </div>
+              <div className="text-[--color-text-2] text-sm">Até amanhã.</div>
             </div>
             <button
               onClick={handleReset}
-              className="w-full text-[--color-muted] text-[14px] py-2 active:opacity-50 transition"
+              className="press w-full min-h-11 text-[--color-text-2] text-sm font-medium"
             >
               Editar
             </button>
@@ -231,10 +239,8 @@ export default function App() {
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);
-  return date
-    .toLocaleDateString("pt-BR", {
-      day: "numeric",
-      month: "long",
-    })
-    .toLowerCase();
+  return date.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+  });
 }

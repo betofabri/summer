@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { CATEGORY_LABELS, type Product, type SuggestResponse } from "../lib/types.ts";
+import {
+  CATEGORY_LABELS,
+  type Product,
+  type SuggestResponse,
+} from "../lib/types.ts";
 import { applyRoutine } from "../lib/api.ts";
 
 interface Props {
@@ -47,59 +51,70 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-3xl bg-[--color-surface] ring-soft px-5 py-5 space-y-4">
-        <div className="text-[--color-dim] text-[11px] uppercase tracking-[0.18em]">
+    <div className="space-y-6">
+      <section
+        aria-label="Sugestão da noite"
+        className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
+      >
+        <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
           Sugestão para esta noite
         </div>
 
-        <p className="text-[15px] leading-relaxed text-[--color-muted]">
+        <p className="text-base leading-relaxed text-[--color-text-2]">
           {suggestion.reasoning}
         </p>
 
-        <div className="space-y-2 pt-1">
+        <ul className="space-y-3" aria-label="Produtos sugeridos">
           {orderedSuggestion.map((p, i) => {
             const isSelected = selected.has(p.id);
             return (
-              <button
-                key={p.id}
-                onClick={() => toggle(p.id)}
-                disabled={applied}
-                className={`w-full text-left rounded-2xl px-4 py-3.5 flex items-center gap-3 transition active:scale-[0.99] ${
-                  isSelected
-                    ? "bg-[--color-surface-2] ring-1 ring-[--color-accent]/50"
-                    : "bg-[--color-surface-2]/40 ring-1 ring-[--color-border] opacity-50"
-                }`}
-              >
-                <span
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold tabular-nums ${
+              <li key={p.id}>
+                <button
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => toggle(p.id)}
+                  disabled={applied}
+                  className={`press w-full text-left rounded-[--radius-md] border min-h-14 px-4 py-3 flex items-center gap-4 ${
                     isSelected
-                      ? "bg-[--color-accent] text-[--color-bg]"
-                      : "bg-[--color-border] text-[--color-dim]"
+                      ? "bg-[--color-primary-soft] border-[--color-primary]"
+                      : "bg-[--color-surface-2] border-[--color-border] opacity-60"
                   }`}
                 >
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[14px] font-medium text-[--color-text] truncate">
-                    {p.name}
+                  <span
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      isSelected
+                        ? "bg-[--color-primary] text-white"
+                        : "bg-[--color-border] text-[--color-text-3]"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-semibold text-[--color-text] truncate">
+                      {p.name}
+                    </div>
+                    <div className="text-xs text-[--color-text-3] mt-0.5 flex items-center gap-2">
+                      <span>{p.brand}</span>
+                      <span
+                        className="w-0.5 h-0.5 rounded-full bg-[--color-text-muted]"
+                        aria-hidden="true"
+                      />
+                      <span>{CATEGORY_LABELS[p.category]}</span>
+                    </div>
                   </div>
-                  <div className="text-[12px] text-[--color-dim] flex items-center gap-2">
-                    <span>{p.brand}</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-[--color-dim]" />
-                    <span>{CATEGORY_LABELS[p.category]}</span>
-                  </div>
-                </div>
-              </button>
+                </button>
+              </li>
             );
           })}
-        </div>
-      </div>
+        </ul>
+      </section>
 
       <button
+        type="button"
         onClick={handleApply}
         disabled={selected.size === 0 || applying || applied}
-        className="w-full bg-[--color-accent] text-[--color-bg] font-medium rounded-2xl py-3.5 active:scale-[0.98] transition disabled:opacity-40 disabled:active:scale-100"
+        className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
       >
         {applied ? "Aplicado" : applying ? "Salvando…" : "Marcar como aplicado"}
       </button>

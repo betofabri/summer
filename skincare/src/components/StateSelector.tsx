@@ -7,27 +7,12 @@ interface Props {
   onPostShaveChange: (v: boolean) => void;
 }
 
-const TONES: Record<string, { bg: string; text: string; ring: string }> = {
-  good: {
-    bg: "bg-[--color-good]/10",
-    text: "text-[--color-good]",
-    ring: "ring-[--color-good]/40",
-  },
-  warn: {
-    bg: "bg-[--color-warn]/10",
-    text: "text-[--color-warn]",
-    ring: "ring-[--color-warn]/40",
-  },
-  bad: {
-    bg: "bg-[--color-bad]/10",
-    text: "text-[--color-bad]",
-    ring: "ring-[--color-bad]/40",
-  },
-  default: {
-    bg: "bg-[--color-surface-2]",
-    text: "text-[--color-text]",
-    ring: "ring-[--color-border-strong]",
-  },
+const SELECTED_TONE: Record<string, string> = {
+  good: "bg-[--color-success-soft] border-[--color-success] text-[--color-success]",
+  warn: "bg-[--color-warning-soft] border-[--color-warning] text-[--color-warning]",
+  bad: "bg-[--color-danger-soft] border-[--color-danger] text-[--color-danger]",
+  default:
+    "bg-[--color-primary-soft] border-[--color-primary] text-[--color-primary]",
 };
 
 export function StateSelector({
@@ -37,55 +22,63 @@ export function StateSelector({
   onPostShaveChange,
 }: Props) {
   return (
-    <div className="space-y-5">
-      <div>
-        <div className="text-[--color-dim] text-[11px] uppercase tracking-[0.18em] mb-3">
-          Como está sua pele hoje
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {SKIN_STATES.map((s) => {
-            const active = value === s.id;
-            const tone = TONES[s.tone] ?? TONES.default;
-            return (
-              <button
-                key={s.id}
-                onClick={() => onChange(s.id)}
-                className={`rounded-2xl py-3.5 text-[15px] font-medium transition active:scale-[0.98] ${
-                  active
-                    ? `${tone.bg} ${tone.text} ring-1 ${tone.ring}`
-                    : "bg-[--color-surface] text-[--color-muted] ring-soft hover:text-[--color-text]"
-                }`}
-              >
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
+    <fieldset className="space-y-6">
+      <legend className="block text-xs font-semibold text-[--color-text-2] uppercase tracking-[0.08em] mb-4">
+        Como está sua pele hoje
+      </legend>
+
+      <div
+        role="radiogroup"
+        aria-label="Estado da pele"
+        className="grid grid-cols-2 gap-3"
+      >
+        {SKIN_STATES.map((s) => {
+          const active = value === s.id;
+          const tone = SELECTED_TONE[s.tone] ?? SELECTED_TONE.default;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(s.id)}
+              className={`press min-h-12 px-4 rounded-[--radius-md] border text-sm font-semibold text-center ${
+                active
+                  ? tone
+                  : "bg-[--color-surface] border-[--color-border] text-[--color-text-2]"
+              }`}
+            >
+              {s.label}
+            </button>
+          );
+        })}
       </div>
 
       <button
+        type="button"
+        role="switch"
+        aria-checked={postShave}
         onClick={() => onPostShaveChange(!postShave)}
-        className={`w-full rounded-2xl py-3 px-4 flex items-center justify-between transition active:scale-[0.99] ${
+        className={`press w-full min-h-12 px-4 rounded-[--radius-md] border flex items-center justify-between gap-3 ${
           postShave
-            ? "bg-[--color-warn]/10 ring-1 ring-[--color-warn]/40"
-            : "bg-[--color-surface] ring-soft"
+            ? "bg-[--color-warning-soft] border-[--color-warning] text-[--color-warning]"
+            : "bg-[--color-surface] border-[--color-border] text-[--color-text-2]"
         }`}
       >
-        <span className={`text-[14px] ${postShave ? "text-[--color-warn]" : "text-[--color-muted]"}`}>
-          Fiz a barba hoje
-        </span>
+        <span className="text-sm font-semibold">Fiz a barba hoje</span>
         <span
-          className={`w-10 h-6 rounded-full relative transition ${
-            postShave ? "bg-[--color-warn]" : "bg-[--color-border-strong]"
+          className={`relative w-11 h-6 rounded-full transition-colors ${
+            postShave ? "bg-[--color-warning]" : "bg-[--color-border-strong]"
           }`}
+          aria-hidden="true"
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 rounded-full bg-[--color-bg] transition ${
-              postShave ? "left-[18px]" : "left-0.5"
+            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
+              postShave ? "left-[22px]" : "left-0.5"
             }`}
           />
         </span>
       </button>
-    </div>
+    </fieldset>
   );
 }

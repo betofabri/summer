@@ -19,10 +19,12 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const API_BASE = `${import.meta.env.BASE_URL}api`;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   if (!token) throw new Error("No token");
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -39,7 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function bootstrap(): Promise<BootstrapResponse> {
-  return request("/api/bootstrap");
+  return request("/bootstrap");
 }
 
 export function logDaily(input: {
@@ -47,7 +49,7 @@ export function logDaily(input: {
   post_shave: boolean;
   notes?: string;
 }): Promise<{ ok: true }> {
-  return request("/api/log", {
+  return request("/log", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -58,7 +60,7 @@ export function suggest(input: {
   post_shave: boolean;
   notes?: string;
 }): Promise<SuggestResponse> {
-  return request("/api/suggest", {
+  return request("/suggest", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -68,12 +70,12 @@ export function applyRoutine(
   routine_id: number,
   product_ids: string[],
 ): Promise<{ ok: true }> {
-  return request("/api/apply", {
+  return request("/apply", {
     method: "POST",
     body: JSON.stringify({ routine_id, product_ids }),
   });
 }
 
 export function history(): Promise<{ history: HistoryEntry[] }> {
-  return request("/api/history");
+  return request("/history");
 }

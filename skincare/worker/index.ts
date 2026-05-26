@@ -63,11 +63,25 @@ const VALID_STATES: SkinState[] = [
   "ressecada",
 ];
 
+const PREFIX = "/summer/skincare";
+
+function strip(pathname: string): string {
+  if (pathname === PREFIX) return "/";
+  if (pathname.startsWith(PREFIX + "/")) return pathname.slice(PREFIX.length);
+  return pathname;
+}
+
 export default {
   async fetch(request: Request, env: AppEnv): Promise<Response> {
     const url = new URL(request.url);
+    const path = strip(url.pathname);
 
-    if (!url.pathname.startsWith("/api/")) {
+    if (!path.startsWith("/api/")) {
+      if (path !== url.pathname) {
+        const innerUrl = new URL(request.url);
+        innerUrl.pathname = path;
+        return env.ASSETS.fetch(new Request(innerUrl, request));
+      }
       return env.ASSETS.fetch(request);
     }
 
@@ -76,7 +90,7 @@ export default {
     }
 
     try {
-      if (url.pathname === "/api/bootstrap" && request.method === "GET") {
+      if (path === "/api/bootstrap" && request.method === "GET") {
         const [products, today, yesterday, history] = await Promise.all([
           listProducts(env.DB),
           getDailyLog(env.DB, todayDate()),
@@ -93,7 +107,7 @@ export default {
         });
       }
 
-      if (url.pathname === "/api/log" && request.method === "POST") {
+      if (path === "/api/log" && request.method === "POST") {
         const body = (await request.json()) as {
           skin_state: string;
           post_shave: boolean;
@@ -111,7 +125,7 @@ export default {
         return json({ ok: true });
       }
 
-      if (url.pathname === "/api/suggest" && request.method === "POST") {
+      if (path === "/api/suggest" && request.method === "POST") {
         const body = (await request.json()) as SuggestRequest;
         if (!VALID_STATES.includes(body.skin_state)) {
           return err(400, "invalid skin_state");
@@ -127,7 +141,7 @@ export default {
         return json({ ...result, routine_id: id });
       }
 
-      if (url.pathname === "/api/apply" && request.method === "POST") {
+      if (path === "/api/apply" && request.method === "POST") {
         const body = (await request.json()) as {
           routine_id: number;
           product_ids: string[];
@@ -136,7 +150,7 @@ export default {
         return json({ ok: true });
       }
 
-      if (url.pathname === "/api/history" && request.method === "GET") {
+      if (path === "/api/history" && request.method === "GET") {
         const history = await getHistory(env.DB, 30);
         return json({ history });
       }
@@ -144,7 +158,7 @@ export default {
       return err(404, "not found");
     } catch (e) {
       const message = e instanceof Error ? e.message : "internal error";
-      console.error({ path: url.pathname, error: message });
+      console.error({ path, error: message });
       return err(500, message);
     }
   },

@@ -66,20 +66,25 @@ ANTHROPIC_API_KEY=sk-ant-...
 npm run deploy
 ```
 
-Vai ficar em `https://skincare.<seu-subdomain>.workers.dev`. Abre no iPhone → Compartilhar → Adicionar à Tela de Início pra virar PWA.
+Sai inicialmente em `https://skincare.<seu-subdomain>.workers.dev/summer/skincare/`.
 
-### 5. (Opcional) Servir em `betofabri.com/summer/skincare/*`
+### 5. Roteamento em `betofabri.com/summer/skincare/*`
 
-No painel Cloudflare → Workers & Pages → `skincare` worker → **Settings → Triggers → Routes** → Add Route:
+No painel Cloudflare → Workers & Pages → `skincare` worker → **Settings → Domains & Routes** → Add → Route:
 
 ```
-Route:  betofabri.com/summer/skincare/*
-Zone:   betofabri.com
+Zone:    betofabri.com
+Route:   betofabri.com/summer/skincare/*
 ```
 
-Como esta rota é mais específica que `betofabri.com/summer/*` (o app de dieta), o Cloudflare resolve ela primeiro — o app de dieta continua intacto.
+Pronto. Rotas no Cloudflare resolvem por **especificidade**: `/summer/skincare/*` é mais específico que `/summer/*`, então:
 
-⚠️ O worker do skincare hoje espera os paths sem prefixo (`/api/bootstrap`, `/`). Se você mapear pra `betofabri.com/summer/skincare/*`, o path que chega no worker vai ser `/summer/skincare/api/bootstrap`. Pra funcionar, ou (a) configura **Transform Rules** removendo o prefixo, ou (b) ajusta o worker pra reconhecer o prefixo. Avisa que eu adapto.
+- `betofabri.com/summer/` → worker `summer` (app de dieta, intocado)
+- `betofabri.com/summer/skincare/` → worker `skincare` (este app)
+
+O worker já reconhece o prefixo `/summer/skincare/` internamente, e o frontend foi construído com `base: '/summer/skincare/'` — todos os links de assets e chamadas de API saem prefixados corretamente. Nada a configurar além da rota.
+
+Abre no iPhone → Compartilhar → Adicionar à Tela de Início pra virar PWA.
 
 ## Desenvolvimento local
 

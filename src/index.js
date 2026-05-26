@@ -21,13 +21,17 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const prefixed = url.pathname.startsWith("/summer/") || url.pathname === "/summer";
 
-    if (url.pathname === "/summer" || url.pathname === "/summer/") {
+    /* Atalhos para diretórios "nus" — manda direto pra /summer/app/.
+       Sem isso, /summer ou /summer/app cairiam num redirect do ASSETS
+       que perderia o prefixo /summer no Location. */
+    if (url.pathname === "/summer" || url.pathname === "/summer/" || url.pathname === "/summer/app") {
       url.pathname = "/summer/app/";
       return Response.redirect(url.toString(), 302);
     }
 
-    if (url.pathname.startsWith("/summer/")) {
+    if (prefixed) {
       url.pathname = url.pathname.slice("/summer".length);
       request = new Request(url, request);
     }
@@ -39,7 +43,25 @@ export default {
       return handleChat(request, env);
     }
 
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+
+    /* Se o ASSETS devolveu um redirect (ex.: trailing slash em diretório)
+       e a request original veio com prefixo /summer/, re-adiciona o prefixo
+       no Location — senão o navegador é mandado pra fora da rota do worker. */
+    if (prefixed && (response.status === 301 || response.status === 302)) {
+      const location = response.headers.get("Location");
+      if (location) {
+        const target = new URL(location, url);
+        if (!target.pathname.startsWith("/summer/")) {
+          target.pathname = "/summer" + target.pathname;
+          const headers = new Headers(response.headers);
+          headers.set("Location", target.toString());
+          return new Response(response.body, { status: response.status, headers });
+        }
+      }
+    }
+
+    return response;
   }
 };
 

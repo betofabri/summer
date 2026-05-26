@@ -200,25 +200,52 @@ export async function suggest(
     },
   };
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
+  const data = await callGeminiWithRetry(url, body);
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     throw new Error("Empty response from Gemini");
   }
 
-  const parsed = JSON.parse(text) as SuggestResponse;
-  return parsed;
+  return JSON.parse(text) as SuggestResponse;
+}
+
+const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 4;
+
+interface GeminiResponse {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+}
+
+async function callGeminiWithRetry(
+  url: string,
+  body: unknown,
+): Promise<GeminiResponse> {
+  let lastError: Error = new Error("Gemini call failed");
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      return (await res.json()) as GeminiResponse;
+    }
+
+    const errText = await res.text();
+
+    if (!RETRY_STATUSES.has(res.status) || attempt === MAX_ATTEMPTS - 1) {
+      if (res.status === 503 || res.status === 429) {
+        throw new Error("OVERLOADED");
+      }
+      throw new Error(`Gemini error ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    lastError = new Error(`Gemini ${res.status}`);
+    const delayMs = 500 * Math.pow(2, attempt) + Math.random() * 250;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+
+  throw lastError;
 }

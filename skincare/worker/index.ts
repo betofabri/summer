@@ -159,6 +159,12 @@ export default {
     } catch (e) {
       const message = e instanceof Error ? e.message : "internal error";
       console.error({ path, error: message });
+      if (message === "OVERLOADED") {
+        return err(
+          503,
+          "Gemini está sobrecarregado agora. Tenta de novo em alguns segundos.",
+        );
+      }
       return err(500, message);
     }
   },

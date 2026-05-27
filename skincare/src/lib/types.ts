@@ -8,6 +8,21 @@ export type Category =
   | "anti_idade"
   | "mascara";
 
+export type Active =
+  | "salicylic"
+  | "glycolic"
+  | "lha"
+  | "niacinamide"
+  | "melasyl"
+  | "zinc"
+  | "hyaluronic"
+  | "b5"
+  | "peptides"
+  | "retinol"
+  | "vitamin_c"
+  | "pomegranate"
+  | "antioxidants";
+
 export interface Product {
   id: string;
   name: string;
@@ -17,6 +32,16 @@ export interface Product {
   intensity: 1 | 2 | 3;
   notes: string | null;
   enabled: boolean;
+}
+
+export interface ProductInput {
+  name: string;
+  brand: string;
+  category: Category;
+  actives: Active[];
+  intensity: 1 | 2 | 3;
+  notes?: string;
+  enabled?: boolean;
 }
 
 export interface DailyLog {
@@ -69,4 +94,51 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   hidratacao: "Hidratação",
   anti_idade: "Anti-idade",
   mascara: "Máscara",
+};
+
+export const CATEGORIES: Category[] = [
+  "tratamento_acne",
+  "spot_treatment",
+  "clareamento",
+  "hidratacao",
+  "anti_idade",
+  "mascara",
+];
+
+export const ACTIVE_LABELS: Record<Active, string> = {
+  salicylic: "Salicílico",
+  glycolic: "Glicólico",
+  lha: "LHA",
+  niacinamide: "Niacinamida",
+  melasyl: "Melasyl",
+  zinc: "Zinco",
+  hyaluronic: "Hialurônico",
+  b5: "Vit. B5",
+  peptides: "Peptídeos",
+  retinol: "Retinol",
+  vitamin_c: "Vit. C",
+  pomegranate: "Romã",
+  antioxidants: "Antioxidantes",
+};
+
+export const ACTIVES: Active[] = [
+  "salicylic",
+  "glycolic",
+  "lha",
+  "niacinamide",
+  "melasyl",
+  "zinc",
+  "hyaluronic",
+  "b5",
+  "peptides",
+  "retinol",
+  "vitamin_c",
+  "pomegranate",
+  "antioxidants",
+];
+
+export const INTENSITY_LABELS: Record<1 | 2 | 3, string> = {
+  1: "Suave",
+  2: "Médio",
+  3: "Forte",
 };

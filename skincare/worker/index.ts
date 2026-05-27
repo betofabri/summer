@@ -1,13 +1,23 @@
 import {
+  createProduct,
+  deleteProduct,
   getDailyLog,
   getHistory,
+  listAllProducts,
   listProducts,
   markRoutineApplied,
   saveRoutine,
+  updateProduct,
   upsertDailyLog,
 } from "./db.ts";
 import { suggest } from "./suggest.ts";
-import type { SkinState, SuggestRequest } from "./types.ts";
+import type {
+  Active,
+  Category,
+  Product,
+  SkinState,
+  SuggestRequest,
+} from "./types.ts";
 
 interface AppEnv extends Env {
   GEMINI_API_KEY: string;
@@ -151,6 +161,63 @@ export default {
       if (path === "/api/history" && request.method === "GET") {
         const history = await getHistory(env.DB, 30);
         return json({ history });
+      }
+
+      if (path === "/api/products" && request.method === "GET") {
+        const products = await listAllProducts(env.DB);
+        return json({ products });
+      }
+
+      if (path === "/api/products" && request.method === "POST") {
+        const body = (await request.json()) as Partial<Product>;
+        if (
+          !body.name?.trim() ||
+          !body.brand?.trim() ||
+          !body.category ||
+          !body.actives ||
+          !body.intensity
+        ) {
+          return err(400, "campos obrigatórios faltando");
+        }
+        const baseId = body.name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 40);
+        const suffix = crypto.randomUUID().slice(0, 4);
+        const id = `${baseId}-${suffix}`;
+        await createProduct(env.DB, {
+          id,
+          name: body.name.trim(),
+          brand: body.brand.trim(),
+          category: body.category as Category,
+          actives: body.actives as Active[],
+          intensity: body.intensity as 1 | 2 | 3,
+          notes: body.notes?.trim() || null,
+          enabled: body.enabled !== false,
+        });
+        return json({ id });
+      }
+
+      if (
+        path.startsWith("/api/products/") &&
+        request.method === "PATCH"
+      ) {
+        const id = path.slice("/api/products/".length);
+        const body = (await request.json()) as Partial<Product>;
+        await updateProduct(env.DB, id, body);
+        return json({ ok: true });
+      }
+
+      if (
+        path.startsWith("/api/products/") &&
+        request.method === "DELETE"
+      ) {
+        const id = path.slice("/api/products/".length);
+        await deleteProduct(env.DB, id);
+        return json({ ok: true });
       }
 
       return err(404, "not found");

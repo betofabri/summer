@@ -76,6 +76,88 @@ export async function listProducts(db: D1Database): Promise<Product[]> {
   return result.results.map(rowToProduct);
 }
 
+export async function listAllProducts(db: D1Database): Promise<Product[]> {
+  const result = await db
+    .prepare("SELECT * FROM products ORDER BY enabled DESC, category, name")
+    .all<ProductRow>();
+  return result.results.map(rowToProduct);
+}
+
+export async function createProduct(
+  db: D1Database,
+  product: Product,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO products (id, name, brand, category, actives, intensity, notes, enabled)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      product.id,
+      product.name,
+      product.brand,
+      product.category,
+      product.actives.join(","),
+      product.intensity,
+      product.notes,
+      product.enabled ? 1 : 0,
+    )
+    .run();
+}
+
+export async function updateProduct(
+  db: D1Database,
+  id: string,
+  updates: Partial<Omit<Product, "id">>,
+): Promise<void> {
+  const sets: string[] = [];
+  const values: unknown[] = [];
+
+  if (updates.name !== undefined) {
+    sets.push("name = ?");
+    values.push(updates.name);
+  }
+  if (updates.brand !== undefined) {
+    sets.push("brand = ?");
+    values.push(updates.brand);
+  }
+  if (updates.category !== undefined) {
+    sets.push("category = ?");
+    values.push(updates.category);
+  }
+  if (updates.actives !== undefined) {
+    sets.push("actives = ?");
+    values.push(updates.actives.join(","));
+  }
+  if (updates.intensity !== undefined) {
+    sets.push("intensity = ?");
+    values.push(updates.intensity);
+  }
+  if (updates.notes !== undefined) {
+    sets.push("notes = ?");
+    values.push(updates.notes);
+  }
+  if (updates.enabled !== undefined) {
+    sets.push("enabled = ?");
+    values.push(updates.enabled ? 1 : 0);
+  }
+
+  if (sets.length === 0) return;
+
+  values.push(id);
+  await db
+    .prepare(`UPDATE products SET ${sets.join(", ")} WHERE id = ?`)
+    .bind(...values)
+    .run();
+}
+
+export async function deleteProduct(
+  db: D1Database,
+  id: string,
+): Promise<void> {
+  await db.prepare("DELETE FROM products WHERE id = ?").bind(id).run();
+}
+
 export async function getDailyLog(
   db: D1Database,
   date: string,

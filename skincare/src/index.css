@@ -107,7 +107,8 @@
   }
 
   .bg-gradient-aurora {
-    background:
+    background-color: var(--color-bg);
+    background-image:
       radial-gradient(
         ellipse 60% 40% at 80% 0%,
         rgba(0, 212, 255, 0.18),

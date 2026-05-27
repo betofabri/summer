@@ -4,6 +4,7 @@ import { YesterdayCard } from "./components/YesterdayCard.tsx";
 import { StateSelector } from "./components/StateSelector.tsx";
 import { Suggestion } from "./components/Suggestion.tsx";
 import { HistoryView } from "./components/HistoryView.tsx";
+import { ProductsView } from "./components/ProductsView.tsx";
 import { bootstrap, getToken, logDaily, suggest } from "./lib/api.ts";
 import type {
   BootstrapResponse,
@@ -24,6 +25,7 @@ export default function App() {
   const [suggestion, setSuggestion] = useState<SuggestResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showProducts, setShowProducts] = useState(false);
 
   const load = useCallback(async () => {
     setBootError(null);
@@ -120,24 +122,50 @@ export default function App() {
             </h1>
             <div className="text-[--color-text-3] text-sm">Boa noite.</div>
           </div>
-          <button
-            onClick={() => setShowHistory(true)}
-            className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
-            aria-label="Histórico"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              aria-hidden="true"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowProducts(true)}
+              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
+              aria-label="Produtos"
             >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 7l6-3 6 3v10l-6 3-6-3V7z" />
+                <path d="M6 7l6 3 6-3M12 10v10" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
+              aria-label="Histórico"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M12 7v5l3 2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
         </header>
 
         <YesterdayCard
@@ -261,6 +289,13 @@ export default function App() {
         <HistoryView
           products={boot.products}
           onClose={() => setShowHistory(false)}
+        />
+      ) : null}
+
+      {showProducts ? (
+        <ProductsView
+          onClose={() => setShowProducts(false)}
+          onChange={() => void load()}
         />
       ) : null}
     </div>

@@ -1,6 +1,8 @@
 import type {
   BootstrapResponse,
   HistoryEntry,
+  Product,
+  ProductInput,
   SkinState,
   SuggestResponse,
 } from "./types.ts";
@@ -78,4 +80,31 @@ export function applyRoutine(
 
 export function history(): Promise<{ history: HistoryEntry[] }> {
   return request("/history");
+}
+
+export function listProducts(): Promise<{ products: Product[] }> {
+  return request("/products");
+}
+
+export function createProduct(input: ProductInput): Promise<{ id: string }> {
+  return request("/products", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateProduct(
+  id: string,
+  updates: Partial<ProductInput> & { enabled?: boolean },
+): Promise<{ ok: true }> {
+  return request(`/products/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}
+
+export function deleteProduct(id: string): Promise<{ ok: true }> {
+  return request(`/products/${id}`, {
+    method: "DELETE",
+  });
 }

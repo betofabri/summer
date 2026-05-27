@@ -54,18 +54,19 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
     <div className="space-y-6">
       <section
         aria-label="Sugestão da noite"
-        className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
+        className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] overflow-hidden"
       >
-        <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.16em] font-bold">
-          <span className="w-1 h-1 rounded-full bg-[--color-primary]" />
-          Sugestão para esta noite
+        <div className="p-6 pb-5 border-b border-[--color-border]">
+          <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.2em] font-bold mb-3">
+            <span className="w-1 h-1 rounded-full bg-[--color-primary]" />
+            Tratamento sugerido
+          </div>
+          <p className="text-base leading-relaxed text-[--color-text-2] font-medium">
+            {suggestion.reasoning}
+          </p>
         </div>
 
-        <p className="text-base leading-relaxed text-[--color-text-2]">
-          {suggestion.reasoning}
-        </p>
-
-        <ul className="space-y-3" aria-label="Produtos sugeridos">
+        <ul className="p-3" aria-label="Produtos sugeridos">
           {orderedSuggestion.map((p, i) => {
             const isSelected = selected.has(p.id);
             return (
@@ -75,35 +76,59 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
                   aria-pressed={isSelected}
                   onClick={() => toggle(p.id)}
                   disabled={applied}
-                  className={`press w-full text-left rounded-[--radius-md] border-2 min-h-[64px] px-4 py-3 flex items-center gap-4 ${
+                  className={`press w-full text-left rounded-[--radius-md] min-h-[72px] px-4 py-3 flex items-center gap-4 ${
                     isSelected
-                      ? "bg-[--color-surface] border-[--color-primary] shadow-lift"
-                      : "bg-[--color-surface-2] border-[--color-border] opacity-50"
+                      ? "bg-[--color-surface-2]"
+                      : "bg-transparent opacity-40"
                   }`}
                 >
                   <span
-                    className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
+                    className={`flex-shrink-0 w-10 h-10 rounded-[--radius-sm] flex items-center justify-center font-mono font-bold text-sm tabular-nums ${
                       isSelected
-                        ? "bg-[--color-primary] text-white"
-                        : "bg-[--color-border] text-[--color-text-3]"
+                        ? "bg-[--color-primary] text-[--color-primary-on]"
+                        : "bg-[--color-surface-3] text-[--color-text-muted]"
                     }`}
                     aria-hidden="true"
                   >
-                    {i + 1}
+                    {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-base font-semibold text-[--color-text] truncate">
+                    <div className="text-base font-bold text-[--color-text] truncate tracking-tight">
                       {p.name}
                     </div>
-                    <div className="text-xs text-[--color-text-3] mt-0.5 flex items-center gap-2">
+                    <div className="text-xs text-[--color-text-3] mt-0.5 flex items-center gap-2 font-medium">
                       <span>{p.brand}</span>
                       <span
-                        className="w-0.5 h-0.5 rounded-full bg-[--color-text-muted]"
+                        className="w-1 h-1 rounded-full bg-[--color-text-muted]"
                         aria-hidden="true"
                       />
                       <span>{CATEGORY_LABELS[p.category]}</span>
                     </div>
                   </div>
+                  <span
+                    className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? "bg-[--color-primary] border-[--color-primary]"
+                        : "bg-transparent border-[--color-border-strong]"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {isSelected ? (
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-[--color-primary-on]"
+                      >
+                        <path d="M3 8.5l3.5 3.5L13 4.5" />
+                      </svg>
+                    ) : null}
+                  </span>
                 </button>
               </li>
             );
@@ -115,9 +140,9 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
         type="button"
         onClick={handleApply}
         disabled={selected.size === 0 || applying || applied}
-        className="press shadow-elevated w-full min-h-[56px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-bold tracking-tight disabled:opacity-40 disabled:shadow-none"
+        className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none"
       >
-        {applied ? "Aplicado" : applying ? "Salvando…" : "Marcar como aplicado"}
+        {applied ? "✓ Aplicado" : applying ? "Salvando…" : "Marcar como aplicado"}
       </button>
     </div>
   );

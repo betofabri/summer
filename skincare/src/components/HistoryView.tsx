@@ -11,18 +11,14 @@ const STATE_LABELS: Record<SkinState, string> = {
   normal: "Normal",
   oleosa: "Oleosa",
   irritada: "Irritada",
-  acne_ativa: "Com Acne",
+  acne_ativa: "Com acne",
 };
 
-const STATE_CHIP: Record<SkinState, string> = {
-  normal:
-    "bg-[--color-success-soft] text-[--color-success] border border-[--color-success]/30",
-  oleosa:
-    "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
-  irritada:
-    "bg-[--color-danger-soft] text-[--color-danger] border border-[--color-danger]/30",
-  acne_ativa:
-    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
+const STATE_DOT: Record<SkinState, string> = {
+  normal: "bg-[--color-success]",
+  oleosa: "bg-[--color-primary]",
+  irritada: "bg-[--color-danger]",
+  acne_ativa: "bg-[--color-warning]",
 };
 
 export function HistoryView({ products, onClose }: Props) {
@@ -39,16 +35,16 @@ export function HistoryView({ products, onClose }: Props) {
     <div
       role="dialog"
       aria-label="Histórico"
-      className="fixed inset-0 bg-[--color-bg] z-50 overflow-y-auto"
+      className="fixed inset-0 bg-[--color-bg] bg-gradient-aurora z-50 overflow-y-auto"
     >
-      <div className="max-w-md mx-auto px-6 pt-10 pb-16">
+      <div className="max-w-md mx-auto px-6 pt-14 pb-20">
         <div className="flex items-center justify-between mb-10">
-          <h2 className="font-display text-2xl font-semibold text-[--color-text]">
+          <h2 className="font-display text-3xl font-bold text-[--color-text] tracking-tight">
             Histórico
           </h2>
           <button
             onClick={onClose}
-            className="press min-h-11 px-5 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-medium"
+            className="press shadow-card min-h-12 px-5 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
           >
             Fechar
           </button>
@@ -57,13 +53,13 @@ export function HistoryView({ products, onClose }: Props) {
         {entries === null ? (
           <div className="text-[--color-text-3] text-sm">Carregando…</div>
         ) : entries.length === 0 ? (
-          <div className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-8 text-center">
+          <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-10 text-center">
             <p className="text-[--color-text-2] text-sm">
               Nenhum registro ainda.
             </p>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {entries.map((e) => {
               const usedProducts =
                 e.routine?.product_ids
@@ -72,37 +68,37 @@ export function HistoryView({ products, onClose }: Props) {
               return (
                 <li
                   key={e.daily.date}
-                  className="bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-5 space-y-4"
+                  className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-5 space-y-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-[--color-text-3] font-medium">
-                      {e.daily.date.slice(8, 10)}/{e.daily.date.slice(5, 7)}
-                    </span>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <div className="flex items-center gap-3">
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATE_CHIP[e.daily.skin_state]}`}
-                      >
+                        className={`w-2 h-2 rounded-full ${STATE_DOT[e.daily.skin_state]}`}
+                      />
+                      <span className="text-base font-bold text-[--color-text] tracking-tight">
                         {STATE_LABELS[e.daily.skin_state]}
                       </span>
                       {e.daily.post_shave ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30">
-                          Pós-barba
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[--radius-pill] text-[10px] font-bold uppercase tracking-wider bg-[--color-warning]/15 text-[--color-warning]">
+                          Barba
                         </span>
                       ) : null}
                     </div>
+                    <span className="text-xs text-[--color-text-3] font-mono tabular-nums">
+                      {e.daily.date.slice(8, 10)}/{e.daily.date.slice(5, 7)}
+                    </span>
                   </div>
 
                   {usedProducts.length > 0 ? (
                     <ul className="space-y-1.5">
-                      {usedProducts.map((p) => (
+                      {usedProducts.map((p, i) => (
                         <li
                           key={p.id}
-                          className="text-sm text-[--color-text-2] flex items-center gap-3"
+                          className="text-sm text-[--color-text-2] flex items-center gap-3 font-medium"
                         >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full bg-[--color-primary]"
-                            aria-hidden="true"
-                          />
+                          <span className="font-mono tabular-nums text-[--color-text-muted] text-xs w-4">
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
                           <span>{p.name}</span>
                         </li>
                       ))}

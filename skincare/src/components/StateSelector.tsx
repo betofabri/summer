@@ -7,19 +7,11 @@ interface Props {
   onPostShaveChange: (v: boolean) => void;
 }
 
-const SELECTED_FILL: Record<string, string> = {
-  good: "bg-[--color-success] border-[--color-success] text-white shadow-elevated",
-  warn: "bg-[--color-warning] border-[--color-warning] text-white shadow-elevated",
-  bad: "bg-[--color-danger] border-[--color-danger] text-white shadow-elevated",
-  default:
-    "bg-[--color-primary] border-[--color-primary] text-white shadow-elevated",
-};
-
 function CheckIcon({ className = "" }: { className?: string }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="14"
+      height="14"
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
@@ -42,8 +34,8 @@ export function StateSelector({
 }: Props) {
   return (
     <fieldset className="space-y-5 border-0 p-0 m-0">
-      <legend className="text-xs font-bold text-[--color-text-2] uppercase tracking-[0.08em] mb-1">
-        Como está sua pele hoje
+      <legend className="text-[11px] font-bold text-[--color-text-3] uppercase tracking-[0.2em] mb-1">
+        Estado da pele
       </legend>
 
       <div
@@ -53,7 +45,6 @@ export function StateSelector({
       >
         {SKIN_STATES.map((s) => {
           const active = value === s.id;
-          const fill = SELECTED_FILL[s.tone] ?? SELECTED_FILL.default;
           return (
             <button
               key={s.id}
@@ -61,16 +52,18 @@ export function StateSelector({
               role="radio"
               aria-checked={active}
               onClick={() => onChange(s.id)}
-              className={`press relative min-h-[60px] px-4 py-3 rounded-[--radius-md] border-2 text-base font-semibold ${
+              className={`press relative min-h-[68px] px-4 py-3 rounded-[--radius-md] text-base font-bold tracking-tight ${
                 active
-                  ? fill
-                  : "bg-[--color-surface] border-[--color-border] text-[--color-text] shadow-card"
+                  ? "bg-[--color-primary] text-[--color-primary-on] shadow-glow"
+                  : "bg-[--color-surface] text-[--color-text-2] border border-[--color-border] shadow-card"
               }`}
             >
               {active ? (
-                <CheckIcon className="absolute left-3 top-1/2 -translate-y-1/2" />
+                <span className="absolute top-3 right-3 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[--color-primary-on]/15">
+                  <CheckIcon className="text-[--color-primary-on]" />
+                </span>
               ) : null}
-              <span className={active ? "pl-5" : ""}>{s.label}</span>
+              <span className="block text-left">{s.label}</span>
             </button>
           );
         })}
@@ -81,16 +74,33 @@ export function StateSelector({
         role="switch"
         aria-checked={postShave}
         onClick={() => onPostShaveChange(!postShave)}
-        className={`press w-full min-h-[60px] px-5 rounded-[--radius-md] border-2 flex items-center justify-between gap-3 ${
+        className={`press w-full min-h-[64px] px-5 rounded-[--radius-md] flex items-center justify-between gap-3 ${
           postShave
-            ? "bg-[--color-warning] border-[--color-warning] text-white shadow-elevated"
-            : "bg-[--color-surface] border-[--color-border] text-[--color-text] shadow-card"
+            ? "bg-[--color-warning] text-[--color-warning-on] shadow-card"
+            : "bg-[--color-surface] text-[--color-text-2] border border-[--color-border] shadow-card"
         }`}
       >
-        <span className="text-base font-semibold">Fiz a barba hoje</span>
+        <div className="flex items-center gap-3">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 8h14M7 8v10a2 2 0 002 2h6a2 2 0 002-2V8M9 4h6l1 4H8z" />
+          </svg>
+          <span className="text-base font-bold tracking-tight">
+            Fiz a barba hoje
+          </span>
+        </div>
         <span
           className={`relative w-12 h-7 rounded-full transition-colors ${
-            postShave ? "bg-white/25" : "bg-[--color-border-strong]"
+            postShave ? "bg-[--color-warning-on]/30" : "bg-[--color-surface-3]"
           }`}
           aria-hidden="true"
         >

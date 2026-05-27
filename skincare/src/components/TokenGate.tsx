@@ -16,24 +16,28 @@ export function TokenGate({ onUnlock }: Props) {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center px-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-8">
-        <div className="space-y-2">
-          <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
+    <div className="min-h-dvh flex items-center justify-center px-6 bg-gradient-aurora">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-10">
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.2em] font-bold">
+            <span className="relative flex items-center justify-center w-2 h-2">
+              <span className="absolute inset-0 rounded-full bg-[--color-primary] animate-glow-pulse" />
+              <span className="relative w-1.5 h-1.5 rounded-full bg-[--color-primary]" />
+            </span>
             Skin
           </div>
-          <h1 className="font-display text-[30px] leading-[1.15] font-semibold text-[--color-text]">
-            Entrar
+          <h1 className="font-display text-[40px] leading-[1] font-bold text-[--color-text] tracking-tight">
+            Acesso
           </h1>
-          <p className="text-[--color-text-2] text-sm">
-            Digite seu token de acesso para continuar.
+          <p className="text-[--color-text-3] text-sm">
+            Digite seu token para continuar.
           </p>
         </div>
 
         <div className="space-y-2">
           <label
             htmlFor="token"
-            className="block text-xs font-semibold text-[--color-text-2] uppercase tracking-[0.08em]"
+            className="block text-[11px] font-bold text-[--color-text-3] uppercase tracking-[0.16em]"
           >
             Token
           </label>
@@ -45,16 +49,16 @@ export function TokenGate({ onUnlock }: Props) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="••••••••"
-            className="press w-full min-h-12 bg-[--color-surface] border border-[--color-border] rounded-[--radius-md] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+            className="press w-full min-h-[56px] bg-[--color-surface] border border-[--color-border] rounded-[--radius-md] px-5 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
           />
         </div>
 
         <button
           type="submit"
           disabled={!value.trim()}
-          className="press w-full min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-white text-base font-semibold disabled:opacity-40"
+          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none"
         >
-          Entrar
+          Entrar →
         </button>
       </form>
     </div>

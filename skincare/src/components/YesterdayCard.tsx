@@ -10,18 +10,7 @@ const STATE_LABELS: Record<SkinState, string> = {
   normal: "Normal",
   oleosa: "Oleosa",
   irritada: "Irritada",
-  acne_ativa: "Com Acne",
-};
-
-const STATE_CHIP: Record<SkinState, string> = {
-  normal:
-    "bg-[--color-success-soft] text-[--color-success] border border-[--color-success]/30",
-  oleosa:
-    "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]",
-  irritada:
-    "bg-[--color-danger-soft] text-[--color-danger] border border-[--color-danger]/30",
-  acne_ativa:
-    "bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30",
+  acne_ativa: "Com acne",
 };
 
 export function YesterdayCard({ yesterday, routine, products }: Props) {
@@ -31,11 +20,11 @@ export function YesterdayCard({ yesterday, routine, products }: Props) {
         aria-label="Estado de ontem"
         className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6"
       >
-        <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold mb-2">
+        <div className="text-[11px] font-bold text-[--color-text-3] uppercase tracking-[0.2em] mb-3">
           Ontem
         </div>
         <p className="text-[--color-text-2] text-sm">
-          Sem registro. Esta é sua primeira noite no app.
+          Sem registro. Esta é sua primeira noite.
         </p>
       </section>
     );
@@ -52,40 +41,37 @@ export function YesterdayCard({ yesterday, routine, products }: Props) {
       aria-label="Estado de ontem"
       className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5"
     >
-      <div className="flex items-baseline justify-between">
-        <div className="text-[--color-text-3] text-xs uppercase tracking-[0.14em] font-semibold">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-bold text-[--color-text-3] uppercase tracking-[0.2em]">
           Ontem
         </div>
-        <div className="text-[--color-text-3] text-xs">
+        <div className="text-[--color-text-3] text-xs font-mono tabular-nums">
           {yesterday.date.slice(8, 10)}/{yesterday.date.slice(5, 7)}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATE_CHIP[yesterday.skin_state]}`}
-        >
+      <div className="flex items-baseline gap-3">
+        <div className="font-display text-2xl font-bold text-[--color-text] tracking-tight">
           {STATE_LABELS[yesterday.skin_state]}
-        </span>
+        </div>
         {yesterday.post_shave ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[--color-warning-soft] text-[--color-warning] border border-[--color-warning]/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[--radius-pill] text-[10px] font-bold uppercase tracking-wider bg-[--color-warning]/15 text-[--color-warning]">
             Pós-barba
           </span>
         ) : null}
       </div>
 
       {usedProducts.length > 0 ? (
-        <ul className="space-y-2">
-          {usedProducts.map((p) => (
+        <ul className="space-y-2.5 pt-1">
+          {usedProducts.map((p, i) => (
             <li
               key={p.id}
               className="flex items-center gap-3 text-sm text-[--color-text-2]"
             >
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-[--color-primary]"
-                aria-hidden="true"
-              />
-              <span>{p.name}</span>
+              <span className="font-mono tabular-nums text-[--color-text-muted] text-xs w-4">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="font-medium">{p.name}</span>
             </li>
           ))}
         </ul>

@@ -181,6 +181,41 @@
   }
   .day-banner strong { color: var(--voltz); font-weight: 600; }
 
+  /* ---- Strava ---- */
+  .strava-card {
+    margin-top: 12px; border-radius: var(--r-xl); padding: 18px 22px;
+    background: var(--surface-container);
+    border: 0.5px solid var(--outline-variant);
+  }
+  .strava-status { font-size: 15px; color: var(--secondary); }
+  .strava-status strong { color: var(--primary); }
+  .strava-activities { margin-top: 14px; display: grid; gap: 10px; }
+  .strava-act {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px; border-radius: var(--r);
+    background: var(--surface-container-lowest);
+    border: 0.5px solid var(--outline-variant);
+  }
+  .strava-act .a-glyph {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--surface-container-high);
+  }
+  .strava-act .a-glyph .material-symbols-outlined { font-size: 20px; color: var(--secondary); }
+  .strava-act .a-name { font-weight: 600; font-size: 15px; color: var(--primary); }
+  .strava-act .a-meta { font-size: 13px; color: var(--outline); }
+  .strava-act .a-day { font-size: 12px; color: var(--outline); margin-left: auto; text-align: right; }
+  .strava-refreshed {
+    margin-top: 12px; padding: 12px 14px; border-radius: var(--r);
+    background: rgba(191,244,67,0.18); border: 0.5px solid var(--voltz-dim);
+    font-size: 13px; line-height: 1.5;
+  }
+  .strava-refreshed code {
+    display: block; background: var(--primary); color: var(--voltz);
+    padding: 6px 10px; border-radius: 6px; margin: 4px 0;
+    font-size: 12px; word-break: break-all;
+  }
+
   /* ---- editor de macros ---- */
   #macroEditor { margin-top: 10px; }
   .editor-bar {
@@ -469,6 +504,14 @@
     <div class="train-grid" id="trainGrid"></div>
     <div class="sec-label">Impacto no dia</div>
     <div class="day-banner" id="dayBannerTrain"></div>
+
+    <div class="sec-label">Strava</div>
+    <div id="stravaCard" class="strava-card">
+      <div id="stravaStatus" class="strava-status">Verificando…</div>
+      <div id="stravaActions" class="btn-row" style="margin-top:10px;"></div>
+      <div id="stravaActivities" class="strava-activities"></div>
+      <div id="stravaRefreshed" class="strava-refreshed" hidden></div>
+    </div>
   </section>
 
   <!-- ABA: CARDÁPIO (FOTO) -->
@@ -531,6 +574,9 @@ const APP_BASE = (() => {
   return m ? m[1] + "/" : "/app/";
 })();
 const API_CHAT_URL = APP_BASE + "api/chat";
+const STRAVA_AUTHORIZE_URL = APP_BASE + "api/strava/authorize";
+const STRAVA_STATUS_URL = APP_BASE + "api/strava/status";
+const STRAVA_ACTIVITIES_URL = APP_BASE + "api/strava/activities";
 
 /* ====== CONFIG: PERFIL E ESTRATÉGIA ====== */
 const PROFILE = { age: 43, sex: "male", height: 163, weight: 72 };
@@ -1078,6 +1124,9 @@ function switchTab(tab) {
   });
   window.scrollTo(0, 0);
   updateMacroMini();
+  if (tab === "train" && stravaState.connected === null) {
+    loadStravaStatus();
+  }
 }
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
@@ -1170,6 +1219,170 @@ document.getElementById("menuAnalyzeBtn").addEventListener("click", async () => 
     btn.disabled = false;
   }
 });
+
+/* ====== STRAVA ====== */
+const STRAVA_GLYPHS = {
+  Run: "directions_run",
+  TrailRun: "directions_run",
+  Ride: "directions_bike",
+  VirtualRide: "directions_bike",
+  WeightTraining: "fitness_center",
+  Workout: "fitness_center",
+  Yoga: "self_improvement",
+  Walk: "directions_walk",
+  Hike: "hiking",
+  Swim: "pool"
+};
+
+const stravaState = { connected: null, activities: null, loading: false };
+
+function fmtDuration(s) {
+  if (!s || s < 0) return "—";
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h${(m % 60).toString().padStart(2, "0")}`;
+  return `${m} min`;
+}
+
+function fmtDistance(m) {
+  if (!m || m < 0) return null;
+  if (m >= 1000) return (m / 1000).toFixed(m >= 10000 ? 1 : 2) + " km";
+  return Math.round(m) + " m";
+}
+
+function fmtDayShort(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const days = ["dom","seg","ter","qua","qui","sex","sáb"];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const day = new Date(d);
+  day.setHours(0,0,0,0);
+  const diff = Math.round((today - day) / 86400000);
+  if (diff === 0) return "hoje";
+  if (diff === 1) return "ontem";
+  return days[d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1);
+}
+
+async function loadStravaStatus() {
+  try {
+    const res = await fetch(STRAVA_STATUS_URL);
+    const data = await res.json();
+    stravaState.connected = !!data.connected;
+    if (data.connected && (stravaState.activities === null)) {
+      loadStravaActivities();
+    }
+  } catch (e) {
+    stravaState.connected = false;
+  }
+  renderStrava();
+}
+
+async function loadStravaActivities() {
+  if (stravaState.loading) return;
+  stravaState.loading = true;
+  renderStrava();
+  try {
+    const res = await fetch(STRAVA_ACTIVITIES_URL);
+    if (!res.ok) {
+      const txt = await res.text();
+      stravaState.activities = { error: txt || ("HTTP " + res.status) };
+    } else {
+      const data = await res.json();
+      stravaState.activities = data;
+    }
+  } catch (e) {
+    stravaState.activities = { error: String(e.message || e) };
+  }
+  stravaState.loading = false;
+  renderStrava();
+}
+
+function renderStrava() {
+  const status = document.getElementById("stravaStatus");
+  const actions = document.getElementById("stravaActions");
+  const list = document.getElementById("stravaActivities");
+  const refreshed = document.getElementById("stravaRefreshed");
+  if (!status) return;
+
+  if (stravaState.connected === null) {
+    status.textContent = "Verificando…";
+    actions.innerHTML = "";
+    list.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  if (!stravaState.connected) {
+    status.innerHTML = "Não conectado ao Strava. As atividades da semana podem vir direto de lá.";
+    actions.innerHTML = `<a class="primary" href="${STRAVA_AUTHORIZE_URL}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined btn-ico">link</span> Conectar Strava</a>`;
+    list.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  status.innerHTML = "<strong>Conectado.</strong> Atividades dos últimos 7 dias:";
+  actions.innerHTML = `<button id="stravaReloadBtn"><span class="material-symbols-outlined btn-ico">refresh</span> Atualizar</button>`;
+  document.getElementById("stravaReloadBtn").addEventListener("click", () => {
+    stravaState.activities = null;
+    loadStravaActivities();
+  });
+
+  if (stravaState.loading) {
+    list.innerHTML = `<div class="strava-act"><div class="a-name">Carregando…</div></div>`;
+    refreshed.hidden = true;
+    return;
+  }
+
+  if (!stravaState.activities) {
+    list.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  if (stravaState.activities.error) {
+    list.innerHTML = `<div class="strava-act"><div class="a-name" style="color:#c0392b;">Erro: ${stravaState.activities.error}</div></div>`;
+    refreshed.hidden = true;
+    return;
+  }
+
+  const acts = stravaState.activities.activities || [];
+  if (acts.length === 0) {
+    list.innerHTML = `<div class="strava-act"><div class="a-name" style="color:var(--outline);">Nenhuma atividade nos últimos 7 dias.</div></div>`;
+  } else {
+    list.innerHTML = acts.map(a => {
+      const glyph = STRAVA_GLYPHS[a.sport_type] || STRAVA_GLYPHS[a.type] || "exercise";
+      const dist = fmtDistance(a.distance_m);
+      const meta = [dist, fmtDuration(a.moving_time_s)].filter(Boolean).join(" · ");
+      return `<div class="strava-act">
+        <div class="a-glyph"><span class="material-symbols-outlined">${glyph}</span></div>
+        <div>
+          <div class="a-name">${escapeHtmlClient(a.name || a.type)}</div>
+          <div class="a-meta">${meta}</div>
+        </div>
+        <div class="a-day">${fmtDayShort(a.start_date_local || a.start_date)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  const ref = stravaState.activities.refreshed;
+  if (ref) {
+    refreshed.hidden = false;
+    refreshed.innerHTML = `<strong>Tokens renovados.</strong> ${escapeHtmlClient(ref.message || "")}
+      <code>STRAVA_ACCESS_TOKEN = ${escapeHtmlClient(ref.access_token)}</code>
+      <code>STRAVA_REFRESH_TOKEN = ${escapeHtmlClient(ref.refresh_token)}</code>
+      <code>STRAVA_EXPIRES_AT = ${escapeHtmlClient(String(ref.expires_at))}</code>`;
+  } else {
+    refreshed.hidden = true;
+  }
+}
+
+function escapeHtmlClient(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
 
 /* ====== INIT ====== */
 function renderAll() {

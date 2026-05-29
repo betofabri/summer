@@ -120,6 +120,18 @@ async function handleChat(request, env) {
           }
         });
       }
+      if (Array.isArray(m.attachments)) {
+        m.attachments.forEach(att => {
+          if (att && att.data) {
+            parts.push({
+              inlineData: {
+                mimeType: att.mimeType || "application/octet-stream",
+                data: att.data
+              }
+            });
+          }
+        });
+      }
       return { role: "user", parts: parts };
     });
 

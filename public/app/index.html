@@ -254,6 +254,132 @@
   .t-row > span:first-child { color: var(--voltz); font-weight: 600; }
   .t-row > span:last-child { color: var(--inverse-on-surface); font-variant-numeric: tabular-nums; }
 
+  /* metas da semana */
+  .strava-goals {
+    margin-top: 14px; padding: 14px 16px; border-radius: var(--r-xl);
+    background: var(--surface-container-lowest);
+    border: 0.5px solid var(--outline-variant);
+  }
+  .strava-goals .g-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--outline); font-weight: 700; margin-bottom: 10px;
+  }
+  .strava-goals .g-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px 12px;
+    align-items: center; padding: 6px 0;
+    border-top: 0.5px dashed var(--outline-variant);
+  }
+  .strava-goals .g-row:first-of-type { border-top: 0; }
+  .strava-goals .g-name { font-weight: 600; font-size: 14px; color: var(--primary); }
+  .strava-goals .g-amt {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--outline); font-variant-numeric: tabular-nums;
+  }
+  .strava-goals .g-amt input {
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    width: 44px; padding: 2px 6px; border-radius: 6px;
+    background: var(--surface); color: var(--primary);
+    border: 0.5px solid var(--outline-variant); text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .strava-goals .g-amt input:focus { outline: none; border-color: var(--voltz-dim); }
+  .strava-goals .g-bar {
+    grid-column: 1 / -1;
+    height: 6px; border-radius: 999px;
+    background: var(--surface-container-high); overflow: hidden;
+  }
+  .strava-goals .g-bar i {
+    display: block; height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--voltz-dim), var(--voltz));
+    transition: width 0.3s ease;
+  }
+  .strava-goals .g-bar i.full { background: var(--voltz); }
+
+  /* action row */
+  .strava-action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .strava-action-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* botão sugerir dentro do dia */
+  .d-header { position: relative; }
+  .d-suggest-btn {
+    font-family: 'Hanken Grotesk', sans-serif; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--voltz); color: var(--primary);
+    border: 0; border-radius: 999px;
+    padding: 5px 12px; cursor: pointer;
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .d-suggest-btn:hover { background: var(--voltz-dim); }
+  .d-suggest-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .d-suggest-btn .material-symbols-outlined { font-size: 14px; }
+
+  /* linhas de plano (vs Strava real) */
+  .d-row.d-plan { color: var(--secondary); }
+  .d-row.d-plan .d-ico { color: var(--voltz-dim); }
+  .d-row.d-plan .d-cat::after {
+    content: 'plano'; margin-left: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    padding: 1px 6px; border-radius: 999px;
+    background: rgba(191,244,67,0.25); color: var(--secondary);
+    text-transform: uppercase;
+  }
+  .d-row.d-plan .d-del {
+    background: none; border: none; cursor: pointer; padding: 2px 4px;
+    color: var(--outline); font-size: 16px; line-height: 1;
+    display: inline-flex; align-items: center;
+  }
+  .d-row.d-plan .d-del:hover { color: #c0392b; }
+
+  /* sugestão pendente */
+  .d-suggestion {
+    margin-top: 6px; padding: 10px 12px;
+    background: rgba(191,244,67,0.10);
+    border: 0.5px dashed var(--voltz-dim);
+    border-radius: var(--r);
+    font-size: 13px;
+  }
+  .d-suggestion .s-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .d-suggestion .s-cat {
+    font-weight: 700; color: var(--primary); font-size: 14px;
+  }
+  .d-suggestion .s-stat { color: var(--outline); font-variant-numeric: tabular-nums; }
+  .d-suggestion .s-motivo {
+    color: var(--secondary); font-size: 12px; line-height: 1.45;
+    margin-top: 4px; font-style: italic;
+  }
+  .d-suggestion .s-actions {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .d-suggestion .s-actions button {
+    font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+    border-radius: 999px; padding: 5px 12px; cursor: pointer;
+    border: 0.5px solid var(--outline-variant); background: transparent;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--secondary);
+    transition: all 0.14s;
+  }
+  .d-suggestion .s-actions .s-accept {
+    background: var(--primary); color: var(--voltz); border-color: var(--primary);
+  }
+  .d-suggestion .s-actions .s-accept:hover { background: var(--secondary); }
+  .d-suggestion .s-actions .s-refuse:hover { color: #c0392b; border-color: #c0392b; }
+  .d-suggestion .s-edit-grid {
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: 6px; align-items: center; margin-top: 6px;
+  }
+  .d-suggestion .s-edit-grid select,
+  .d-suggestion .s-edit-grid input {
+    font-family: inherit; font-size: 13px;
+    padding: 4px 8px; border-radius: 6px;
+    border: 0.5px solid var(--outline-variant);
+    background: var(--surface);
+    color: var(--primary);
+  }
+  .d-suggestion .s-edit-grid input { width: 64px; text-align: right; }
+
   .strava-refreshed {
     margin-top: 12px; padding: 12px 14px; border-radius: var(--r);
     background: rgba(191,244,67,0.18); border: 0.5px solid var(--voltz-dim);
@@ -557,6 +683,7 @@
     <div class="sec-label">Strava</div>
     <div id="stravaCard" class="strava-card">
       <div id="stravaStatus" class="strava-status">Verificando…</div>
+      <div id="stravaGoals" class="strava-goals"></div>
       <div id="stravaActions" class="btn-row" style="margin-top:10px;"></div>
       <div id="stravaActivities" class="strava-activities"></div>
       <div id="stravaRefreshed" class="strava-refreshed" hidden></div>
@@ -1318,7 +1445,49 @@ function fmtDateKey(d) {
   return `${y}-${m}-${day}`;
 }
 
-const stravaState = { connected: null, activities: null, loading: false, filter: "all" };
+/* localStorage para metas e plano (persistem entre sessões). */
+const STRAVA_GOALS_KEY = "summer:strava:goals";
+const STRAVA_PLAN_KEY = "summer:strava:plan";
+const DEFAULT_GOALS = { runKm: 25, yogaCount: 4 };
+
+function loadGoals() {
+  try {
+    const raw = localStorage.getItem(STRAVA_GOALS_KEY);
+    if (raw) return { ...DEFAULT_GOALS, ...JSON.parse(raw) };
+  } catch (e) {}
+  return { ...DEFAULT_GOALS };
+}
+function saveGoals(g) {
+  try { localStorage.setItem(STRAVA_GOALS_KEY, JSON.stringify(g)); } catch (e) {}
+}
+function loadPlan() {
+  try {
+    const raw = localStorage.getItem(STRAVA_PLAN_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+function savePlan(p) {
+  try { localStorage.setItem(STRAVA_PLAN_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+/* Plano por dia: { "YYYY-MM-DD": { corrida?:{km}, yoga?:{count}, musculacao?:{min} } }.
+   pendingByDay: sugestão da IA aguardando decisão (não persiste). */
+const stravaState = {
+  connected: null, activities: null, loading: false, filter: "all",
+  goals: loadGoals(),
+  plan: loadPlan(),
+  pendingByDay: {},
+  suggesting: null  /* "today" | "remaining" | "YYYY-MM-DD" */
+};
+
+/* Estima kcal de um item planejado, usando a mesma heurística. */
+function planKcal(cat, item) {
+  if (cat === "corrida")    return Math.round(75 * (item.km || 0));
+  if (cat === "yoga")       return 320 * (item.count || 1);
+  if (cat === "musculacao") return Math.round(5 * (item.min || 0));
+  return 0;
+}
 
 async function loadStravaStatus() {
   try {
@@ -1354,73 +1523,20 @@ async function loadStravaActivities() {
   renderStrava();
 }
 
-function renderStrava() {
-  const status = document.getElementById("stravaStatus");
-  const actions = document.getElementById("stravaActions");
-  const list = document.getElementById("stravaActivities");
-  const refreshed = document.getElementById("stravaRefreshed");
-  if (!status) return;
+/* ====== STRAVA: utilidades de bucket ====== */
 
-  if (stravaState.connected === null) {
-    status.textContent = "Verificando…";
-    actions.innerHTML = "";
-    list.innerHTML = "";
-    refreshed.hidden = true;
-    return;
-  }
-
-  if (!stravaState.connected) {
-    status.innerHTML = "Não conectado ao Strava. Conecta pra ver a semana inteira aqui.";
-    actions.innerHTML = `<a class="primary" href="${STRAVA_AUTHORIZE_URL}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
-      <span class="material-symbols-outlined btn-ico">link</span> Conectar Strava</a>`;
-    list.innerHTML = "";
-    refreshed.hidden = true;
-    return;
-  }
-
-  const mon = mondayOfCurrentWeek();
-  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
-  const headerRange = `${mon.getDate().toString().padStart(2,"0")}/${(mon.getMonth()+1).toString().padStart(2,"0")} – ${sun.getDate().toString().padStart(2,"0")}/${(sun.getMonth()+1).toString().padStart(2,"0")}`;
-  status.innerHTML = `<strong>Semana ${headerRange}</strong> · segunda a domingo`;
-  actions.innerHTML = `<button id="stravaReloadBtn"><span class="material-symbols-outlined btn-ico">refresh</span> Atualizar</button>`;
-  document.getElementById("stravaReloadBtn").addEventListener("click", () => {
-    stravaState.activities = null;
-    loadStravaActivities();
-  });
-
-  if (stravaState.loading) {
-    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty">Carregando…</div></div></div>`;
-    refreshed.hidden = true;
-    return;
-  }
-
-  if (!stravaState.activities) {
-    list.innerHTML = "";
-    refreshed.hidden = true;
-    return;
-  }
-
-  if (stravaState.activities.error) {
-    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty" style="color:#c0392b;">Erro: ${escapeHtmlClient(stravaState.activities.error)}</div></div></div>`;
-    refreshed.hidden = true;
-    return;
-  }
-
-  const acts = stravaState.activities.activities || [];
-
-  /* Bucket por dia da semana atual + categoria. */
-  const weekKeys = [];
+/* Constrói buckets por dia (do Strava + plano) usados em render e prompt. */
+function buildWeekBuckets(weekKeys, acts) {
   const buckets = {};
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(mon); d.setDate(mon.getDate() + i);
-    const k = fmtDateKey(d);
-    weekKeys.push({ date: d, key: k });
-    buckets[k] = { corrida: null, yoga: null, musculacao: null, outras: [] };
-  }
-
+  weekKeys.forEach(({ key }) => {
+    buckets[key] = {
+      corrida: null, yoga: null, musculacao: null, outras: [],
+      plan: stravaState.plan[key] || null
+    };
+  });
   acts.forEach(a => {
     const isoLocal = a.start_date_local || a.start_date || "";
-    const key = isoLocal.slice(0, 10);  /* "YYYY-MM-DD" */
+    const key = isoLocal.slice(0, 10);
     if (!buckets[key]) return;
     const cat = mapStravaCategory(a);
     const kcal = estimateKcal(a);
@@ -1443,14 +1559,122 @@ function renderStrava() {
       b.outras.push({ name: a.name || a.type, kcal });
     }
   });
+  return buckets;
+}
 
-  const filter = stravaState.filter || "all";
-  const showCat = (c) => filter === "all" || filter === c;
+function renderStrava() {
+  const status = document.getElementById("stravaStatus");
+  const goalsEl = document.getElementById("stravaGoals");
+  const actions = document.getElementById("stravaActions");
+  const list = document.getElementById("stravaActivities");
+  const refreshed = document.getElementById("stravaRefreshed");
+  if (!status) return;
 
-  const todayKey = fmtDateKey(new Date());
-  const nowMs = Date.now();
+  if (stravaState.connected === null) {
+    status.textContent = "Verificando…";
+    goalsEl.innerHTML = "";
+    actions.innerHTML = "";
+    list.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  if (!stravaState.connected) {
+    status.innerHTML = "Não conectado ao Strava. Conecta pra ver a semana inteira aqui.";
+    goalsEl.innerHTML = "";
+    actions.innerHTML = `<a class="primary" href="${STRAVA_AUTHORIZE_URL}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+      <span class="material-symbols-outlined btn-ico">link</span> Conectar Strava</a>`;
+    list.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  const mon = mondayOfCurrentWeek();
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const headerRange = `${mon.getDate().toString().padStart(2,"0")}/${(mon.getMonth()+1).toString().padStart(2,"0")} – ${sun.getDate().toString().padStart(2,"0")}/${(sun.getMonth()+1).toString().padStart(2,"0")}`;
+  status.innerHTML = `<strong>Semana ${headerRange}</strong> · segunda a domingo`;
+
+  if (stravaState.loading || stravaState.activities === null) {
+    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty">Carregando…</div></div></div>`;
+    goalsEl.innerHTML = "";
+    actions.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  if (stravaState.activities.error) {
+    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty" style="color:#c0392b;">Erro: ${escapeHtmlClient(stravaState.activities.error)}</div></div></div>`;
+    goalsEl.innerHTML = "";
+    actions.innerHTML = "";
+    refreshed.hidden = true;
+    return;
+  }
+
+  const acts = stravaState.activities.activities || [];
+
+  /* Semana sequencial (seg→dom) e key cache. */
+  const weekKeys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    weekKeys.push({ date: d, key: fmtDateKey(d) });
+  }
+  const buckets = buildWeekBuckets(weekKeys, acts);
+
+  /* Metas + progresso. */
+  const goals = stravaState.goals;
+  let doneRunKm = 0, doneYogaCount = 0;
+  weekKeys.forEach(({ key }) => {
+    const b = buckets[key];
+    if (b.corrida) doneRunKm += b.corrida.km;
+    if (b.yoga)    doneYogaCount += b.yoga.count;
+    if (b.plan && b.plan.corrida) doneRunKm += b.plan.corrida.km || 0;
+    if (b.plan && b.plan.yoga)    doneYogaCount += b.plan.yoga.count || 0;
+  });
+  const runPct = goals.runKm > 0 ? Math.min(100, (doneRunKm / goals.runKm) * 100) : 0;
+  const yogaPct = goals.yogaCount > 0 ? Math.min(100, (doneYogaCount / goals.yogaCount) * 100) : 0;
+
+  goalsEl.innerHTML = `
+    <div class="g-title">Metas da semana</div>
+    <div class="g-row">
+      <div class="g-name">Corrida</div>
+      <div class="g-amt">${doneRunKm.toFixed(1)} / <input type="number" id="goalRunInput" value="${goals.runKm}" min="0" max="200" step="1" /> km</div>
+      <div class="g-bar"><i class="${runPct >= 100 ? 'full' : ''}" style="width:${runPct.toFixed(1)}%"></i></div>
+    </div>
+    <div class="g-row">
+      <div class="g-name">Hot yoga</div>
+      <div class="g-amt">${doneYogaCount} / <input type="number" id="goalYogaInput" value="${goals.yogaCount}" min="0" max="14" step="1" /> ×</div>
+      <div class="g-bar"><i class="${yogaPct >= 100 ? 'full' : ''}" style="width:${yogaPct.toFixed(1)}%"></i></div>
+    </div>
+  `;
+  document.getElementById("goalRunInput").addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v) && v >= 0) { stravaState.goals.runKm = v; saveGoals(stravaState.goals); renderStrava(); }
+  });
+  document.getElementById("goalYogaInput").addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v) && v >= 0) { stravaState.goals.yogaCount = v; saveGoals(stravaState.goals); renderStrava(); }
+  });
+
+  /* Action row: atualizar + sugerir faltantes. */
+  const remainingDays = getRemainingDays(weekKeys, buckets);
+  const canSuggestRemaining = remainingDays.length > 0;
+  const sugRemBusy = stravaState.suggesting === "remaining";
+  actions.innerHTML = `<div class="strava-action-row">
+    <button id="stravaReloadBtn"><span class="material-symbols-outlined btn-ico">refresh</span> Atualizar</button>
+    <button id="stravaSuggestRemainingBtn" ${canSuggestRemaining && !sugRemBusy ? "" : "disabled"}>
+      <span class="material-symbols-outlined btn-ico">auto_awesome</span>
+      ${sugRemBusy ? "Sugerindo…" : "Sugerir faltantes"}
+    </button>
+  </div>`;
+  document.getElementById("stravaReloadBtn").addEventListener("click", () => {
+    stravaState.activities = null;
+    loadStravaActivities();
+  });
+  document.getElementById("stravaSuggestRemainingBtn").addEventListener("click", suggestRemainingDays);
 
   /* Pills de filtro. */
+  const filter = stravaState.filter || "all";
+  const showCat = (c) => filter === "all" || filter === c;
   const pills = `<div class="strava-filter">
     <button class="filter-pill ${filter === 'all' ? 'on' : ''}" data-cat="all">Tudo</button>
     <button class="filter-pill ${filter === 'corrida' ? 'on' : ''}" data-cat="corrida">Corrida</button>
@@ -1458,45 +1682,11 @@ function renderStrava() {
     <button class="filter-pill ${filter === 'musculacao' ? 'on' : ''}" data-cat="musculacao">Musculação</button>
   </div>`;
 
-  /* Cards de cada dia. */
-  const daysHtml = weekKeys.map(({ date, key }) => {
-    const b = buckets[key];
-    const isToday = (key === todayKey);
-    const isFuture = date.getTime() > nowMs && !isToday;
-    const dayLabel = `${DAYS_SHORT[date.getDay()]} ${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}`;
-
-    const rows = [];
-    ["corrida","yoga","musculacao"].forEach(c => {
-      if (b[c] && showCat(c)) {
-        const cfg = CAT_CONFIG[c];
-        rows.push(`<div class="d-row">
-          <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
-          <span class="d-cat">${cfg.label}</span>
-          <span class="d-stat">${cfg.stat(b[c])}</span>
-        </div>`);
-      }
-    });
-    if (filter === "all") {
-      b.outras.forEach(o => {
-        rows.push(`<div class="d-row">
-          <span class="material-symbols-outlined d-ico">exercise</span>
-          <span class="d-cat">${escapeHtmlClient(o.name)}</span>
-          <span class="d-stat">${o.kcal ? o.kcal + ' kcal' : '—'}</span>
-        </div>`);
-      });
-    }
-    if (rows.length === 0) {
-      rows.push(`<div class="d-row d-empty">${isFuture ? "—" : "sem registro"}</div>`);
-    }
-
-    return `<div class="strava-day ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}">
-      <div class="d-header">
-        <span class="d-name">${dayLabel}</span>
-        ${isToday ? '<span class="d-flag">hoje</span>' : ''}
-      </div>
-      <div class="d-rows">${rows.join('')}</div>
-    </div>`;
-  }).join('');
+  /* Cards de cada dia — invertido (mais recente em cima). */
+  const todayKey = fmtDateKey(new Date());
+  const nowMs = Date.now();
+  const reversed = [...weekKeys].reverse();
+  const daysHtml = reversed.map(({ date, key }) => renderDayCard(date, key, buckets[key], { todayKey, nowMs, showCat, filter })).join('');
 
   /* Totais da semana. */
   const totals = { corrida: { km: 0, kcal: 0 }, yoga: { kcal: 0, count: 0 }, musculacao: { min: 0, kcal: 0 } };
@@ -1505,8 +1695,10 @@ function renderStrava() {
     if (b.corrida)    { totals.corrida.km += b.corrida.km; totals.corrida.kcal += b.corrida.kcal; }
     if (b.yoga)       { totals.yoga.kcal += b.yoga.kcal; totals.yoga.count += b.yoga.count; }
     if (b.musculacao) { totals.musculacao.min += b.musculacao.min; totals.musculacao.kcal += b.musculacao.kcal; }
+    if (b.plan && b.plan.corrida)    { totals.corrida.km += b.plan.corrida.km || 0; totals.corrida.kcal += planKcal("corrida", b.plan.corrida); }
+    if (b.plan && b.plan.yoga)       { totals.yoga.count += b.plan.yoga.count || 0; totals.yoga.kcal += planKcal("yoga", b.plan.yoga); }
+    if (b.plan && b.plan.musculacao) { totals.musculacao.min += b.plan.musculacao.min || 0; totals.musculacao.kcal += planKcal("musculacao", b.plan.musculacao); }
   });
-
   const totalRows = [];
   if (showCat("corrida") && totals.corrida.km > 0) {
     totalRows.push(`<div class="t-row"><span>Corrida</span><span>${totals.corrida.km.toFixed(1)} km · ${totals.corrida.kcal} kcal</span></div>`);
@@ -1518,17 +1710,11 @@ function renderStrava() {
     totalRows.push(`<div class="t-row"><span>Musculação</span><span>${Math.round(totals.musculacao.min)} min · ${totals.musculacao.kcal} kcal</span></div>`);
   }
   const totalsHtml = totalRows.length > 0
-    ? `<div class="strava-totals"><div class="t-head">Total da semana</div>${totalRows.join('')}</div>`
+    ? `<div class="strava-totals"><div class="t-head">Total da semana (realizado + planejado)</div>${totalRows.join('')}</div>`
     : `<div class="strava-totals"><div class="t-head">Total da semana</div><div class="t-row"><span style="color:var(--voltz-dim);">Nada registrado ainda nesta semana.</span><span></span></div></div>`;
 
   list.innerHTML = pills + `<div class="strava-week">${daysHtml}</div>` + totalsHtml;
-
-  list.querySelectorAll('.filter-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      stravaState.filter = btn.dataset.cat;
-      renderStrava();
-    });
-  });
+  attachStravaListeners(list);
 
   const ref = stravaState.activities.refreshed;
   if (ref) {
@@ -1540,6 +1726,399 @@ function renderStrava() {
   } else {
     refreshed.hidden = true;
   }
+}
+
+function renderDayCard(date, key, b, ctx) {
+  const isToday = (key === ctx.todayKey);
+  const isFuture = date.getTime() > ctx.nowMs && !isToday;
+  const dayLabel = `${DAYS_SHORT[date.getDay()]} ${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}`;
+  const sugBusy = stravaState.suggesting === "today" || stravaState.suggesting === key;
+
+  const rows = [];
+  /* Strava real */
+  ["corrida","yoga","musculacao"].forEach(c => {
+    if (b[c] && ctx.showCat(c)) {
+      const cfg = CAT_CONFIG[c];
+      rows.push(`<div class="d-row">
+        <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
+        <span class="d-cat">${cfg.label}</span>
+        <span class="d-stat">${cfg.stat(b[c])}</span>
+      </div>`);
+    }
+  });
+  if (ctx.filter === "all") {
+    b.outras.forEach(o => {
+      rows.push(`<div class="d-row">
+        <span class="material-symbols-outlined d-ico">exercise</span>
+        <span class="d-cat">${escapeHtmlClient(o.name)}</span>
+        <span class="d-stat">${o.kcal ? o.kcal + ' kcal' : '—'}</span>
+      </div>`);
+    });
+  }
+  /* Planos */
+  if (b.plan) {
+    ["corrida","yoga","musculacao"].forEach(c => {
+      if (b.plan[c] && ctx.showCat(c)) {
+        const cfg = CAT_CONFIG[c];
+        const kcal = planKcal(c, b.plan[c]);
+        const statTxt = c === "corrida" ? `${(b.plan[c].km||0).toFixed(1)} km · ${kcal} kcal`
+                      : c === "yoga"    ? `${b.plan[c].count > 1 ? b.plan[c].count + "× · " : ""}${kcal} kcal`
+                      :                   `${Math.round(b.plan[c].min||0)} min · ${kcal} kcal`;
+        rows.push(`<div class="d-row d-plan">
+          <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
+          <span class="d-cat">${cfg.label}</span>
+          <span class="d-stat">${statTxt}</span>
+          <button class="d-del" data-del-plan="${key}" data-del-cat="${c}" title="Remover plano">×</button>
+        </div>`);
+      }
+    });
+  }
+
+  if (rows.length === 0) {
+    rows.push(`<div class="d-row d-empty">${isFuture ? "—" : "sem registro"}</div>`);
+  }
+
+  /* Sugestão pendente. */
+  let pendingHtml = "";
+  const pending = stravaState.pendingByDay[key];
+  if (pending) {
+    pendingHtml = renderPendingSuggestion(key, pending);
+  }
+
+  const suggestBtn = isToday
+    ? `<button class="d-suggest-btn" id="suggestTodayBtn" ${sugBusy ? "disabled" : ""}>
+        <span class="material-symbols-outlined">auto_awesome</span>
+        ${sugBusy ? "..." : "Sugerir treino"}
+      </button>`
+    : "";
+
+  return `<div class="strava-day ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}">
+    <div class="d-header">
+      <span class="d-name">${dayLabel}</span>
+      ${isToday ? '<span class="d-flag">hoje</span>' : ''}
+      ${suggestBtn}
+    </div>
+    <div class="d-rows">${rows.join('')}</div>
+    ${pendingHtml}
+  </div>`;
+}
+
+function renderPendingSuggestion(key, p) {
+  const cat = p.categoria;
+  const cfg = CAT_CONFIG[cat];
+  const label = cfg ? cfg.label : (cat === "descanso" ? "Descanso" : cat);
+  const kcal = planKcal(cat, p);
+  const statTxt = cat === "corrida" ? `${(p.km||0).toFixed(1)} km · ${kcal} kcal`
+                : cat === "yoga"    ? `${kcal} kcal`
+                : cat === "musculacao" ? `${Math.round(p.min||0)} min · ${kcal} kcal`
+                : "";
+
+  if (p.editing) {
+    return `<div class="d-suggestion">
+      <div class="s-edit-grid">
+        <select data-edit-cat="${key}">
+          <option value="corrida" ${cat==="corrida"?"selected":""}>Corrida</option>
+          <option value="yoga" ${cat==="yoga"?"selected":""}>Yoga</option>
+          <option value="musculacao" ${cat==="musculacao"?"selected":""}>Musculação</option>
+          <option value="descanso" ${cat==="descanso"?"selected":""}>Descanso</option>
+        </select>
+        <input type="number" data-edit-km="${key}" placeholder="km" value="${p.km || ''}" min="0" max="42" step="0.5" />
+        <input type="number" data-edit-min="${key}" placeholder="min" value="${p.min || ''}" min="0" max="180" step="5" />
+      </div>
+      <div class="s-actions">
+        <button class="s-accept" data-action="save-edit" data-key="${key}">Salvar</button>
+        <button data-action="refuse" data-key="${key}">Cancelar</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="d-suggestion">
+    <div class="s-row">
+      <span class="material-symbols-outlined d-ico" style="color:var(--voltz-dim);">${cfg ? cfg.glyph : "lightbulb"}</span>
+      <span class="s-cat">${label}</span>
+      <span class="s-stat">${statTxt}</span>
+    </div>
+    ${p.motivo ? `<div class="s-motivo">${escapeHtmlClient(p.motivo)}</div>` : ""}
+    <div class="s-actions">
+      <button class="s-accept" data-action="accept" data-key="${key}">Aceitar</button>
+      <button data-action="edit" data-key="${key}">Editar</button>
+      <button class="s-refuse" data-action="refuse" data-key="${key}">Recusar</button>
+    </div>
+  </div>`;
+}
+
+function attachStravaListeners(root) {
+  root.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      stravaState.filter = btn.dataset.cat;
+      renderStrava();
+    });
+  });
+  const todayBtn = document.getElementById("suggestTodayBtn");
+  if (todayBtn) todayBtn.addEventListener("click", suggestTodayWorkout);
+
+  root.querySelectorAll('button[data-del-plan]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.delPlan;
+      const c = btn.dataset.delCat;
+      if (stravaState.plan[k]) {
+        delete stravaState.plan[k][c];
+        if (Object.keys(stravaState.plan[k]).length === 0) delete stravaState.plan[k];
+        savePlan(stravaState.plan);
+        renderStrava();
+      }
+    });
+  });
+  root.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      const action = btn.dataset.action;
+      if (action === "accept")     acceptSuggestion(key);
+      else if (action === "edit")  editSuggestion(key);
+      else if (action === "refuse") refuseSuggestion(key);
+      else if (action === "save-edit") saveEditedSuggestion(key);
+    });
+  });
+}
+
+/* Lista de dias que precisam de sugestão (futuro + hoje, sem Strava real
+   nem plano nem sugestão pendente). */
+function getRemainingDays(weekKeys, buckets) {
+  const todayKey = fmtDateKey(new Date());
+  const now = Date.now();
+  const out = [];
+  weekKeys.forEach(({ date, key }) => {
+    const b = buckets[key];
+    const isToday = key === todayKey;
+    const isFutureOrToday = date.getTime() >= new Date().setHours(0,0,0,0);
+    if (!isFutureOrToday) return;
+    const hasReal = !!(b.corrida || b.yoga || b.musculacao || (b.outras && b.outras.length));
+    const hasPlan = !!(b.plan && Object.keys(b.plan).length);
+    const hasPending = !!stravaState.pendingByDay[key];
+    if (hasReal || hasPlan || hasPending) return;
+    out.push({ date, key });
+  });
+  return out;
+}
+
+/* ====== STRAVA: prompts e chamadas de IA ====== */
+
+function buildWeekContext() {
+  const mon = mondayOfCurrentWeek();
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const weekKeys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    weekKeys.push({ date: d, key: fmtDateKey(d) });
+  }
+  const acts = (stravaState.activities && stravaState.activities.activities) || [];
+  const buckets = buildWeekBuckets(weekKeys, acts);
+
+  const lines = [];
+  let doneRun = 0, doneYoga = 0, doneLiftMin = 0;
+  const planLines = [];
+  const todayKey = fmtDateKey(new Date());
+
+  weekKeys.forEach(({ date, key }) => {
+    const dayName = DAYS_SHORT[date.getDay()];
+    const dayLabel = `${dayName} ${key}${key === todayKey ? " (hoje)" : ""}`;
+    const b = buckets[key];
+    const parts = [];
+    if (b.corrida) { parts.push(`corrida ${b.corrida.km.toFixed(1)}km`); doneRun += b.corrida.km; }
+    if (b.yoga)    { parts.push(`hot yoga ${b.yoga.count}× (~${b.yoga.count*60}min)`); doneYoga += b.yoga.count; }
+    if (b.musculacao) { parts.push(`musculação ${Math.round(b.musculacao.min)}min`); doneLiftMin += b.musculacao.min; }
+    if (b.outras.length) parts.push(b.outras.map(o => o.name).join(", "));
+    if (parts.length) lines.push(`- ${dayLabel}: ${parts.join("; ")}`);
+    else lines.push(`- ${dayLabel}: (sem registro)`);
+    if (b.plan) {
+      const pl = [];
+      if (b.plan.corrida) { pl.push(`corrida ${(b.plan.corrida.km||0).toFixed(1)}km`); doneRun += b.plan.corrida.km || 0; }
+      if (b.plan.yoga)    { pl.push(`hot yoga ${b.plan.yoga.count||1}×`); doneYoga += b.plan.yoga.count || 0; }
+      if (b.plan.musculacao) { pl.push(`musculação ${Math.round(b.plan.musculacao.min||0)}min`); doneLiftMin += b.plan.musculacao.min || 0; }
+      if (pl.length) planLines.push(`- ${dayLabel}: ${pl.join("; ")} (planejado)`);
+    }
+  });
+
+  const goals = stravaState.goals;
+  return {
+    headerRange: `${mon.toISOString().slice(0,10)} (seg) → ${sun.toISOString().slice(0,10)} (dom)`,
+    todayKey,
+    todayName: DAYS_SHORT[new Date().getDay()],
+    dayLines: lines.join("\n"),
+    planLines: planLines.length ? planLines.join("\n") : "(nenhum)",
+    doneRunKm: doneRun.toFixed(1),
+    doneYoga,
+    doneLiftMin: Math.round(doneLiftMin),
+    goalRunKm: goals.runKm,
+    goalYoga: goals.yogaCount,
+    remainingRunKm: Math.max(0, goals.runKm - doneRun).toFixed(1),
+    remainingYoga: Math.max(0, goals.yogaCount - doneYoga)
+  };
+}
+
+const SUGGESTION_PRINCIPLES = `Princípios:
+- Não sugerir corrida em 2 dias seguidos (cuidar do desgaste).
+- Hot yoga pode ser em dias consecutivos sem problema.
+- Pelo menos 1 dia de descanso por semana.
+- Distribuir as corridas ao longo da semana.
+- Se faltam X km em N dias úteis, sugira corridas próximas de X/N km cada.
+- Yoga geralmente em dias sem corrida pesada, ou em dia leve.
+- Musculação é complementar — só sugerir se o usuário já vinha fazendo na semana.`;
+
+async function suggestTodayWorkout() {
+  if (stravaState.suggesting) return;
+  stravaState.suggesting = "today";
+  renderStrava();
+  try {
+    const ctx = buildWeekContext();
+    const prompt = `Você é um coach de treinos. Hoje é ${ctx.todayName} ${ctx.todayKey}.
+Semana atual: ${ctx.headerRange}.
+
+Metas semanais do usuário:
+- Corrida: ${ctx.goalRunKm} km
+- Hot yoga: ${ctx.goalYoga} sessões
+
+Status da semana até agora (realizado + planejado):
+${ctx.dayLines}
+${ctx.planLines !== "(nenhum)" ? "Planos no app:\n" + ctx.planLines : ""}
+
+Resta atingir:
+- Corrida: ${ctx.remainingRunKm} km
+- Hot yoga: ${ctx.remainingYoga} sessões
+
+Perfil: 43 anos, 163cm, 72kg, foco em perda de peso e disposição.
+
+${SUGGESTION_PRINCIPLES}
+
+Sugira UM treino para hoje (${ctx.todayKey}). Responda APENAS com JSON, sem markdown:
+{"categoria":"corrida"|"yoga"|"musculacao"|"descanso","km":N,"min":N,"motivo":"explicação breve em pt-br, no máximo 2 frases"}
+Use "km" só quando categoria for corrida. Use "min" só quando for musculacao. Yoga não precisa de km/min.
+Se categoria for descanso, omita km/min.`;
+    const out = await callClaude(prompt, 600);
+    const j = parseJSON(out);
+    if (!j || !j.categoria) throw new Error("Sugestão inválida.");
+    stravaState.pendingByDay[ctx.todayKey] = sanitizeSuggestion(j);
+  } catch (e) {
+    alert("Não consegui sugerir agora — " + (e.message || e) + ". Tente de novo.");
+  }
+  stravaState.suggesting = null;
+  renderStrava();
+}
+
+async function suggestRemainingDays() {
+  if (stravaState.suggesting) return;
+  stravaState.suggesting = "remaining";
+  renderStrava();
+  try {
+    const ctx = buildWeekContext();
+    const mon = mondayOfCurrentWeek();
+    const weekKeys = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      weekKeys.push({ date: d, key: fmtDateKey(d) });
+    }
+    const acts = (stravaState.activities && stravaState.activities.activities) || [];
+    const buckets = buildWeekBuckets(weekKeys, acts);
+    const remaining = getRemainingDays(weekKeys, buckets);
+    if (remaining.length === 0) {
+      alert("Não há dias restantes para sugerir.");
+      stravaState.suggesting = null;
+      renderStrava();
+      return;
+    }
+    const datasList = remaining.map(r => {
+      const n = DAYS_SHORT[r.date.getDay()];
+      return `${n} ${r.key}`;
+    }).join(", ");
+
+    const prompt = `Você é um coach de treinos. Hoje é ${ctx.todayName} ${ctx.todayKey}.
+Semana: ${ctx.headerRange}.
+
+Metas semanais do usuário:
+- Corrida: ${ctx.goalRunKm} km
+- Hot yoga: ${ctx.goalYoga} sessões
+
+Status da semana até agora (realizado + planejado):
+${ctx.dayLines}
+${ctx.planLines !== "(nenhum)" ? "Planos no app:\n" + ctx.planLines : ""}
+
+Resta atingir:
+- Corrida: ${ctx.remainingRunKm} km
+- Hot yoga: ${ctx.remainingYoga} sessões
+
+Perfil: 43 anos, 163cm, 72kg, foco em perda de peso e disposição.
+
+${SUGGESTION_PRINCIPLES}
+
+Dias para os quais devo sugerir treino (em ordem): ${datasList}.
+Distribua os treinos para tentar atingir as metas semanais, respeitando os princípios.
+Responda APENAS com JSON, sem markdown:
+{"plans":[
+  {"data":"YYYY-MM-DD","categoria":"corrida"|"yoga"|"musculacao"|"descanso","km":N,"min":N,"motivo":"explicação breve"},
+  ...
+]}
+Inclua UMA entrada para cada data da lista, na mesma ordem. Use "km" só pra corrida, "min" só pra musculacao.`;
+    const out = await callClaude(prompt, 1400);
+    const j = parseJSON(out);
+    const plans = (j && Array.isArray(j.plans)) ? j.plans : [];
+    plans.forEach(p => {
+      if (!p || !p.data || !p.categoria) return;
+      stravaState.pendingByDay[p.data] = sanitizeSuggestion(p);
+    });
+    if (plans.length === 0) throw new Error("Nenhuma sugestão recebida.");
+  } catch (e) {
+    alert("Não consegui sugerir agora — " + (e.message || e) + ". Tente de novo.");
+  }
+  stravaState.suggesting = null;
+  renderStrava();
+}
+
+function sanitizeSuggestion(p) {
+  const out = { categoria: p.categoria, motivo: p.motivo ? String(p.motivo).slice(0, 200) : "" };
+  if (p.km != null) out.km = Math.max(0, Number(p.km) || 0);
+  if (p.min != null) out.min = Math.max(0, Number(p.min) || 0);
+  return out;
+}
+
+function acceptSuggestion(key) {
+  const p = stravaState.pendingByDay[key];
+  if (!p) return;
+  if (p.categoria === "descanso") {
+    /* Descanso = só limpa pending, não vira plano. */
+    delete stravaState.pendingByDay[key];
+    renderStrava();
+    return;
+  }
+  if (!stravaState.plan[key]) stravaState.plan[key] = {};
+  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0 };
+  else if (p.categoria === "yoga")  stravaState.plan[key].yoga = { count: 1 };
+  else if (p.categoria === "musculacao") stravaState.plan[key].musculacao = { min: p.min || 0 };
+  savePlan(stravaState.plan);
+  delete stravaState.pendingByDay[key];
+  renderStrava();
+}
+
+function editSuggestion(key) {
+  if (!stravaState.pendingByDay[key]) return;
+  stravaState.pendingByDay[key].editing = true;
+  renderStrava();
+}
+
+function saveEditedSuggestion(key) {
+  const catSel = document.querySelector(`select[data-edit-cat="${key}"]`);
+  const kmIn = document.querySelector(`input[data-edit-km="${key}"]`);
+  const minIn = document.querySelector(`input[data-edit-min="${key}"]`);
+  if (!catSel) return;
+  const cat = catSel.value;
+  const km = kmIn && kmIn.value !== "" ? Number(kmIn.value) : null;
+  const min = minIn && minIn.value !== "" ? Number(minIn.value) : null;
+  stravaState.pendingByDay[key] = { categoria: cat, km: km == null ? undefined : km, min: min == null ? undefined : min, motivo: stravaState.pendingByDay[key].motivo || "" };
+  acceptSuggestion(key);
+}
+
+function refuseSuggestion(key) {
+  delete stravaState.pendingByDay[key];
+  renderStrava();
 }
 
 function escapeHtmlClient(s) {

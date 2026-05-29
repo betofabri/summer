@@ -367,8 +367,7 @@
   .d-suggestion .s-actions .s-accept:hover { background: var(--secondary); }
   .d-suggestion .s-actions .s-refuse:hover { color: #c0392b; border-color: #c0392b; }
   .d-suggestion .s-edit-grid {
-    display: grid; grid-template-columns: 1fr auto auto;
-    gap: 6px; align-items: center; margin-top: 6px;
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
   }
   .d-suggestion .s-edit-grid select,
   .d-suggestion .s-edit-grid input {
@@ -378,7 +377,9 @@
     background: var(--surface);
     color: var(--primary);
   }
-  .d-suggestion .s-edit-grid input { width: 64px; text-align: right; }
+  .d-suggestion .s-edit-grid select[data-edit-cat] { flex: 1 1 110px; }
+  .d-suggestion .s-edit-grid select[data-edit-tipo] { flex: 0 0 56px; }
+  .d-suggestion .s-edit-grid input { flex: 0 0 70px; text-align: right; }
 
   .strava-refreshed {
     margin-top: 12px; padding: 12px 14px; border-radius: var(--r);
@@ -767,7 +768,7 @@ const BASE_FAT = 64;            /* g de gordura (alvo) */
 const REFEED_RATIO = 0.65;      /* fração da energia do treino devolvida como comida */
 
 const WORKOUTS = {
-  yoga: { label: "Hot yoga",   glyph: "self_improvement", kcal: () => 320 },
+  yoga: { label: "Hot yoga",   glyph: "self_improvement", kcal: () => 375 },
   run:  { label: "Corrida",    glyph: "directions_run",   kcal: (o) => Math.round((o.km || 5) * 75) },
   lift: { label: "Musculação", glyph: "fitness_center",   kcal: (o) => Math.round((o.min || 40) * 5) }
 };
@@ -1422,7 +1423,7 @@ function estimateKcal(act) {
   if (act.calories && act.calories > 0) return Math.round(act.calories);
   const cat = mapStravaCategory(act);
   if (cat === "corrida")    return Math.round(75 * ((act.distance_m || 0) / 1000));
-  if (cat === "yoga")       return 320;
+  if (cat === "yoga")       return 375;
   if (cat === "musculacao") return Math.round(5 * ((act.moving_time_s || 0) / 60));
   return 0;
 }
@@ -1484,7 +1485,7 @@ const stravaState = {
 /* Estima kcal de um item planejado, usando a mesma heurística. */
 function planKcal(cat, item) {
   if (cat === "corrida")    return Math.round(75 * (item.km || 0));
-  if (cat === "yoga")       return 320 * (item.count || 1);
+  if (cat === "yoga")       return 375 * (item.count || 1);
   if (cat === "musculacao") return Math.round(5 * (item.min || 0));
   return 0;
 }
@@ -1761,12 +1762,13 @@ function renderDayCard(date, key, b, ctx) {
       if (b.plan[c] && ctx.showCat(c)) {
         const cfg = CAT_CONFIG[c];
         const kcal = planKcal(c, b.plan[c]);
+        const tipo = c === "corrida" && b.plan[c].tipo ? ` ${b.plan[c].tipo}` : "";
         const statTxt = c === "corrida" ? `${(b.plan[c].km||0).toFixed(1)} km · ${kcal} kcal`
                       : c === "yoga"    ? `${b.plan[c].count > 1 ? b.plan[c].count + "× · " : ""}${kcal} kcal`
                       :                   `${Math.round(b.plan[c].min||0)} min · ${kcal} kcal`;
         rows.push(`<div class="d-row d-plan">
           <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
-          <span class="d-cat">${cfg.label}</span>
+          <span class="d-cat">${cfg.label}${tipo}</span>
           <span class="d-stat">${statTxt}</span>
           <button class="d-del" data-del-plan="${key}" data-del-cat="${c}" title="Remover plano">×</button>
         </div>`);
@@ -1806,7 +1808,8 @@ function renderDayCard(date, key, b, ctx) {
 function renderPendingSuggestion(key, p) {
   const cat = p.categoria;
   const cfg = CAT_CONFIG[cat];
-  const label = cfg ? cfg.label : (cat === "descanso" ? "Descanso" : cat);
+  const tipo = cat === "corrida" && p.tipo ? ` ${p.tipo}` : "";
+  const label = cfg ? cfg.label + tipo : (cat === "descanso" ? "Descanso" : cat);
   const kcal = planKcal(cat, p);
   const statTxt = cat === "corrida" ? `${(p.km||0).toFixed(1)} km · ${kcal} kcal`
                 : cat === "yoga"    ? `${kcal} kcal`
@@ -1821,6 +1824,12 @@ function renderPendingSuggestion(key, p) {
           <option value="yoga" ${cat==="yoga"?"selected":""}>Yoga</option>
           <option value="musculacao" ${cat==="musculacao"?"selected":""}>Musculação</option>
           <option value="descanso" ${cat==="descanso"?"selected":""}>Descanso</option>
+        </select>
+        <select data-edit-tipo="${key}" title="Tipo (só corrida)">
+          <option value="" ${!p.tipo?"selected":""}>—</option>
+          <option value="A" ${p.tipo==="A"?"selected":""}>A</option>
+          <option value="B" ${p.tipo==="B"?"selected":""}>B</option>
+          <option value="C" ${p.tipo==="C"?"selected":""}>C</option>
         </select>
         <input type="number" data-edit-km="${key}" placeholder="km" value="${p.km || ''}" min="0" max="42" step="0.5" />
         <input type="number" data-edit-min="${key}" placeholder="min" value="${p.min || ''}" min="0" max="180" step="5" />
@@ -1956,14 +1965,23 @@ function buildWeekContext() {
   };
 }
 
-const SUGGESTION_PRINCIPLES = `Princípios:
-- Não sugerir corrida em 2 dias seguidos (cuidar do desgaste).
-- Hot yoga pode ser em dias consecutivos sem problema.
-- Pelo menos 1 dia de descanso por semana.
-- Distribuir as corridas ao longo da semana.
-- Se faltam X km em N dias úteis, sugira corridas próximas de X/N km cada.
-- Yoga geralmente em dias sem corrida pesada, ou em dia leve.
-- Musculação é complementar — só sugerir se o usuário já vinha fazendo na semana.`;
+const SUGGESTION_PRINCIPLES = `Estratégia de treino do Roberto:
+
+CORRIDA — 5 sessões na semana, ~25 km no total, em três tipos:
+  - Tipo A (volume baixo, ~3 km): 2× por semana, dias leves
+  - Tipo B (volume médio, ~4-5 km): 2× por semana
+  - Tipo C (longão, 8 a 12 km): 1× por semana, SEMPRE no SÁBADO
+  Total da soma: 2×A + 2×B + 1×C ≈ 25 km.
+
+HOT YOGA — 4× por semana, cada sessão = 375 kcal.
+
+OUTROS PRINCÍPIOS:
+- Pelo menos 1 dia de descanso por semana (geralmente segunda ou sexta antes do longão).
+- Não fazer corrida B ou C em dois dias consecutivos. Corrida A pode vir no dia seguinte de B.
+- Yoga pode ser em qualquer dia, inclusive consecutivos, e combina bem com dia de corrida A.
+- Musculação só sugerir se já vinha aparecendo na semana.
+
+QUANDO SUGERIR CORRIDA — informe "tipo": "A" | "B" | "C" no JSON, e o "km" coerente com o tipo.`;
 
 async function suggestTodayWorkout() {
   if (stravaState.suggesting) return;
@@ -1991,9 +2009,9 @@ Perfil: 43 anos, 163cm, 72kg, foco em perda de peso e disposição.
 ${SUGGESTION_PRINCIPLES}
 
 Sugira UM treino para hoje (${ctx.todayKey}). Responda APENAS com JSON, sem markdown:
-{"categoria":"corrida"|"yoga"|"musculacao"|"descanso","km":N,"min":N,"motivo":"explicação breve em pt-br, no máximo 2 frases"}
-Use "km" só quando categoria for corrida. Use "min" só quando for musculacao. Yoga não precisa de km/min.
-Se categoria for descanso, omita km/min.`;
+{"categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","km":N,"min":N,"motivo":"explicação breve em pt-br, no máximo 2 frases"}
+Inclua "tipo" SÓ quando categoria for "corrida". Use "km" só pra corrida; "min" só pra musculacao. Yoga não precisa de km/min.
+Se categoria for descanso, omita km/min/tipo.`;
     const out = await callClaude(prompt, 600);
     const j = parseJSON(out);
     if (!j || !j.categoria) throw new Error("Sugestão inválida.");
@@ -2054,10 +2072,11 @@ Dias para os quais devo sugerir treino (em ordem): ${datasList}.
 Distribua os treinos para tentar atingir as metas semanais, respeitando os princípios.
 Responda APENAS com JSON, sem markdown:
 {"plans":[
-  {"data":"YYYY-MM-DD","categoria":"corrida"|"yoga"|"musculacao"|"descanso","km":N,"min":N,"motivo":"explicação breve"},
+  {"data":"YYYY-MM-DD","categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","km":N,"min":N,"motivo":"explicação breve"},
   ...
 ]}
-Inclua UMA entrada para cada data da lista, na mesma ordem. Use "km" só pra corrida, "min" só pra musculacao.`;
+Inclua UMA entrada para cada data da lista, na mesma ordem. Use "km"/"tipo" só pra corrida; "min" só pra musculacao.
+Lembre-se: o longão (tipo C, até 12 km) é SEMPRE no sábado.`;
     const out = await callClaude(prompt, 1400);
     const j = parseJSON(out);
     const plans = (j && Array.isArray(j.plans)) ? j.plans : [];
@@ -2077,6 +2096,7 @@ function sanitizeSuggestion(p) {
   const out = { categoria: p.categoria, motivo: p.motivo ? String(p.motivo).slice(0, 200) : "" };
   if (p.km != null) out.km = Math.max(0, Number(p.km) || 0);
   if (p.min != null) out.min = Math.max(0, Number(p.min) || 0);
+  if (p.categoria === "corrida" && (p.tipo === "A" || p.tipo === "B" || p.tipo === "C")) out.tipo = p.tipo;
   return out;
 }
 
@@ -2090,7 +2110,7 @@ function acceptSuggestion(key) {
     return;
   }
   if (!stravaState.plan[key]) stravaState.plan[key] = {};
-  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0 };
+  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0, tipo: p.tipo };
   else if (p.categoria === "yoga")  stravaState.plan[key].yoga = { count: 1 };
   else if (p.categoria === "musculacao") stravaState.plan[key].musculacao = { min: p.min || 0 };
   savePlan(stravaState.plan);
@@ -2108,11 +2128,20 @@ function saveEditedSuggestion(key) {
   const catSel = document.querySelector(`select[data-edit-cat="${key}"]`);
   const kmIn = document.querySelector(`input[data-edit-km="${key}"]`);
   const minIn = document.querySelector(`input[data-edit-min="${key}"]`);
+  const tipoSel = document.querySelector(`select[data-edit-tipo="${key}"]`);
   if (!catSel) return;
   const cat = catSel.value;
   const km = kmIn && kmIn.value !== "" ? Number(kmIn.value) : null;
   const min = minIn && minIn.value !== "" ? Number(minIn.value) : null;
-  stravaState.pendingByDay[key] = { categoria: cat, km: km == null ? undefined : km, min: min == null ? undefined : min, motivo: stravaState.pendingByDay[key].motivo || "" };
+  const tipo = tipoSel && tipoSel.value ? tipoSel.value : undefined;
+  const prev = stravaState.pendingByDay[key] || {};
+  stravaState.pendingByDay[key] = {
+    categoria: cat,
+    km: km == null ? undefined : km,
+    min: min == null ? undefined : min,
+    tipo: cat === "corrida" ? tipo : undefined,
+    motivo: prev.motivo || ""
+  };
   acceptSuggestion(key);
 }
 

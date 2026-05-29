@@ -202,15 +202,48 @@ function json(obj, status) {
 /* ============================================================
  * STRAVA OAuth + atividades
  *
- * Esquema "token único manual": guardamos access/refresh/expires nos
- * Secrets do Cloudflare e o Worker faz refresh transparente. Como
- * Secrets são read-only em runtime, quando o refresh acontece o novo
- * access_token só vive em memória até o fim daquela requisição —
- * portanto o helper expõe os novos valores num header X-Strava-Refreshed
- * para o frontend mostrar e o Roberto re-cadastrar manualmente.
+ * Persistência dos tokens (com fallback):
+ *   1) Se existir binding env.STRAVA_KV (Cloudflare KV), grava lá. Refresh
+ *      atualiza o KV automaticamente — Roberto nunca mais precisa
+ *      re-cadastrar Secrets manualmente.
+ *   2) Se o KV não estiver ligado, lê dos Secrets STRAVA_ACCESS_TOKEN /
+ *      STRAVA_REFRESH_TOKEN / STRAVA_EXPIRES_AT (esquema manual antigo).
+ *      Nesse modo, quando o token é renovado, devolvemos os novos valores
+ *      pro frontend mostrar e o Roberto cadastrar — só até o KV entrar.
+ *
+ * Os Secrets STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET continuam sendo
+ * Secrets — são fixos do app, não rotativos.
  * ============================================================ */
 
 const STRAVA_SCOPE = "read,activity:read_all";
+const STRAVA_KV_KEY = "strava:tokens";
+
+async function readStravaTokens(env) {
+  if (env.STRAVA_KV) {
+    try {
+      const raw = await env.STRAVA_KV.get(STRAVA_KV_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* cai pro fallback */ }
+  }
+  if (env.STRAVA_ACCESS_TOKEN) {
+    return {
+      access_token: env.STRAVA_ACCESS_TOKEN,
+      refresh_token: env.STRAVA_REFRESH_TOKEN || "",
+      expires_at: parseInt(env.STRAVA_EXPIRES_AT || "0", 10)
+    };
+  }
+  return null;
+}
+
+async function writeStravaTokens(env, tokens) {
+  if (!env.STRAVA_KV) return false;
+  await env.STRAVA_KV.put(STRAVA_KV_KEY, JSON.stringify({
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_at: tokens.expires_at
+  }));
+  return true;
+}
 
 function callbackUrl(request, prefix) {
   const url = new URL(request.url);
@@ -287,27 +320,44 @@ async function handleStravaCallback(request, env, prefix) {
     return htmlPage("Resposta inesperada", `<pre>${escapeHtml(raw)}</pre>`);
   }
 
+  const tokens = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: data.expires_at
+  };
+  const persisted = await writeStravaTokens(env, tokens);
+  const athleteName = `${data.athlete?.firstname || ""} ${data.athlete?.lastname || ""}`.trim();
+
+  if (persisted) {
+    return htmlPage(
+      "Conectado!",
+      `<p>Strava conectado e tokens salvos no KV. Pode usar o app agora — a renovação automática
+         vai cuidar sozinha das próximas 6h em diante.</p>
+       ${athleteName ? `<p style="color:#666;font-size:14px;">Atleta: ${escapeHtml(athleteName)}</p>` : ""}
+       <p><a href="${prefix}/app/">voltar ao app</a></p>`
+    );
+  }
   return htmlPage(
-    "Conectado!",
-    `<p>Cadastra estes valores como <strong>Secrets</strong> no Cloudflare e faz um redeploy
-       (commit qualquer no GitHub serve):</p>
+    "Conectado! (modo manual)",
+    `<p>O KV ainda não está ligado neste Worker. Cadastra estes valores como
+       <strong>Secrets</strong> no Cloudflare e faz um redeploy:</p>
      <table>
-       <tr><th>STRAVA_ACCESS_TOKEN</th><td><code>${escapeHtml(data.access_token || "")}</code></td></tr>
-       <tr><th>STRAVA_REFRESH_TOKEN</th><td><code>${escapeHtml(data.refresh_token || "")}</code></td></tr>
-       <tr><th>STRAVA_EXPIRES_AT</th><td><code>${escapeHtml(String(data.expires_at || ""))}</code></td></tr>
+       <tr><th>STRAVA_ACCESS_TOKEN</th><td><code>${escapeHtml(tokens.access_token || "")}</code></td></tr>
+       <tr><th>STRAVA_REFRESH_TOKEN</th><td><code>${escapeHtml(tokens.refresh_token || "")}</code></td></tr>
+       <tr><th>STRAVA_EXPIRES_AT</th><td><code>${escapeHtml(String(tokens.expires_at || ""))}</code></td></tr>
      </table>
-     <p style="color:#666;font-size:14px;">Atleta: ${escapeHtml(data.athlete?.firstname || "")} ${escapeHtml(data.athlete?.lastname || "")}</p>
+     ${athleteName ? `<p style="color:#666;font-size:14px;">Atleta: ${escapeHtml(athleteName)}</p>` : ""}
      <p><a href="${prefix}/app/">voltar ao app</a></p>`
   );
 }
 
 async function handleStravaStatus(request, env) {
-  if (!env.STRAVA_ACCESS_TOKEN) {
-    return json({ connected: false });
-  }
-  const expiresAt = parseInt(env.STRAVA_EXPIRES_AT || "0", 10);
+  const t = await readStravaTokens(env);
+  if (!t || !t.access_token) return json({ connected: false });
+  const expiresAt = t.expires_at || 0;
   return json({
     connected: true,
+    storage: env.STRAVA_KV ? "kv" : "secrets",
     expires_at: expiresAt,
     expires_in_seconds: Math.max(0, expiresAt - Math.floor(Date.now() / 1000))
   });
@@ -360,28 +410,30 @@ async function handleStravaActivities(request, env) {
   }));
 
   const result = { activities: slim };
-  if (tokenResult.refreshed) {
+  /* Só expomos os tokens novos quando NÃO conseguimos persistir (sem KV).
+     Com KV ativo, o refresh é transparente e o frontend não precisa saber. */
+  if (tokenResult.refreshed && !tokenResult.persisted) {
     result.refreshed = {
       access_token: tokenResult.accessToken,
       refresh_token: tokenResult.refreshToken,
       expires_at: tokenResult.expiresAt,
-      message: "Os tokens foram renovados. Atualize os Secrets STRAVA_ACCESS_TOKEN, STRAVA_REFRESH_TOKEN e STRAVA_EXPIRES_AT no Cloudflare e faça um redeploy."
+      message: "Os tokens foram renovados. Atualize os Secrets STRAVA_ACCESS_TOKEN, STRAVA_REFRESH_TOKEN e STRAVA_EXPIRES_AT no Cloudflare e faça um redeploy. (Pra acabar com essa chatice, ligue o binding KV STRAVA_KV no wrangler.jsonc.)"
     };
   }
   return json(result);
 }
 
 async function getStravaAccessToken(env) {
-  if (!env.STRAVA_ACCESS_TOKEN || !env.STRAVA_REFRESH_TOKEN) {
+  const t = await readStravaTokens(env);
+  if (!t || !t.access_token || !t.refresh_token) {
     throw new Error("Strava não conectado. Visite /app/api/strava/authorize.");
   }
 
-  const expiresAt = parseInt(env.STRAVA_EXPIRES_AT || "0", 10);
   const now = Math.floor(Date.now() / 1000);
 
   /* Folga de 60s para evitar 401 por race. */
-  if (expiresAt && expiresAt > now + 60) {
-    return { accessToken: env.STRAVA_ACCESS_TOKEN, refreshed: false };
+  if (t.expires_at && t.expires_at > now + 60) {
+    return { accessToken: t.access_token, refreshed: false };
   }
 
   if (!env.STRAVA_CLIENT_ID || !env.STRAVA_CLIENT_SECRET) {
@@ -394,7 +446,7 @@ async function getStravaAccessToken(env) {
     body: new URLSearchParams({
       client_id: env.STRAVA_CLIENT_ID,
       client_secret: env.STRAVA_CLIENT_SECRET,
-      refresh_token: env.STRAVA_REFRESH_TOKEN,
+      refresh_token: t.refresh_token,
       grant_type: "refresh_token"
     })
   });
@@ -403,11 +455,21 @@ async function getStravaAccessToken(env) {
     throw new Error("Falha ao renovar token Strava: " + raw);
   }
   const data = JSON.parse(raw);
+  const newTokens = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: data.expires_at
+  };
+  /* Tenta persistir no KV; se não tiver binding, segue em frente — o
+     frontend vai receber os tokens novos no response para o usuário
+     cadastrar manualmente. */
+  const persisted = await writeStravaTokens(env, newTokens);
   return {
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
-    expiresAt: data.expires_at,
-    refreshed: true
+    accessToken: newTokens.access_token,
+    refreshToken: newTokens.refresh_token,
+    expiresAt: newTokens.expires_at,
+    refreshed: true,
+    persisted: persisted
   };
 }
 

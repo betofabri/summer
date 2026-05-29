@@ -344,6 +344,18 @@
   }
   .d-suggestion .s-cat .d-rest-tag { font-size: 9px; }
 
+  /* análise da bioimpedância */
+  .bio-analysis {
+    margin-top: 14px; padding: 18px 22px;
+    background: var(--surface-container-lowest);
+    border: 0.5px solid var(--outline-variant);
+    border-radius: var(--r-xl);
+    color: var(--primary);
+    font-size: 15px; line-height: 1.65;
+  }
+  .bio-analysis p { margin: 0 0 12px; }
+  .bio-analysis p:last-child { margin-bottom: 0; }
+
   /* sugestão pendente */
   .d-suggestion {
     margin-top: 6px; padding: 10px 12px;
@@ -677,6 +689,9 @@
     <div class="day-banner" id="dayBanner"></div>
     <div id="macroEditor"></div>
 
+    <div class="sec-label">Treino de hoje</div>
+    <div class="train-grid" id="trainGrid"></div>
+
     <div class="sec-label">Refeições</div>
     <div id="meals"></div>
 
@@ -687,13 +702,8 @@
     <div id="suggestBox"></div>
   </section>
 
-  <!-- ABA: TREINOS -->
+  <!-- ABA: TREINOS (Strava + planejamento da semana) -->
   <section class="tab-panel" id="panel-train" hidden>
-    <div class="sec-label">Treino de hoje</div>
-    <div class="train-grid" id="trainGrid"></div>
-    <div class="sec-label">Impacto no dia</div>
-    <div class="day-banner" id="dayBannerTrain"></div>
-
     <div class="sec-label">Strava</div>
     <div id="stravaCard" class="strava-card">
       <div id="stravaStatus" class="strava-status">Verificando…</div>
@@ -702,6 +712,37 @@
       <div id="stravaActivities" class="strava-activities"></div>
       <div id="stravaRefreshed" class="strava-refreshed" hidden></div>
     </div>
+  </section>
+
+  <!-- ABA: BIOIMPEDÂNCIA -->
+  <section class="tab-panel" id="panel-bio" hidden>
+    <div class="sec-label">Bioimpedância</div>
+    <p class="day-sub" style="font-size:15px;margin-bottom:1rem;">
+      Envie o PDF ou foto do exame. A IA lê os números (gordura, músculo, água,
+      taxa metabólica) e cruza com seus treinos da semana e a sua dieta de hoje.
+    </p>
+
+    <input type="file" id="bioFile" accept="image/*,application/pdf" hidden />
+    <div class="photo-drop" id="bioDrop">
+      <span class="material-symbols-outlined" style="font-size:38px;color:var(--outline);">upload_file</span>
+      <div style="font-weight:600;margin-top:6px;">Enviar PDF ou foto do exame</div>
+      <div style="font-size:13px;color:var(--outline);">Toque para escolher um arquivo</div>
+    </div>
+
+    <div id="bioPreviewWrap" hidden style="margin-top:14px;">
+      <div id="bioPreview"></div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="primary" id="bioAnalyzeBtn"><span class="material-symbols-outlined btn-ico">auto_awesome</span> Analisar exame</button>
+        <button id="bioClearBtn"><span class="material-symbols-outlined btn-ico">close</span> Trocar arquivo</button>
+      </div>
+    </div>
+
+    <div id="bioResult"></div>
+
+    <p style="font-size:13px;color:var(--outline);line-height:1.6;margin-top:1.25rem;">
+      Os números do exame são lidos pela IA — vale revisar antes de tomar qualquer decisão
+      clínica. A análise cruza com a semana atual de treinos do Strava e com a dieta de hoje.
+    </p>
   </section>
 
   <!-- ABA: CARDÁPIO (FOTO) -->
@@ -751,6 +792,10 @@
   <button class="tab-btn" data-tab="train" type="button">
     <span class="material-symbols-outlined tab-ico">fitness_center</span>
     <span class="tab-label">Treinos</span>
+  </button>
+  <button class="tab-btn" data-tab="bio" type="button">
+    <span class="material-symbols-outlined tab-ico">monitor_weight</span>
+    <span class="tab-label">Bio</span>
   </button>
 </nav>
 
@@ -1006,8 +1051,6 @@ function renderTargets() {
       + `alvo de <strong>${tg.kcal} kcal</strong>, com o extra concentrado em carboidrato.`;
   }
   document.getElementById("dayBanner").innerHTML = banner;
-  const bannerTrain = document.getElementById("dayBannerTrain");
-  if (bannerTrain) bannerTrain.innerHTML = banner;
   document.getElementById("daySub").textContent = tg.edited
     ? "Metas editadas para hoje."
     : tg.wk === 0
@@ -1305,7 +1348,7 @@ let currentTab = "food";
 
 function switchTab(tab) {
   currentTab = tab;
-  const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train" };
+  const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train", bio: "panel-bio" };
   Object.keys(panels).forEach(key => {
     document.getElementById(panels[key]).hidden = (key !== tab);
   });
@@ -1314,7 +1357,7 @@ function switchTab(tab) {
   });
   window.scrollTo(0, 0);
   updateMacroMini();
-  if (tab === "train" && stravaState.connected === null) {
+  if ((tab === "train" || tab === "bio") && stravaState.connected === null) {
     loadStravaStatus();
   }
 }
@@ -1409,6 +1452,134 @@ document.getElementById("menuAnalyzeBtn").addEventListener("click", async () => 
     btn.disabled = false;
   }
 });
+
+/* ====== ABA BIOIMPEDÂNCIA: UPLOAD + ANÁLISE ====== */
+let bioFile = null;  /* { mimeType, data, name, isPdf } — data em base64 sem prefixo */
+
+document.getElementById("bioDrop").addEventListener("click", () => {
+  document.getElementById("bioFile").click();
+});
+
+document.getElementById("bioFile").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    const comma = dataUrl.indexOf(",");
+    const meta = dataUrl.slice(0, comma);
+    const mimeType = (meta.match(/data:(.*?);/) || [])[1] || file.type || "application/octet-stream";
+    const isPdf = mimeType === "application/pdf";
+    bioFile = {
+      mimeType: mimeType,
+      data: dataUrl.slice(comma + 1),
+      name: file.name,
+      isPdf: isPdf
+    };
+    const preview = document.getElementById("bioPreview");
+    if (isPdf) {
+      preview.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:18px;background:var(--surface-container-lowest);border-radius:var(--r-xl);border:0.5px solid var(--outline-variant);">
+        <span class="material-symbols-outlined" style="font-size:36px;color:var(--secondary);">picture_as_pdf</span>
+        <div><div style="font-weight:600;font-size:14px;color:var(--primary);">${escapeHtmlClient(file.name)}</div>
+        <div style="font-size:12px;color:var(--outline);">${(file.size/1024).toFixed(0)} KB</div></div>
+      </div>`;
+    } else {
+      preview.innerHTML = `<img alt="Exame" src="${dataUrl}" style="width:100%;border-radius:var(--r-xl);display:block;" />`;
+    }
+    document.getElementById("bioPreviewWrap").hidden = false;
+    document.getElementById("bioDrop").hidden = true;
+    document.getElementById("bioResult").innerHTML = "";
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("bioClearBtn").addEventListener("click", () => {
+  bioFile = null;
+  document.getElementById("bioFile").value = "";
+  document.getElementById("bioPreviewWrap").hidden = true;
+  document.getElementById("bioDrop").hidden = false;
+  document.getElementById("bioResult").innerHTML = "";
+});
+
+document.getElementById("bioAnalyzeBtn").addEventListener("click", async () => {
+  if (!bioFile) return;
+  const btn = document.getElementById("bioAnalyzeBtn");
+  const box = document.getElementById("bioResult");
+  btn.disabled = true;
+  box.innerHTML = `<div class="msg" style="margin-top:14px;">Lendo o exame e cruzando com seus treinos e dieta…</div>`;
+  try {
+    /* Contexto: treinos da semana + dieta de hoje. */
+    const ctx = buildBioContext();
+    const prompt = `Você é um profissional de saúde lendo um exame de bioimpedância. Analise os números do exame anexo e cruze com o contexto de treino e dieta do Roberto.
+
+PERFIL: 43 anos, homem, 163 cm, foco em perda de peso e disposição.
+
+CONTEXTO — SEMANA DE TREINO (${ctx.weekRange}):
+${ctx.trainSummary}
+
+CONTEXTO — DIETA DE HOJE:
+- Metas: ${ctx.targets.kcal} kcal, ${ctx.targets.p}g P, ${ctx.targets.c}g C, ${ctx.targets.g}g G
+- Consumido: ${ctx.consumed.kcal} kcal, ${ctx.consumed.p}g P, ${ctx.consumed.c}g C, ${ctx.consumed.g}g G
+- Estratégia: ciclo de calorias (dia de treino come mais carbo)
+
+INSTRUÇÕES:
+1. Leia os números do exame (% gordura, massa magra, água corporal, gordura visceral, TMB, etc.). Se não conseguir ler, diga isso claramente.
+2. Diga o que está bem e o que merece atenção, com referências às faixas adequadas para o perfil.
+3. Cruze com os treinos: a carga semanal está adequada para o que o exame mostra?
+4. Cruze com a dieta: o aporte calórico e de macro está coerente com a composição corporal e os treinos?
+5. Sugestões práticas e específicas para os próximos dias.
+
+Responda em português do Brasil, com no máximo 5 parágrafos curtos, sem markdown, sem emoji. Use linguagem direta, sem "como IA" ou "vou ser honesto".`;
+    const out = await callClaude({ text: prompt, image: bioFile }, 2500);
+    const escapedHtml = escapeHtmlClient(out).replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>");
+    box.innerHTML = `<div class="bio-analysis"><p>${escapedHtml}</p></div>`;
+  } catch (err) {
+    box.innerHTML = `<div class="msg err" style="margin-top:14px;">Não consegui analisar agora. Se for PDF muito grande, tenta uma foto da página principal. Erro: ${escapeHtmlClient(String(err.message || err))}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function buildBioContext() {
+  /* Treinos da semana. */
+  const mon = mondayOfCurrentWeek();
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const weekKeys = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    weekKeys.push({ date: d, key: fmtDateKey(d) });
+  }
+  const acts = (stravaState.activities && stravaState.activities.activities) || [];
+  const buckets = buildWeekBuckets(weekKeys, acts);
+  const lines = [];
+  let totalRunKm = 0, totalYoga = 0;
+  weekKeys.forEach(({ date, key }) => {
+    const dayName = DAYS_SHORT[date.getDay()];
+    const b = buckets[key];
+    const parts = [];
+    if (b.corrida) { parts.push(`corrida ${b.corrida.km.toFixed(1)}km`); totalRunKm += b.corrida.km; }
+    if (b.yoga)    { parts.push(`yoga ${b.yoga.count}×`); totalYoga += b.yoga.count; }
+    if (b.musculacao) parts.push(`musc ${Math.round(b.musculacao.min)}min`);
+    if (b.plan && b.plan.corrida) { parts.push(`corrida ${(b.plan.corrida.km||0).toFixed(1)}km (planejado)`); totalRunKm += b.plan.corrida.km || 0; }
+    if (b.plan && b.plan.yoga)    { parts.push(`yoga ${b.plan.yoga.count||1}× (planejado)`); totalYoga += b.plan.yoga.count || 0; }
+    if (b.plan && b.plan.musculacao) parts.push(`musc ${Math.round(b.plan.musculacao.min||0)}min (planejado)`);
+    if (b.plan && b.plan.descanso) parts.push("descanso total");
+    lines.push(`- ${dayName} ${key}: ${parts.length ? parts.join("; ") : "(sem registro)"}`);
+  });
+  const goals = stravaState.goals;
+  const trainSummary = `Metas semanais: ${goals.runKm} km corrida + ${goals.yogaCount}× hot yoga.\n`
+    + `Realizado/planejado até agora: ${totalRunKm.toFixed(1)} km corrida + ${totalYoga}× yoga.\n`
+    + `Dias da semana:\n${lines.join("\n")}`;
+  /* Dieta de hoje. */
+  const tg = dayTargets();
+  const t = consumed();
+  return {
+    weekRange: `${fmtDateKey(mon)} → ${fmtDateKey(sun)}`,
+    trainSummary,
+    targets: { kcal: tg.kcal, p: tg.protein, c: tg.carb, g: tg.fat },
+    consumed: { kcal: Math.round(t.kcal), p: Math.round(t.p), c: Math.round(t.c), g: Math.round(t.g) }
+  };
+}
 
 /* ====== STRAVA ====== */
 const DAYS_SHORT = ["dom","seg","ter","qua","qui","sex","sáb"];
@@ -1771,6 +1942,14 @@ function renderDayCard(date, key, b, ctx) {
   }
   /* Planos */
   if (b.plan) {
+    if (b.plan.descanso && ctx.filter === "all") {
+      rows.push(`<div class="d-row d-plan">
+        <span class="material-symbols-outlined d-ico">weekend</span>
+        <span class="d-cat">Descanso total</span>
+        <span class="d-stat">0 kcal</span>
+        <button class="d-del" data-del-plan="${key}" data-del-cat="descanso" title="Remover plano">×</button>
+      </div>`);
+    }
     ["corrida","yoga","musculacao"].forEach(c => {
       if (b.plan[c] && ctx.showCat(c)) {
         const cfg = CAT_CONFIG[c];
@@ -2018,6 +2197,11 @@ QUANDO SUGERIR CORRIDA — informe "tipo": "A" | "B" | "C" no JSON e o "km" coer
 o tipo. Se você quebrou a macro pra adaptar, escolha o "tipo" mais próximo do volume
 sugerido (ex.: 4 km → B; 3 km → A; 9 km → C).
 
+DESCANSO TOTAL — é uma sugestão válida e bem-vinda quando o corpo precisa.
+Use "categoria": "descanso" (sem km, sem min, sem tipo, sem modo). Sem treino nenhum
+no dia. Apropriado quando há sinais de cansaço acumulado, semana já carregada,
+ou um descanso programado faz sentido.
+
 DESCANSO ATIVO ("modo": "descanso"):
 Você pode sugerir UM treino marcado como descanso ativo quando perceber que o
 corpo do Roberto está sendo estressado demais num tipo de atividade. Duas formas:
@@ -2157,15 +2341,10 @@ function sanitizeSuggestion(p) {
 function acceptSuggestion(key) {
   const p = stravaState.pendingByDay[key];
   if (!p) return;
-  if (p.categoria === "descanso") {
-    /* Descanso = só limpa pending, não vira plano. */
-    delete stravaState.pendingByDay[key];
-    renderStrava();
-    return;
-  }
   if (!stravaState.plan[key]) stravaState.plan[key] = {};
-  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0, tipo: p.tipo, modo: p.modo };
-  else if (p.categoria === "yoga")  stravaState.plan[key].yoga = { count: 1, modo: p.modo };
+  if (p.categoria === "descanso")        stravaState.plan[key].descanso = { motivo: p.motivo || "" };
+  else if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0, tipo: p.tipo, modo: p.modo };
+  else if (p.categoria === "yoga")       stravaState.plan[key].yoga = { count: 1, modo: p.modo };
   else if (p.categoria === "musculacao") stravaState.plan[key].musculacao = { min: p.min || 0 };
   savePlan(stravaState.plan);
   delete stravaState.pendingByDay[key];

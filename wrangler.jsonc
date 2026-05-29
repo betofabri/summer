@@ -10,6 +10,9 @@
   "routes": [
     { "pattern": "betofabri.com/summer/*", "zone_name": "betofabri.com" }
   ],
+  "kv_namespaces": [
+    { "binding": "STRAVA_KV", "id": "55df805cdf85447aae99fa26ad7a0f79" }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

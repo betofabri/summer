@@ -1965,23 +1965,39 @@ function buildWeekContext() {
   };
 }
 
-const SUGGESTION_PRINCIPLES = `Estratégia de treino do Roberto:
+const SUGGESTION_PRINCIPLES = `Estratégia de treino do Roberto.
 
-CORRIDA — 5 sessões na semana, ~25 km no total, em três tipos:
-  - Tipo A (volume baixo, ~3 km): 2× por semana, dias leves
+A MACRO IDEAL DA SEMANA (use como referência, não como camisa de força):
+- Corrida: 5 sessões totalizando ~25 km, distribuídas em três tipos:
+  - Tipo A (volume baixo, ~3 km): 2× por semana
   - Tipo B (volume médio, ~4-5 km): 2× por semana
   - Tipo C (longão, 8 a 12 km): 1× por semana, SEMPRE no SÁBADO
-  Total da soma: 2×A + 2×B + 1×C ≈ 25 km.
+  Soma típica: 2×A + 2×B + 1×C ≈ 25 km.
+- Hot yoga: 4× por semana (cada sessão = 375 kcal).
+- Pelo menos 1 dia de descanso por semana.
 
-HOT YOGA — 4× por semana, cada sessão = 375 kcal.
+REGRAS RÍGIDAS (NÃO QUEBRAR):
+- NUNCA sugerir mais de 12 km em um único dia. Limite absoluto, vale para qualquer tipo de corrida.
+- C (longão) é SEMPRE no sábado.
+- Não sugerir B nem C em dois dias consecutivos. Tipo A pode vir no dia seguinte a B.
 
-OUTROS PRINCÍPIOS:
-- Pelo menos 1 dia de descanso por semana (geralmente segunda ou sexta antes do longão).
-- Não fazer corrida B ou C em dois dias consecutivos. Corrida A pode vir no dia seguinte de B.
-- Yoga pode ser em qualquer dia, inclusive consecutivos, e combina bem com dia de corrida A.
+INTELIGÊNCIA NA ADAPTAÇÃO:
+- A macro A/B/C é o IDEAL. Se a semana ainda tem dias suficientes para o padrão, siga ele.
+- Se o Roberto perdeu dias da semana (ex.: já passaram 3 dias de descanso, sobram só 2-3 dias),
+  redistribua o volume restante nos dias que sobram — pode quebrar A/B/C, juntar B com A
+  em outro dia, ou substituir um A por um B mais curto — desde que respeite o teto de
+  12 km/dia e a regra de não-consecutivos.
+- Se mesmo redistribuindo o total não atinge os 25 km sem furar o teto de 12 km/dia ou
+  a regra de não-consecutivos, ACEITE o déficit. Roberto vai "ficar devendo" alguns km
+  na semana e tudo bem — é MUITO melhor que sugerir um treino impossível, queimar as
+  pernas ou empilhar B+C em dias seguidos. Quanto mais perto do domingo, mais essa
+  lógica vale.
+- Yoga combina bem com dia de A ou descanso ativo.
 - Musculação só sugerir se já vinha aparecendo na semana.
 
-QUANDO SUGERIR CORRIDA — informe "tipo": "A" | "B" | "C" no JSON, e o "km" coerente com o tipo.`;
+QUANDO SUGERIR CORRIDA — informe "tipo": "A" | "B" | "C" no JSON e o "km" coerente com
+o tipo. Se você quebrou a macro pra adaptar, escolha o "tipo" mais próximo do volume
+sugerido (ex.: 4 km → B; 3 km → A; 9 km → C).`;
 
 async function suggestTodayWorkout() {
   if (stravaState.suggesting) return;
@@ -2094,7 +2110,10 @@ Lembre-se: o longão (tipo C, até 12 km) é SEMPRE no sábado.`;
 
 function sanitizeSuggestion(p) {
   const out = { categoria: p.categoria, motivo: p.motivo ? String(p.motivo).slice(0, 200) : "" };
-  if (p.km != null) out.km = Math.max(0, Number(p.km) || 0);
+  if (p.km != null) {
+    /* Teto rígido de 12 km/dia — defesa caso a IA ignore o princípio. */
+    out.km = Math.min(12, Math.max(0, Number(p.km) || 0));
+  }
   if (p.min != null) out.min = Math.max(0, Number(p.min) || 0);
   if (p.categoria === "corrida" && (p.tipo === "A" || p.tipo === "B" || p.tipo === "C")) out.tipo = p.tipo;
   return out;

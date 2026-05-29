@@ -321,10 +321,11 @@ async function handleStravaActivities(request, env) {
     return json({ error: String(e.message || e) }, 500);
   }
 
-  /* Início da semana (segunda-feira 00:00 local). Pega últimas 30 atividades
-     limitadas a 7 dias atrás como margem — o frontend filtra fino. */
-  const oneWeekAgo = Math.floor(Date.now() / 1000) - 7 * 86400;
-  const apiUrl = `https://www.strava.com/api/v3/athlete/activities?after=${oneWeekAgo}&per_page=30`;
+  /* Janela larga (9 dias) para garantir que cubra a semana atual
+     (segunda → domingo) seja qual for o dia em que o app é aberto.
+     O frontend recorta a semana redonda com base no fuso local. */
+  const nineDaysAgo = Math.floor(Date.now() / 1000) - 9 * 86400;
+  const apiUrl = `https://www.strava.com/api/v3/athlete/activities?after=${nineDaysAgo}&per_page=50`;
 
   let resp;
   try {

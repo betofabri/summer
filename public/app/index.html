@@ -189,22 +189,71 @@
   }
   .strava-status { font-size: 15px; color: var(--secondary); }
   .strava-status strong { color: var(--primary); }
-  .strava-activities { margin-top: 14px; display: grid; gap: 10px; }
-  .strava-act {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px 14px; border-radius: var(--r);
+  .strava-activities { margin-top: 14px; }
+
+  /* filtro */
+  .strava-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-pill {
+    font-family: 'Hanken Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+    background: transparent; color: var(--outline);
+    border: 0.5px solid var(--outline-variant); border-radius: 999px;
+    padding: 6px 14px; cursor: pointer; transition: all 0.14s;
+  }
+  .filter-pill:hover { border-color: var(--voltz-dim); color: var(--primary); }
+  .filter-pill.on {
+    background: var(--primary); color: var(--voltz);
+    border-color: var(--primary);
+  }
+
+  /* grade da semana */
+  .strava-week { margin-top: 12px; display: grid; gap: 6px; }
+  .strava-day {
+    border-radius: var(--r);
     background: var(--surface-container-lowest);
     border: 0.5px solid var(--outline-variant);
+    padding: 10px 14px;
   }
-  .strava-act .a-glyph {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: grid; place-items: center;
-    background: var(--surface-container-high);
+  .strava-day.today {
+    border-color: var(--voltz-dim);
+    background: rgba(191,244,67,0.08);
   }
-  .strava-act .a-glyph .material-symbols-outlined { font-size: 20px; color: var(--secondary); }
-  .strava-act .a-name { font-weight: 600; font-size: 15px; color: var(--primary); }
-  .strava-act .a-meta { font-size: 13px; color: var(--outline); }
-  .strava-act .a-day { font-size: 12px; color: var(--outline); margin-left: auto; text-align: right; }
+  .strava-day.future { opacity: 0.45; }
+  .d-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    color: var(--outline); letter-spacing: 0.06em;
+  }
+  .d-flag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    background: var(--voltz); color: var(--primary);
+    padding: 2px 8px; border-radius: 999px; text-transform: uppercase;
+  }
+  .d-rows { margin-top: 6px; display: grid; gap: 4px; }
+  .d-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; color: var(--primary);
+  }
+  .d-row .d-ico { font-size: 18px; color: var(--secondary); flex-shrink: 0; }
+  .d-row .d-cat { font-weight: 600; }
+  .d-row .d-stat { color: var(--outline); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .d-row.d-empty { color: var(--outline); padding-left: 28px; font-size: 13px; }
+
+  /* totais da semana */
+  .strava-totals {
+    margin-top: 14px; padding: 14px 18px; border-radius: var(--r-xl);
+    background: var(--primary); color: var(--inverse-on-surface);
+  }
+  .t-head {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--voltz-dim); margin-bottom: 8px; font-weight: 700;
+  }
+  .t-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 14px; padding: 5px 0;
+  }
+  .t-row > span:first-child { color: var(--voltz); font-weight: 600; }
+  .t-row > span:last-child { color: var(--inverse-on-surface); font-variant-numeric: tabular-nums; }
+
   .strava-refreshed {
     margin-top: 12px; padding: 12px 14px; border-radius: var(--r);
     background: rgba(191,244,67,0.18); border: 0.5px solid var(--voltz-dim);
@@ -1221,48 +1270,55 @@ document.getElementById("menuAnalyzeBtn").addEventListener("click", async () => 
 });
 
 /* ====== STRAVA ====== */
-const STRAVA_GLYPHS = {
-  Run: "directions_run",
-  TrailRun: "directions_run",
-  Ride: "directions_bike",
-  VirtualRide: "directions_bike",
-  WeightTraining: "fitness_center",
-  Workout: "fitness_center",
-  Yoga: "self_improvement",
-  Walk: "directions_walk",
-  Hike: "hiking",
-  Swim: "pool"
+const DAYS_SHORT = ["dom","seg","ter","qua","qui","sex","sáb"];
+
+/* Mapeia o sport_type do Strava nas 3 categorias do app + "outras". */
+const CAT_CONFIG = {
+  corrida:    { label: "Corrida",    glyph: "directions_run",   stat: (b) => `${b.km.toFixed(1)} km · ${b.kcal} kcal` },
+  yoga:       { label: "Yoga",       glyph: "self_improvement", stat: (b) => `${b.count > 1 ? b.count + "× · " : ""}${b.kcal} kcal` },
+  musculacao: { label: "Musculação", glyph: "fitness_center",   stat: (b) => `${Math.round(b.min)} min · ${b.kcal} kcal` }
 };
 
-const stravaState = { connected: null, activities: null, loading: false };
-
-function fmtDuration(s) {
-  if (!s || s < 0) return "—";
-  const m = Math.floor(s / 60);
-  const h = Math.floor(m / 60);
-  if (h > 0) return `${h}h${(m % 60).toString().padStart(2, "0")}`;
-  return `${m} min`;
+function mapStravaCategory(act) {
+  const t = act.sport_type || act.type;
+  if (t === "Run" || t === "TrailRun" || t === "VirtualRun") return "corrida";
+  if (t === "Yoga") return "yoga";
+  if (t === "WeightTraining" || t === "Workout" || t === "Crossfit") return "musculacao";
+  return "outras";
 }
 
-function fmtDistance(m) {
-  if (!m || m < 0) return null;
-  if (m >= 1000) return (m / 1000).toFixed(m >= 10000 ? 1 : 2) + " km";
-  return Math.round(m) + " m";
+/* Estimativa de kcal alinhada com os valores que o app já usa em WORKOUTS.
+   Se o Strava devolver calories preenchido (raro em /athlete/activities),
+   damos preferência. Senão, usamos a heurística do app pra ter número
+   coerente com o resto da matemática do ciclo de calorias. */
+function estimateKcal(act) {
+  if (act.calories && act.calories > 0) return Math.round(act.calories);
+  const cat = mapStravaCategory(act);
+  if (cat === "corrida")    return Math.round(75 * ((act.distance_m || 0) / 1000));
+  if (cat === "yoga")       return 320;
+  if (cat === "musculacao") return Math.round(5 * ((act.moving_time_s || 0) / 60));
+  return 0;
 }
 
-function fmtDayShort(iso) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  const days = ["dom","seg","ter","qua","qui","sex","sáb"];
+/* Segunda-feira 00:00 da semana atual no fuso local. */
+function mondayOfCurrentWeek() {
   const today = new Date();
-  today.setHours(0,0,0,0);
-  const day = new Date(d);
-  day.setHours(0,0,0,0);
-  const diff = Math.round((today - day) / 86400000);
-  if (diff === 0) return "hoje";
-  if (diff === 1) return "ontem";
-  return days[d.getDay()] + " " + d.getDate() + "/" + (d.getMonth() + 1);
+  today.setHours(0, 0, 0, 0);
+  const dow = today.getDay();
+  const back = dow === 0 ? 6 : (dow - 1);  /* domingo → volta 6 dias */
+  const mon = new Date(today);
+  mon.setDate(mon.getDate() - back);
+  return mon;
 }
+
+function fmtDateKey(d) {
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const stravaState = { connected: null, activities: null, loading: false, filter: "all" };
 
 async function loadStravaStatus() {
   try {
@@ -1314,7 +1370,7 @@ function renderStrava() {
   }
 
   if (!stravaState.connected) {
-    status.innerHTML = "Não conectado ao Strava. As atividades da semana podem vir direto de lá.";
+    status.innerHTML = "Não conectado ao Strava. Conecta pra ver a semana inteira aqui.";
     actions.innerHTML = `<a class="primary" href="${STRAVA_AUTHORIZE_URL}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
       <span class="material-symbols-outlined btn-ico">link</span> Conectar Strava</a>`;
     list.innerHTML = "";
@@ -1322,7 +1378,10 @@ function renderStrava() {
     return;
   }
 
-  status.innerHTML = "<strong>Conectado.</strong> Atividades dos últimos 7 dias:";
+  const mon = mondayOfCurrentWeek();
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const headerRange = `${mon.getDate().toString().padStart(2,"0")}/${(mon.getMonth()+1).toString().padStart(2,"0")} – ${sun.getDate().toString().padStart(2,"0")}/${(sun.getMonth()+1).toString().padStart(2,"0")}`;
+  status.innerHTML = `<strong>Semana ${headerRange}</strong> · segunda a domingo`;
   actions.innerHTML = `<button id="stravaReloadBtn"><span class="material-symbols-outlined btn-ico">refresh</span> Atualizar</button>`;
   document.getElementById("stravaReloadBtn").addEventListener("click", () => {
     stravaState.activities = null;
@@ -1330,7 +1389,7 @@ function renderStrava() {
   });
 
   if (stravaState.loading) {
-    list.innerHTML = `<div class="strava-act"><div class="a-name">Carregando…</div></div>`;
+    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty">Carregando…</div></div></div>`;
     refreshed.hidden = true;
     return;
   }
@@ -1342,29 +1401,134 @@ function renderStrava() {
   }
 
   if (stravaState.activities.error) {
-    list.innerHTML = `<div class="strava-act"><div class="a-name" style="color:#c0392b;">Erro: ${stravaState.activities.error}</div></div>`;
+    list.innerHTML = `<div class="strava-day"><div class="d-rows"><div class="d-row d-empty" style="color:#c0392b;">Erro: ${escapeHtmlClient(stravaState.activities.error)}</div></div></div>`;
     refreshed.hidden = true;
     return;
   }
 
   const acts = stravaState.activities.activities || [];
-  if (acts.length === 0) {
-    list.innerHTML = `<div class="strava-act"><div class="a-name" style="color:var(--outline);">Nenhuma atividade nos últimos 7 dias.</div></div>`;
-  } else {
-    list.innerHTML = acts.map(a => {
-      const glyph = STRAVA_GLYPHS[a.sport_type] || STRAVA_GLYPHS[a.type] || "exercise";
-      const dist = fmtDistance(a.distance_m);
-      const meta = [dist, fmtDuration(a.moving_time_s)].filter(Boolean).join(" · ");
-      return `<div class="strava-act">
-        <div class="a-glyph"><span class="material-symbols-outlined">${glyph}</span></div>
-        <div>
-          <div class="a-name">${escapeHtmlClient(a.name || a.type)}</div>
-          <div class="a-meta">${meta}</div>
-        </div>
-        <div class="a-day">${fmtDayShort(a.start_date_local || a.start_date)}</div>
-      </div>`;
-    }).join("");
+
+  /* Bucket por dia da semana atual + categoria. */
+  const weekKeys = [];
+  const buckets = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const k = fmtDateKey(d);
+    weekKeys.push({ date: d, key: k });
+    buckets[k] = { corrida: null, yoga: null, musculacao: null, outras: [] };
   }
+
+  acts.forEach(a => {
+    const isoLocal = a.start_date_local || a.start_date || "";
+    const key = isoLocal.slice(0, 10);  /* "YYYY-MM-DD" */
+    if (!buckets[key]) return;
+    const cat = mapStravaCategory(a);
+    const kcal = estimateKcal(a);
+    const b = buckets[key];
+    if (cat === "corrida") {
+      if (!b.corrida) b.corrida = { km: 0, kcal: 0, count: 0 };
+      b.corrida.km += (a.distance_m || 0) / 1000;
+      b.corrida.kcal += kcal;
+      b.corrida.count += 1;
+    } else if (cat === "yoga") {
+      if (!b.yoga) b.yoga = { kcal: 0, count: 0 };
+      b.yoga.kcal += kcal;
+      b.yoga.count += 1;
+    } else if (cat === "musculacao") {
+      if (!b.musculacao) b.musculacao = { min: 0, kcal: 0, count: 0 };
+      b.musculacao.min += (a.moving_time_s || 0) / 60;
+      b.musculacao.kcal += kcal;
+      b.musculacao.count += 1;
+    } else {
+      b.outras.push({ name: a.name || a.type, kcal });
+    }
+  });
+
+  const filter = stravaState.filter || "all";
+  const showCat = (c) => filter === "all" || filter === c;
+
+  const todayKey = fmtDateKey(new Date());
+  const nowMs = Date.now();
+
+  /* Pills de filtro. */
+  const pills = `<div class="strava-filter">
+    <button class="filter-pill ${filter === 'all' ? 'on' : ''}" data-cat="all">Tudo</button>
+    <button class="filter-pill ${filter === 'corrida' ? 'on' : ''}" data-cat="corrida">Corrida</button>
+    <button class="filter-pill ${filter === 'yoga' ? 'on' : ''}" data-cat="yoga">Yoga</button>
+    <button class="filter-pill ${filter === 'musculacao' ? 'on' : ''}" data-cat="musculacao">Musculação</button>
+  </div>`;
+
+  /* Cards de cada dia. */
+  const daysHtml = weekKeys.map(({ date, key }) => {
+    const b = buckets[key];
+    const isToday = (key === todayKey);
+    const isFuture = date.getTime() > nowMs && !isToday;
+    const dayLabel = `${DAYS_SHORT[date.getDay()]} ${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}`;
+
+    const rows = [];
+    ["corrida","yoga","musculacao"].forEach(c => {
+      if (b[c] && showCat(c)) {
+        const cfg = CAT_CONFIG[c];
+        rows.push(`<div class="d-row">
+          <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
+          <span class="d-cat">${cfg.label}</span>
+          <span class="d-stat">${cfg.stat(b[c])}</span>
+        </div>`);
+      }
+    });
+    if (filter === "all") {
+      b.outras.forEach(o => {
+        rows.push(`<div class="d-row">
+          <span class="material-symbols-outlined d-ico">exercise</span>
+          <span class="d-cat">${escapeHtmlClient(o.name)}</span>
+          <span class="d-stat">${o.kcal ? o.kcal + ' kcal' : '—'}</span>
+        </div>`);
+      });
+    }
+    if (rows.length === 0) {
+      rows.push(`<div class="d-row d-empty">${isFuture ? "—" : "sem registro"}</div>`);
+    }
+
+    return `<div class="strava-day ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''}">
+      <div class="d-header">
+        <span class="d-name">${dayLabel}</span>
+        ${isToday ? '<span class="d-flag">hoje</span>' : ''}
+      </div>
+      <div class="d-rows">${rows.join('')}</div>
+    </div>`;
+  }).join('');
+
+  /* Totais da semana. */
+  const totals = { corrida: { km: 0, kcal: 0 }, yoga: { kcal: 0, count: 0 }, musculacao: { min: 0, kcal: 0 } };
+  weekKeys.forEach(({ key }) => {
+    const b = buckets[key];
+    if (b.corrida)    { totals.corrida.km += b.corrida.km; totals.corrida.kcal += b.corrida.kcal; }
+    if (b.yoga)       { totals.yoga.kcal += b.yoga.kcal; totals.yoga.count += b.yoga.count; }
+    if (b.musculacao) { totals.musculacao.min += b.musculacao.min; totals.musculacao.kcal += b.musculacao.kcal; }
+  });
+
+  const totalRows = [];
+  if (showCat("corrida") && totals.corrida.km > 0) {
+    totalRows.push(`<div class="t-row"><span>Corrida</span><span>${totals.corrida.km.toFixed(1)} km · ${totals.corrida.kcal} kcal</span></div>`);
+  }
+  if (showCat("yoga") && totals.yoga.count > 0) {
+    totalRows.push(`<div class="t-row"><span>Yoga</span><span>${totals.yoga.count}× · ${totals.yoga.kcal} kcal</span></div>`);
+  }
+  if (showCat("musculacao") && totals.musculacao.min > 0) {
+    totalRows.push(`<div class="t-row"><span>Musculação</span><span>${Math.round(totals.musculacao.min)} min · ${totals.musculacao.kcal} kcal</span></div>`);
+  }
+  const totalsHtml = totalRows.length > 0
+    ? `<div class="strava-totals"><div class="t-head">Total da semana</div>${totalRows.join('')}</div>`
+    : `<div class="strava-totals"><div class="t-head">Total da semana</div><div class="t-row"><span style="color:var(--voltz-dim);">Nada registrado ainda nesta semana.</span><span></span></div></div>`;
+
+  list.innerHTML = pills + `<div class="strava-week">${daysHtml}</div>` + totalsHtml;
+
+  list.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      stravaState.filter = btn.dataset.cat;
+      renderStrava();
+    });
+  });
 
   const ref = stravaState.activities.refreshed;
   if (ref) {

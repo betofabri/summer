@@ -356,6 +356,49 @@
   .bio-analysis p { margin: 0 0 12px; }
   .bio-analysis p:last-child { margin-bottom: 0; }
 
+  /* consulta holística */
+  .consult-files {
+    display: grid; gap: 6px; margin-top: 10px;
+  }
+  .consult-files:empty { display: none; }
+  .consult-file {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: var(--r);
+    background: var(--surface-container-lowest);
+    border: 0.5px solid var(--outline-variant);
+  }
+  .consult-file .cf-thumb {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: grid; place-items: center; flex-shrink: 0;
+    background: var(--surface-container-high); overflow: hidden;
+  }
+  .consult-file .cf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .consult-file .cf-thumb .material-symbols-outlined { font-size: 20px; color: var(--secondary); }
+  .consult-file .cf-name {
+    font-weight: 600; font-size: 14px; color: var(--primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .consult-file .cf-meta { font-size: 12px; color: var(--outline); }
+  .consult-file .cf-info { min-width: 0; flex: 1; }
+  .consult-file .cf-del {
+    background: none; border: none; cursor: pointer; padding: 4px 6px;
+    color: var(--outline); font-size: 18px; line-height: 1;
+    display: inline-flex; align-items: center;
+  }
+  .consult-file .cf-del:hover { color: #c0392b; }
+
+  .consult-note {
+    width: 100%; margin-top: 12px;
+    padding: 12px 14px; border-radius: var(--r);
+    background: var(--surface-container-lowest);
+    border: 0.5px solid var(--outline-variant);
+    font-family: 'Hanken Grotesk', sans-serif; font-size: 14px;
+    color: var(--primary); resize: vertical; min-height: 80px;
+    box-sizing: border-box;
+  }
+  .consult-note:focus { outline: none; border-color: var(--voltz-dim); }
+  .consult-note::placeholder { color: var(--outline); }
+
   /* sugestão pendente */
   .d-suggestion {
     margin-top: 6px; padding: 10px 12px;
@@ -745,6 +788,40 @@
     </p>
   </section>
 
+  <!-- ABA: CONSULTA HOLÍSTICA -->
+  <section class="tab-panel" id="panel-consult" hidden>
+    <div class="sec-label">Consulta</div>
+    <p class="day-sub" style="font-size:15px;margin-bottom:1rem;">
+      Envie quantos prints quiser (treinos do Strava, smartwatch, exames, fotos)
+      e opcionalmente uma nota com como você está se sentindo. A IA olha tudo
+      junto e cruza com seu histórico da semana e dieta de hoje pra uma análise
+      ampla.
+    </p>
+
+    <input type="file" id="consultFile" accept="image/*,application/pdf" multiple hidden />
+    <div class="photo-drop" id="consultDrop">
+      <span class="material-symbols-outlined" style="font-size:38px;color:var(--outline);">attach_file</span>
+      <div style="font-weight:600;margin-top:6px;">Adicionar arquivos</div>
+      <div style="font-size:13px;color:var(--outline);">PDFs ou imagens — pode escolher vários</div>
+    </div>
+
+    <div id="consultFiles" class="consult-files"></div>
+
+    <textarea id="consultNote" class="consult-note" rows="3" placeholder="Como você está se sentindo? Algum sintoma, dúvida ou objetivo específico desta consulta? (opcional)"></textarea>
+
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="primary" id="consultAnalyzeBtn" disabled><span class="material-symbols-outlined btn-ico">auto_awesome</span> Pedir consulta</button>
+      <button id="consultClearBtn"><span class="material-symbols-outlined btn-ico">refresh</span> Limpar</button>
+    </div>
+
+    <div id="consultResult"></div>
+
+    <p style="font-size:13px;color:var(--outline);line-height:1.6;margin-top:1.25rem;">
+      A IA não substitui consulta clínica de verdade — é uma leitura cruzada
+      dos seus dados pra te ajudar a entender o todo.
+    </p>
+  </section>
+
   <!-- ABA: CARDÁPIO (FOTO) -->
   <section class="tab-panel" id="panel-menu" hidden>
     <div class="sec-label">Foto de cardápio</div>
@@ -796,6 +873,10 @@
   <button class="tab-btn" data-tab="bio" type="button">
     <span class="material-symbols-outlined tab-ico">monitor_weight</span>
     <span class="tab-label">Bio</span>
+  </button>
+  <button class="tab-btn" data-tab="consult" type="button">
+    <span class="material-symbols-outlined tab-ico">psychology</span>
+    <span class="tab-label">Consulta</span>
   </button>
 </nav>
 
@@ -916,6 +997,9 @@ async function callClaude(input, maxTokens) {
   } else {
     userMessage = { role: "user", content: input.text || "" };
     if (input.image) userMessage.image = input.image;
+    if (Array.isArray(input.attachments) && input.attachments.length) {
+      userMessage.attachments = input.attachments;
+    }
   }
   const res = await fetch(API_CHAT_URL, {
     method: "POST",
@@ -1348,7 +1432,7 @@ let currentTab = "food";
 
 function switchTab(tab) {
   currentTab = tab;
-  const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train", bio: "panel-bio" };
+  const panels = { food: "panel-food", menu: "panel-menu", train: "panel-train", bio: "panel-bio", consult: "panel-consult" };
   Object.keys(panels).forEach(key => {
     document.getElementById(panels[key]).hidden = (key !== tab);
   });
@@ -1357,7 +1441,7 @@ function switchTab(tab) {
   });
   window.scrollTo(0, 0);
   updateMacroMini();
-  if ((tab === "train" || tab === "bio") && stravaState.connected === null) {
+  if ((tab === "train" || tab === "bio" || tab === "consult") && stravaState.connected === null) {
     loadStravaStatus();
   }
 }
@@ -1580,6 +1664,124 @@ function buildBioContext() {
     consumed: { kcal: Math.round(t.kcal), p: Math.round(t.p), c: Math.round(t.c), g: Math.round(t.g) }
   };
 }
+
+/* ====== ABA CONSULTA: UPLOAD MÚLTIPLO + ANÁLISE HOLÍSTICA ====== */
+let consultFiles = [];  /* [{ id, name, size, mimeType, data, isPdf, dataUrl }] */
+let consultNextId = 1;
+
+document.getElementById("consultDrop").addEventListener("click", () => {
+  document.getElementById("consultFile").click();
+});
+
+document.getElementById("consultFile").addEventListener("change", (e) => {
+  const files = Array.from(e.target.files || []);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const comma = dataUrl.indexOf(",");
+      const meta = dataUrl.slice(0, comma);
+      const mimeType = (meta.match(/data:(.*?);/) || [])[1] || file.type || "application/octet-stream";
+      consultFiles.push({
+        id: consultNextId++,
+        name: file.name,
+        size: file.size,
+        mimeType: mimeType,
+        data: dataUrl.slice(comma + 1),
+        dataUrl: mimeType.startsWith("image/") ? dataUrl : null,
+        isPdf: mimeType === "application/pdf"
+      });
+      renderConsultFiles();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = "";  /* permite re-selecionar o mesmo arquivo depois */
+});
+
+function renderConsultFiles() {
+  const wrap = document.getElementById("consultFiles");
+  if (consultFiles.length === 0) {
+    wrap.innerHTML = "";
+    document.getElementById("consultAnalyzeBtn").disabled = true;
+    return;
+  }
+  document.getElementById("consultAnalyzeBtn").disabled = false;
+  wrap.innerHTML = consultFiles.map(f => `
+    <div class="consult-file">
+      <div class="cf-thumb">
+        ${f.dataUrl
+          ? `<img alt="" src="${f.dataUrl}" />`
+          : `<span class="material-symbols-outlined">${f.isPdf ? "picture_as_pdf" : "description"}</span>`}
+      </div>
+      <div class="cf-info">
+        <div class="cf-name">${escapeHtmlClient(f.name)}</div>
+        <div class="cf-meta">${(f.size/1024).toFixed(0)} KB · ${f.isPdf ? "PDF" : f.mimeType.split("/")[1] || "arquivo"}</div>
+      </div>
+      <button class="cf-del" data-rm="${f.id}" title="Remover">×</button>
+    </div>
+  `).join("");
+  wrap.querySelectorAll("button[data-rm]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = parseInt(btn.dataset.rm, 10);
+      consultFiles = consultFiles.filter(f => f.id !== id);
+      renderConsultFiles();
+    });
+  });
+}
+
+document.getElementById("consultClearBtn").addEventListener("click", () => {
+  consultFiles = [];
+  document.getElementById("consultFile").value = "";
+  document.getElementById("consultNote").value = "";
+  document.getElementById("consultResult").innerHTML = "";
+  renderConsultFiles();
+});
+
+document.getElementById("consultAnalyzeBtn").addEventListener("click", async () => {
+  if (consultFiles.length === 0) return;
+  const btn = document.getElementById("consultAnalyzeBtn");
+  const box = document.getElementById("consultResult");
+  const note = document.getElementById("consultNote").value.trim();
+  btn.disabled = true;
+  box.innerHTML = `<div class="msg" style="margin-top:14px;">Olhando os ${consultFiles.length} arquivo${consultFiles.length>1?"s":""} e cruzando com seu histórico…</div>`;
+  try {
+    const ctx = buildBioContext();  /* reusa o mesmo contexto da bio */
+    const prompt = `Você é um profissional de saúde fazendo uma consulta holística do Roberto, baseada em todos os arquivos anexados e no contexto da semana.
+
+PERFIL: 43 anos, homem, 163 cm, foco em perda de peso e disposição.
+
+CONTEXTO — SEMANA DE TREINO (${ctx.weekRange}):
+${ctx.trainSummary}
+
+CONTEXTO — DIETA DE HOJE:
+- Metas: ${ctx.targets.kcal} kcal, ${ctx.targets.p}g P, ${ctx.targets.c}g C, ${ctx.targets.g}g G
+- Consumido: ${ctx.consumed.kcal} kcal, ${ctx.consumed.p}g P, ${ctx.consumed.c}g C, ${ctx.consumed.g}g G
+
+NOTA DO ROBERTO PARA ESTA CONSULTA:
+${note || "(nenhuma — apenas analise tudo que está nos anexos e no contexto.)"}
+
+ANEXOS: ${consultFiles.length} arquivo${consultFiles.length>1?"s":""} enviado${consultFiles.length>1?"s":""} (prints de treinos do Strava/smartwatch, exames de bioimpedância, fotos, etc.). Para cada um, identifique o que é, extraia os números/dados visíveis (frequência cardíaca, splits, zonas, composição corporal, hidratação, etc.) e mencione se algum não conseguir ler.
+
+ANALISE de forma holística, em parágrafos numerados:
+
+1. Resumo dos anexos: o que cada arquivo mostra e os números/dados relevantes.
+2. Como os treinos da semana (Strava + planejados) se conectam com os números dos exames e prints de treinos individuais.
+3. Como a dieta de hoje (e o ciclo de calorias da estratégia) está apoiando ou conflitando com tudo isso.
+4. Pontos fortes — o que está dando certo.
+5. Pontos de atenção — o que merece olhar.
+6. Sugestões práticas e específicas para os próximos dias (treino, alimentação, recuperação).
+
+Linguagem direta em pt-BR, total no máximo 8 parágrafos curtos. Sem markdown, sem emoji, sem "como IA" ou "vou ser honesto". Use os números mencionados nos anexos quando disponíveis.`;
+    const attachments = consultFiles.map(f => ({ mimeType: f.mimeType, data: f.data }));
+    const out = await callClaude({ text: prompt, attachments: attachments }, 3500);
+    const escapedHtml = escapeHtmlClient(out).replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>");
+    box.innerHTML = `<div class="bio-analysis"><p>${escapedHtml}</p></div>`;
+  } catch (err) {
+    box.innerHTML = `<div class="msg err" style="margin-top:14px;">Não consegui analisar agora. Se você anexou muitos PDFs grandes, tenta enviar menos arquivos por vez. Erro: ${escapeHtmlClient(String(err.message || err))}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 /* ====== STRAVA ====== */
 const DAYS_SHORT = ["dom","seg","ter","qua","qui","sex","sáb"];

@@ -331,6 +331,19 @@
   }
   .d-row.d-plan .d-del:hover { color: #c0392b; }
 
+  /* badge "descanso ativo" — neutro, não verde-lima (que sinaliza "feito/completo") */
+  .d-rest-tag {
+    margin-left: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    padding: 1px 7px; border-radius: 999px;
+    background: rgba(255,255,255,0.6);
+    color: var(--secondary);
+    border: 0.5px solid var(--outline-variant);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .d-suggestion .s-cat .d-rest-tag { font-size: 9px; }
+
   /* sugestão pendente */
   .d-suggestion {
     margin-top: 6px; padding: 10px 12px;
@@ -1763,12 +1776,15 @@ function renderDayCard(date, key, b, ctx) {
         const cfg = CAT_CONFIG[c];
         const kcal = planKcal(c, b.plan[c]);
         const tipo = c === "corrida" && b.plan[c].tipo ? ` ${b.plan[c].tipo}` : "";
+        const restoBadge = b.plan[c].modo === "descanso"
+          ? (c === "corrida" ? '<span class="d-rest-tag">Z2/Z3 · descanso</span>' : '<span class="d-rest-tag">descanso</span>')
+          : "";
         const statTxt = c === "corrida" ? `${(b.plan[c].km||0).toFixed(1)} km · ${kcal} kcal`
                       : c === "yoga"    ? `${b.plan[c].count > 1 ? b.plan[c].count + "× · " : ""}${kcal} kcal`
                       :                   `${Math.round(b.plan[c].min||0)} min · ${kcal} kcal`;
         rows.push(`<div class="d-row d-plan">
           <span class="material-symbols-outlined d-ico">${cfg.glyph}</span>
-          <span class="d-cat">${cfg.label}${tipo}</span>
+          <span class="d-cat">${cfg.label}${tipo}${restoBadge}</span>
           <span class="d-stat">${statTxt}</span>
           <button class="d-del" data-del-plan="${key}" data-del-cat="${c}" title="Remover plano">×</button>
         </div>`);
@@ -1810,6 +1826,9 @@ function renderPendingSuggestion(key, p) {
   const cfg = CAT_CONFIG[cat];
   const tipo = cat === "corrida" && p.tipo ? ` ${p.tipo}` : "";
   const label = cfg ? cfg.label + tipo : (cat === "descanso" ? "Descanso" : cat);
+  const restBadge = p.modo === "descanso"
+    ? (cat === "corrida" ? '<span class="d-rest-tag">Z2/Z3 · descanso</span>' : '<span class="d-rest-tag">descanso</span>')
+    : "";
   const kcal = planKcal(cat, p);
   const statTxt = cat === "corrida" ? `${(p.km||0).toFixed(1)} km · ${kcal} kcal`
                 : cat === "yoga"    ? `${kcal} kcal`
@@ -1844,7 +1863,7 @@ function renderPendingSuggestion(key, p) {
   return `<div class="d-suggestion">
     <div class="s-row">
       <span class="material-symbols-outlined d-ico" style="color:var(--voltz-dim);">${cfg ? cfg.glyph : "lightbulb"}</span>
-      <span class="s-cat">${label}</span>
+      <span class="s-cat">${label}${restBadge}</span>
       <span class="s-stat">${statTxt}</span>
     </div>
     ${p.motivo ? `<div class="s-motivo">${escapeHtmlClient(p.motivo)}</div>` : ""}
@@ -1997,7 +2016,19 @@ INTELIGÊNCIA NA ADAPTAÇÃO:
 
 QUANDO SUGERIR CORRIDA — informe "tipo": "A" | "B" | "C" no JSON e o "km" coerente com
 o tipo. Se você quebrou a macro pra adaptar, escolha o "tipo" mais próximo do volume
-sugerido (ex.: 4 km → B; 3 km → A; 9 km → C).`;
+sugerido (ex.: 4 km → B; 3 km → A; 9 km → C).
+
+DESCANSO ATIVO ("modo": "descanso"):
+Você pode sugerir UM treino marcado como descanso ativo quando perceber que o
+corpo do Roberto está sendo estressado demais num tipo de atividade. Duas formas:
+- Hot yoga como descanso → "modo": "descanso", categoria "yoga". O usuário verá:
+  "Yoga hoje é descanso." Ex.: depois de 2-3 corridas seguidas (mesmo respeitando
+  os limites), só yoga descanso evita pisar no acelerador.
+- Corrida leve em zona aeróbia → "modo": "descanso", categoria "corrida". O usuário verá:
+  "Corrida hoje é leve (Z2/Z3) ou descanso." Volume curto (1-4 km), tipo A.
+  Útil quando o Roberto quer correr sem queimar perna.
+Inclua "modo": "treino" | "descanso" no JSON. Default é "treino". Use sempre que
+considerar que a recuperação é mais importante que volume.`;
 
 async function suggestTodayWorkout() {
   if (stravaState.suggesting) return;
@@ -2025,9 +2056,10 @@ Perfil: 43 anos, 163cm, 72kg, foco em perda de peso e disposição.
 ${SUGGESTION_PRINCIPLES}
 
 Sugira UM treino para hoje (${ctx.todayKey}). Responda APENAS com JSON, sem markdown:
-{"categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","km":N,"min":N,"motivo":"explicação breve em pt-br, no máximo 2 frases"}
+{"categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","modo":"treino"|"descanso","km":N,"min":N,"motivo":"explicação breve em pt-br, no máximo 2 frases"}
 Inclua "tipo" SÓ quando categoria for "corrida". Use "km" só pra corrida; "min" só pra musculacao. Yoga não precisa de km/min.
-Se categoria for descanso, omita km/min/tipo.`;
+"modo": "descanso" sinaliza descanso ativo (yoga leve, corrida Z2/Z3) — use quando recuperação > volume.
+Se categoria for descanso (total), omita km/min/tipo/modo.`;
     const out = await callClaude(prompt, 600);
     const j = parseJSON(out);
     if (!j || !j.categoria) throw new Error("Sugestão inválida.");
@@ -2088,10 +2120,11 @@ Dias para os quais devo sugerir treino (em ordem): ${datasList}.
 Distribua os treinos para tentar atingir as metas semanais, respeitando os princípios.
 Responda APENAS com JSON, sem markdown:
 {"plans":[
-  {"data":"YYYY-MM-DD","categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","km":N,"min":N,"motivo":"explicação breve"},
+  {"data":"YYYY-MM-DD","categoria":"corrida"|"yoga"|"musculacao"|"descanso","tipo":"A"|"B"|"C","modo":"treino"|"descanso","km":N,"min":N,"motivo":"explicação breve"},
   ...
 ]}
 Inclua UMA entrada para cada data da lista, na mesma ordem. Use "km"/"tipo" só pra corrida; "min" só pra musculacao.
+"modo": "descanso" sinaliza descanso ativo (yoga descanso, corrida Z2/Z3 leve). Default "treino".
 Lembre-se: o longão (tipo C, até 12 km) é SEMPRE no sábado.`;
     const out = await callClaude(prompt, 1400);
     const j = parseJSON(out);
@@ -2116,6 +2149,8 @@ function sanitizeSuggestion(p) {
   }
   if (p.min != null) out.min = Math.max(0, Number(p.min) || 0);
   if (p.categoria === "corrida" && (p.tipo === "A" || p.tipo === "B" || p.tipo === "C")) out.tipo = p.tipo;
+  /* "modo" só aplica a yoga e corrida — descanso ativo. */
+  if ((p.categoria === "corrida" || p.categoria === "yoga") && p.modo === "descanso") out.modo = "descanso";
   return out;
 }
 
@@ -2129,8 +2164,8 @@ function acceptSuggestion(key) {
     return;
   }
   if (!stravaState.plan[key]) stravaState.plan[key] = {};
-  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0, tipo: p.tipo };
-  else if (p.categoria === "yoga")  stravaState.plan[key].yoga = { count: 1 };
+  if (p.categoria === "corrida")    stravaState.plan[key].corrida = { km: p.km || 0, tipo: p.tipo, modo: p.modo };
+  else if (p.categoria === "yoga")  stravaState.plan[key].yoga = { count: 1, modo: p.modo };
   else if (p.categoria === "musculacao") stravaState.plan[key].musculacao = { min: p.min || 0 };
   savePlan(stravaState.plan);
   delete stravaState.pendingByDay[key];
@@ -2159,6 +2194,7 @@ function saveEditedSuggestion(key) {
     km: km == null ? undefined : km,
     min: min == null ? undefined : min,
     tipo: cat === "corrida" ? tipo : undefined,
+    modo: (cat === "corrida" || cat === "yoga") ? prev.modo : undefined,
     motivo: prev.motivo || ""
   };
   acceptSuggestion(key);

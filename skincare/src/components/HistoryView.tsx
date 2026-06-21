@@ -44,7 +44,7 @@ export function HistoryView({ products, onClose }: Props) {
           </h2>
           <button
             onClick={onClose}
-            className="press shadow-card min-h-12 px-5 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
+            className="press min-h-12 px-5 inline-flex items-center justify-center rounded-[--radius-md] glass text-[--color-text-2] text-sm font-semibold"
           >
             Fechar
           </button>
@@ -53,7 +53,7 @@ export function HistoryView({ products, onClose }: Props) {
         {entries === null ? (
           <div className="text-[--color-text-3] text-sm">Carregando…</div>
         ) : entries.length === 0 ? (
-          <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-10 text-center">
+          <div className="glass shadow-glass rounded-[--radius-lg] p-10 text-center">
             <p className="text-[--color-text-2] text-sm">
               Nenhum registro ainda.
             </p>
@@ -68,7 +68,7 @@ export function HistoryView({ products, onClose }: Props) {
               return (
                 <li
                   key={e.daily.date}
-                  className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-5 space-y-4"
+                  className="glass shadow-glass rounded-[--radius-lg] p-5 space-y-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">

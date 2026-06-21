@@ -36,9 +36,10 @@ export function PhotoCapture({
       type="button"
       onClick={() => inputRef.current?.click()}
       disabled={disabled || processing}
-      className="press w-full min-h-[88px] rounded-[--radius-md] bg-[--color-surface-2] border-2 border-dashed border-[--color-border-strong] px-5 py-4 flex items-center gap-4 text-left disabled:opacity-50"
+      className="press w-full min-h-[88px] rounded-[--radius-md] glass-soft border-dashed px-5 py-4 flex items-center gap-4 text-left disabled:opacity-50"
+      style={{ borderStyle: "dashed", borderWidth: "1.5px" }}
     >
-      <span className="flex-shrink-0 w-12 h-12 rounded-full bg-[--color-primary] text-[--color-primary-on] flex items-center justify-center">
+      <span className="flex-shrink-0 w-12 h-12 rounded-full glass-primary text-[--color-primary-bright] flex items-center justify-center shadow-soft-glow">
         <svg
           width="22"
           height="22"

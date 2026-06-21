@@ -49,14 +49,14 @@ export function TokenGate({ onUnlock }: Props) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="••••••••"
-            className="press w-full min-h-[56px] bg-[--color-surface] border border-[--color-border] rounded-[--radius-md] px-5 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+            className="press w-full min-h-[56px] glass-soft rounded-[--radius-md] px-5 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
           />
         </div>
 
         <button
           type="submit"
           disabled={!value.trim()}
-          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none"
+          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none disabled:opacity-50"
         >
           Entrar →
         </button>

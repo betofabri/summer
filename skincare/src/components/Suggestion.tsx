@@ -54,7 +54,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
     <div className="space-y-6">
       <section
         aria-label="Sugestão da noite"
-        className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] overflow-hidden"
+        className="glass shadow-glass rounded-[--radius-lg] overflow-hidden"
       >
         <div className="p-6 pb-5 border-b border-[--color-border]">
           <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.2em] font-bold mb-3">
@@ -78,7 +78,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
                   disabled={applied}
                   className={`press w-full text-left rounded-[--radius-md] min-h-[72px] px-4 py-3 flex items-center gap-4 ${
                     isSelected
-                      ? "bg-[--color-surface-2]"
+                      ? "glass-soft"
                       : "bg-transparent opacity-40"
                   }`}
                 >
@@ -140,7 +140,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
         type="button"
         onClick={handleApply}
         disabled={selected.size === 0 || applying || applied}
-        className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none"
+        className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none disabled:opacity-50"
       >
         {applied ? "✓ Aplicado" : applying ? "Salvando…" : "Marcar como aplicado"}
       </button>

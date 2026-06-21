@@ -61,7 +61,7 @@ export function SituationsView({ onClose, onChange }: Props) {
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={view.mode === "list" ? onClose : backToList}
-            className="press shadow-card min-h-12 px-4 inline-flex items-center justify-center gap-1 rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
+            className="press min-h-12 px-4 inline-flex items-center justify-center gap-1 rounded-[--radius-md] glass text-[--color-text-2] text-sm font-semibold"
           >
             <svg
               width="14"
@@ -123,7 +123,7 @@ function ListView({
     <>
       <button
         onClick={onNew}
-        className="press w-full mb-6 min-h-[56px] inline-flex items-center justify-center gap-2 rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow"
+        className="press w-full mb-6 min-h-[56px] inline-flex items-center justify-center gap-2 rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow"
       >
         <svg
           width="20"
@@ -143,7 +143,7 @@ function ListView({
       {situations === null ? (
         <div className="text-[--color-text-3] text-sm">Carregando…</div>
       ) : situations.length === 0 ? (
-        <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-10 text-center">
+        <div className="glass shadow-glass rounded-[--radius-lg] p-10 text-center">
           <p className="text-[--color-text-2] text-sm">
             Nenhuma situação. Comece tirando uma foto do que você quer
             acompanhar (espinha, pelo encravado, mancha, etc).
@@ -155,7 +155,7 @@ function ListView({
             <li key={s.id}>
               <button
                 onClick={() => onOpen(s.id)}
-                className="press w-full text-left shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] overflow-hidden flex items-stretch gap-4"
+                className="press w-full text-left glass shadow-glass rounded-[--radius-lg] overflow-hidden flex items-stretch gap-4"
               >
                 <div className="w-24 h-24 flex-shrink-0 bg-[--color-surface-2]">
                   {s.cover ? (
@@ -246,14 +246,14 @@ function NewSituationForm({
 
   return (
     <div className="space-y-6">
-      <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5">
+      <div className="glass shadow-glass rounded-[--radius-lg] p-6 space-y-5">
         <Field label="Título">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Espinha bochecha esq."
             autoFocus
-            className="press w-full min-h-12 bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+            className="press w-full min-h-12 glass-soft rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
           />
         </Field>
 
@@ -268,8 +268,8 @@ function NewSituationForm({
                   onClick={() => setCategory(c)}
                   className={`press min-h-11 px-3 rounded-[--radius-sm] text-sm font-bold tracking-tight ${
                     active
-                      ? "bg-[--color-primary] text-[--color-primary-on]"
-                      : "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]"
+                      ? "glass-primary text-[--color-primary-bright] shadow-soft-glow"
+                      : "glass-soft text-[--color-text-2]"
                   }`}
                 >
                   {SITUATION_CATEGORY_LABELS[c]}
@@ -285,14 +285,14 @@ function NewSituationForm({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Contexto, suspeita de causa, etc."
             rows={2}
-            className="press w-full bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
+            className="press w-full glass-soft rounded-[--radius-sm] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
           />
         </Field>
 
         {error ? (
           <div
             role="alert"
-            className="bg-[--color-surface-2] border border-[--color-danger]/50 rounded-[--radius-sm] px-4 py-3 text-sm text-[--color-danger] font-medium"
+            className="glass-soft border-[--color-danger]/40 rounded-[--radius-sm] px-4 py-3 text-sm text-[--color-danger] font-medium"
           >
             {error}
           </div>
@@ -303,7 +303,7 @@ function NewSituationForm({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:opacity-50"
+          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow disabled:opacity-50"
         >
           {saving ? "Criando…" : "Criar e tirar foto"}
         </button>
@@ -412,7 +412,7 @@ function DetailView({
       </header>
 
       {pendingPhoto ? (
-        <div className="shadow-card bg-[--color-surface] border border-[--color-primary]/40 rounded-[--radius-lg] overflow-hidden">
+        <div className="glass shadow-glass border-[--color-primary]/40 rounded-[--radius-lg] overflow-hidden">
           <img
             src={pendingPhoto}
             alt="Pré-visualização"
@@ -423,7 +423,7 @@ function DetailView({
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Legenda (opcional)"
-              className="press w-full min-h-11 bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 text-sm text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+              className="press w-full min-h-11 glass-soft rounded-[--radius-sm] px-4 text-sm text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
             />
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -431,7 +431,7 @@ function DetailView({
                   setPendingPhoto(null);
                   setCaption("");
                 }}
-                className="press min-h-11 rounded-[--radius-sm] bg-[--color-surface-2] border border-[--color-border] text-sm font-semibold text-[--color-text-2]"
+                className="press min-h-11 rounded-[--radius-sm] glass text-sm font-semibold text-[--color-text-2]"
               >
                 Descartar
               </button>
@@ -474,7 +474,7 @@ function DetailView({
               return (
                 <li
                   key={p.id}
-                  className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] overflow-hidden"
+                  className="glass shadow-glass rounded-[--radius-lg] overflow-hidden"
                 >
                   <div className="aspect-square w-full bg-[--color-surface-2]">
                     <AuthedImage
@@ -526,7 +526,7 @@ function DetailView({
       <div className="space-y-2 pt-2">
         <button
           onClick={handleToggleStatus}
-          className="press w-full min-h-12 rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
+          className="press w-full min-h-12 rounded-[--radius-md] glass text-[--color-text-2] text-sm font-semibold"
         >
           {isResolved ? "Reabrir situação" : "Marcar como resolvida"}
         </button>

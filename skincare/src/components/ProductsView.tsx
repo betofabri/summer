@@ -68,14 +68,14 @@ export function ProductsView({ onClose, onChange }: Props) {
           </h2>
           <button
             onClick={onClose}
-            className="press shadow-card min-h-12 px-5 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
+            className="press min-h-12 px-5 inline-flex items-center justify-center rounded-[--radius-md] glass text-[--color-text-2] text-sm font-semibold"
           >
             Fechar
           </button>
         </div>
 
         {edit.mode === "analyzing" ? (
-          <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-16 flex flex-col items-center gap-5">
+          <div className="glass shadow-glass rounded-[--radius-lg] px-6 py-16 flex flex-col items-center gap-5">
             <div className="flex gap-2">
               {[0, 1, 2].map((i) => (
                 <span
@@ -155,7 +155,7 @@ export function ProductsView({ onClose, onChange }: Props) {
             {products === null ? (
               <div className="text-[--color-text-3] text-sm">Carregando…</div>
             ) : products.length === 0 ? (
-              <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-10 text-center">
+              <div className="glass shadow-glass rounded-[--radius-lg] p-10 text-center">
                 <p className="text-[--color-text-2] text-sm">
                   Nenhum produto. Adicione o primeiro.
                 </p>
@@ -165,10 +165,8 @@ export function ProductsView({ onClose, onChange }: Props) {
                 {products.map((p) => (
                   <li
                     key={p.id}
-                    className={`shadow-card rounded-[--radius-lg] border ${
-                      p.enabled
-                        ? "bg-[--color-surface] border-[--color-border]"
-                        : "bg-[--color-surface]/50 border-[--color-border]/50"
+                    className={`rounded-[--radius-lg] ${
+                      p.enabled ? "glass shadow-glass" : "glass-soft opacity-60"
                     }`}
                   >
                     <div className="p-5 flex items-start gap-4">
@@ -202,7 +200,7 @@ export function ProductsView({ onClose, onChange }: Props) {
                           className={`relative block w-12 h-7 rounded-full transition-colors ${
                             p.enabled
                               ? "bg-[--color-primary]"
-                              : "bg-[--color-surface-3]"
+                              : "glass-soft"
                           }`}
                         >
                           <span
@@ -317,7 +315,7 @@ function ProductForm({
 
   return (
     <div className="space-y-6">
-      <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5">
+      <div className="glass shadow-glass rounded-[--radius-lg] p-6 space-y-5">
         <div className="text-[11px] font-bold text-[--color-primary] uppercase tracking-[0.2em]">
           {product ? "Editar produto" : prefill ? "Confira e salve" : "Novo produto"}
         </div>
@@ -327,7 +325,7 @@ function ProductForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Effaclar Serum"
-            className="press w-full min-h-12 bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+            className="press w-full min-h-12 glass-soft rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
           />
         </Field>
 
@@ -336,7 +334,7 @@ function ProductForm({
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
             placeholder="Ex: La Roche-Posay"
-            className="press w-full min-h-12 bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
+            className="press w-full min-h-12 glass-soft rounded-[--radius-sm] px-4 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary]"
           />
         </Field>
 
@@ -351,8 +349,8 @@ function ProductForm({
                   onClick={() => setCategory(c)}
                   className={`press min-h-11 px-3 rounded-[--radius-sm] text-sm font-bold tracking-tight ${
                     active
-                      ? "bg-[--color-primary] text-[--color-primary-on]"
-                      : "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]"
+                      ? "glass-primary text-[--color-primary-bright] shadow-soft-glow"
+                      : "glass-soft text-[--color-text-2]"
                   }`}
                 >
                   {CATEGORY_LABELS[c]}
@@ -373,8 +371,8 @@ function ProductForm({
                   onClick={() => toggleActive(a)}
                   className={`press min-h-10 px-3.5 rounded-[--radius-pill] text-xs font-bold tracking-tight ${
                     isOn
-                      ? "bg-[--color-primary] text-[--color-primary-on]"
-                      : "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]"
+                      ? "glass-primary text-[--color-primary-bright] shadow-soft-glow"
+                      : "glass-soft text-[--color-text-2]"
                   }`}
                 >
                   {ACTIVE_LABELS[a]}
@@ -395,8 +393,8 @@ function ProductForm({
                   onClick={() => setIntensity(n)}
                   className={`press min-h-11 rounded-[--radius-sm] text-sm font-bold tracking-tight ${
                     active
-                      ? "bg-[--color-primary] text-[--color-primary-on]"
-                      : "bg-[--color-surface-2] text-[--color-text-2] border border-[--color-border]"
+                      ? "glass-primary text-[--color-primary-bright] shadow-soft-glow"
+                      : "glass-soft text-[--color-text-2]"
                   }`}
                 >
                   {INTENSITY_LABELS[n]}
@@ -412,7 +410,7 @@ function ProductForm({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Observações sobre uso, restrições, etc."
             rows={2}
-            className="press w-full bg-[--color-surface-2] border border-[--color-border] rounded-[--radius-sm] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
+            className="press w-full glass-soft rounded-[--radius-sm] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
           />
         </Field>
 
@@ -430,7 +428,7 @@ function ProductForm({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:opacity-50"
+          className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow disabled:opacity-50"
         >
           {saving ? "Salvando…" : "Salvar"}
         </button>

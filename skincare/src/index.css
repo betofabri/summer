@@ -1,34 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* Dark fintech surfaces */
-  --color-bg: #07080c;
-  --color-surface: #11131a;
-  --color-surface-2: #1a1d27;
-  --color-surface-3: #232734;
+  /* Base surfaces — slightly warmer dark, less stark */
+  --color-bg: #0a0c12;
+  --color-surface: #14171f;
+  --color-surface-2: #1c2029;
+  --color-surface-3: #252934;
 
+  /* Borders kept for non-glass utilities */
   --color-border: #232634;
   --color-border-strong: #353a4b;
 
-  /* Text */
-  --color-text: #f5f7fa;
-  --color-text-2: #a5a9b8;
-  --color-text-3: #6b7080;
-  --color-text-muted: #4a4f5e;
+  /* Glass tokens — translucent layers + frosted borders */
+  --glass-bg: rgba(28, 32, 42, 0.45);
+  --glass-bg-strong: rgba(38, 42, 54, 0.6);
+  --glass-bg-soft: rgba(28, 32, 42, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-strong: rgba(255, 255, 255, 0.11);
+  --glass-highlight: rgba(255, 255, 255, 0.04);
 
-  /* Accent — electric cyan */
+  /* Text — slight softening, still hits AA */
+  --color-text: #ecedf3;
+  --color-text-2: #9da2b3;
+  --color-text-3: #6d7282;
+  --color-text-muted: #4d5260;
+
+  /* Accent — cyan with paired soft layers */
   --color-primary: #00d4ff;
   --color-primary-bright: #22e5ff;
   --color-primary-dark: #00a8cc;
-  --color-primary-soft: rgba(0, 212, 255, 0.1);
+  --color-primary-soft: rgba(0, 212, 255, 0.12);
+  --color-primary-glass: rgba(0, 212, 255, 0.22);
+  --color-primary-glass-strong: rgba(0, 212, 255, 0.34);
   --color-primary-on: #001218;
 
   /* Semantic */
   --color-success: #2ee59d;
+  --color-success-glass: rgba(46, 229, 157, 0.18);
   --color-success-on: #002d1c;
   --color-warning: #ffa940;
+  --color-warning-glass: rgba(255, 169, 64, 0.18);
   --color-warning-on: #2a1500;
   --color-danger: #ff5c7a;
+  --color-danger-glass: rgba(255, 92, 122, 0.18);
   --color-danger-on: #2d0008;
 
   /* Type */
@@ -37,20 +51,28 @@
   --font-display: "Inter", "InterVariable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Radii */
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  /* Radii — slightly larger for softness */
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
   --radius-pill: 999px;
 
-  /* Shadows */
-  --shadow-glow:
-    0 0 0 1px rgba(0, 212, 255, 0.3),
-    0 8px 24px -4px rgba(0, 212, 255, 0.35),
-    0 0 40px -8px rgba(0, 212, 255, 0.25);
-  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 2px 16px -4px rgba(0, 0, 0, 0.5);
-  --shadow-lift: 0 8px 24px -8px rgba(0, 0, 0, 0.6);
+  /* Shadows — diffuse and lifted, not stark */
+  --shadow-glass:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 8px 32px -12px rgba(0, 0, 0, 0.55),
+    0 2px 8px -2px rgba(0, 0, 0, 0.25);
+  --shadow-glass-lift:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 16px 40px -16px rgba(0, 0, 0, 0.6);
+  --shadow-soft-glow:
+    0 0 0 1px rgba(0, 212, 255, 0.16),
+    0 18px 48px -16px rgba(0, 212, 255, 0.32),
+    0 0 80px -16px rgba(0, 212, 255, 0.16);
+  --shadow-soft-glow-success:
+    0 0 0 1px rgba(46, 229, 157, 0.16),
+    0 18px 48px -16px rgba(46, 229, 157, 0.3);
 }
 
 @layer base {
@@ -96,28 +118,63 @@
     letter-spacing: -0.025em;
   }
 
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
+  /* Glass layers — translucent with backdrop blur, lifted */
+  .glass {
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid var(--glass-border);
   }
-  .shadow-card {
-    box-shadow: var(--shadow-card);
+  .glass-strong {
+    background-color: var(--glass-bg-strong);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid var(--glass-border-strong);
   }
-  .shadow-lift {
-    box-shadow: var(--shadow-lift);
+  .glass-soft {
+    background-color: var(--glass-bg-soft);
+    backdrop-filter: blur(20px) saturate(130%);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+    border: 1px solid var(--glass-border);
+  }
+  .glass-primary {
+    background-color: var(--color-primary-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 212, 255, 0.4);
   }
 
+  .shadow-glass {
+    box-shadow: var(--shadow-glass);
+  }
+  .shadow-glass-lift {
+    box-shadow: var(--shadow-glass-lift);
+  }
+  .shadow-soft-glow {
+    box-shadow: var(--shadow-soft-glow);
+  }
+  .shadow-soft-glow-success {
+    box-shadow: var(--shadow-soft-glow-success);
+  }
+
+  /* Aurora — slightly more present so glass refracts something */
   .bg-gradient-aurora {
     background-color: var(--color-bg);
     background-image:
       radial-gradient(
-        ellipse 60% 40% at 80% 0%,
-        rgba(0, 212, 255, 0.18),
-        transparent 60%
+        ellipse 70% 50% at 80% 0%,
+        rgba(0, 212, 255, 0.22),
+        transparent 65%
       ),
       radial-gradient(
-        ellipse 50% 30% at 0% 100%,
-        rgba(168, 85, 247, 0.08),
-        transparent 60%
+        ellipse 60% 40% at 0% 100%,
+        rgba(168, 85, 247, 0.12),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 40% 30% at 50% 50%,
+        rgba(0, 212, 255, 0.05),
+        transparent 70%
       );
   }
 
@@ -128,14 +185,14 @@
   @media (prefers-reduced-motion: no-preference) {
     .press {
       transition:
-        transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
-        background-color 180ms ease,
-        border-color 180ms ease,
-        color 180ms ease,
-        box-shadow 180ms ease;
+        transform 240ms cubic-bezier(0.32, 1.4, 0.5, 1),
+        background-color 240ms ease,
+        border-color 240ms ease,
+        color 240ms ease,
+        box-shadow 240ms ease;
     }
     .press:active {
-      transform: scale(0.97);
+      transform: scale(0.975);
     }
   }
 }
@@ -143,13 +200,19 @@
 @keyframes glow-pulse {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.4;
   }
   50% {
-    opacity: 1;
+    opacity: 0.9;
   }
 }
 
 .animate-glow-pulse {
-  animation: glow-pulse 1.4s ease-in-out infinite;
+  animation: glow-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse {
+    animation: none;
+  }
 }

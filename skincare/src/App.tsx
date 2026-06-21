@@ -98,7 +98,7 @@ export default function App() {
             <div className="text-[--color-danger] text-sm font-medium">{bootError}</div>
             <button
               onClick={load}
-              className="press min-h-12 px-6 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface-2] text-[--color-text] text-sm font-semibold border border-[--color-border-strong]"
+              className="press min-h-12 px-6 inline-flex items-center justify-center rounded-[--radius-md] glass text-[--color-text] text-sm font-semibold"
             >
               Tentar novamente
             </button>
@@ -211,7 +211,7 @@ export default function App() {
         {boot.active_situations.length > 0 ? (
           <button
             onClick={() => setShowSituations(true)}
-            className="press w-full mt-3 shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-4 flex items-center gap-3 text-left"
+            className="press w-full mt-3 glass shadow-glass rounded-[--radius-lg] p-4 flex items-center gap-3 text-left"
           >
             <div className="flex -space-x-3">
               {boot.active_situations.slice(0, 3).map((s) => (
@@ -295,14 +295,14 @@ export default function App() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Algo específico hoje?"
                   rows={3}
-                  className="press mt-3 w-full bg-[--color-surface] border border-[--color-border] rounded-[--radius-md] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
+                  className="press mt-3 w-full glass-soft rounded-[--radius-md] px-4 py-3 text-base text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-primary] resize-none"
                 />
               </details>
 
               {error ? (
                 <div
                   role="alert"
-                  className="bg-[--color-surface] border border-[--color-danger]/50 rounded-[--radius-md] px-4 py-3 text-sm text-[--color-danger] font-medium"
+                  className="glass border-[--color-danger]/40 rounded-[--radius-md] px-4 py-3 text-sm text-[--color-danger] font-medium"
                 >
                   {error}
                 </div>
@@ -311,13 +311,13 @@ export default function App() {
               <button
                 onClick={handleSuggest}
                 disabled={!state}
-                className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none"
+                className="press w-full min-h-[60px] inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-soft-glow disabled:bg-[--color-surface-2] disabled:text-[--color-text-muted] disabled:shadow-none disabled:opacity-50"
               >
                 Sugerir tratamento →
               </button>
             </>
           ) : phase === "suggesting" ? (
-            <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-20 flex flex-col items-center gap-5">
+            <div className="glass shadow-glass rounded-[--radius-lg] px-6 py-20 flex flex-col items-center gap-5">
               <div className="flex gap-2">
                 {[0, 1, 2].map((i) => (
                   <span
@@ -339,8 +339,8 @@ export default function App() {
             />
           ) : phase === "done" ? (
             <div className="space-y-6">
-              <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-12 text-center space-y-4">
-                <div className="inline-flex w-14 h-14 items-center justify-center rounded-full bg-[--color-success] text-[--color-success-on]">
+              <div className="glass shadow-glass rounded-[--radius-lg] px-6 py-12 text-center space-y-4">
+                <div className="inline-flex w-14 h-14 items-center justify-center rounded-full bg-[--color-success] text-[--color-success-on] shadow-soft-glow-success">
                   <svg
                     width="24"
                     height="24"

@@ -54,13 +54,13 @@ export function StateSelector({
               onClick={() => onChange(s.id)}
               className={`press relative min-h-[68px] px-4 py-3 rounded-[--radius-md] text-base font-bold tracking-tight ${
                 active
-                  ? "bg-[--color-primary] text-[--color-primary-on] shadow-glow"
-                  : "bg-[--color-surface] text-[--color-text-2] border border-[--color-border] shadow-card"
+                  ? "glass-primary text-[--color-primary-bright] shadow-soft-glow"
+                  : "glass text-[--color-text-2]"
               }`}
             >
               {active ? (
-                <span className="absolute top-3 right-3 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[--color-primary-on]/15">
-                  <CheckIcon className="text-[--color-primary-on]" />
+                <span className="absolute top-3 right-3 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[--color-primary] text-[--color-primary-on]">
+                  <CheckIcon />
                 </span>
               ) : null}
               <span className="block text-left">{s.label}</span>
@@ -76,8 +76,8 @@ export function StateSelector({
         onClick={() => onPostShaveChange(!postShave)}
         className={`press w-full min-h-[64px] px-5 rounded-[--radius-md] flex items-center justify-between gap-3 ${
           postShave
-            ? "bg-[--color-warning] text-[--color-warning-on] shadow-card"
-            : "bg-[--color-surface] text-[--color-text-2] border border-[--color-border] shadow-card"
+            ? "bg-[--color-warning-glass] text-[--color-warning] border border-[--color-warning]/40"
+            : "glass text-[--color-text-2]"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -100,7 +100,7 @@ export function StateSelector({
         </div>
         <span
           className={`relative w-12 h-7 rounded-full transition-colors ${
-            postShave ? "bg-[--color-warning-on]/30" : "bg-[--color-surface-3]"
+            postShave ? "bg-[--color-warning]" : "bg-[--color-surface-3]"
           }`}
           aria-hidden="true"
         >

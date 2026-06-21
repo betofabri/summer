@@ -142,6 +142,11 @@
   .fav:hover{color:var(--w-strong)}
   .fav.on{color:var(--w-strong);text-shadow:0 0 10px rgba(255,210,74,.5)}
   .fav:active{transform:scale(1.3)}
+  .xbtn{appearance:none;border:0;background:transparent;cursor:pointer;font-size:15px;line-height:1;color:var(--muted2);padding:0 1px;transition:transform .15s,color .15s}
+  .xbtn:hover{color:var(--w-heavy)}
+  .xbtn.on{color:var(--accent)}
+  .card.is-hidden{opacity:.5}
+  .linklike{cursor:pointer;color:var(--accent);font-size:11px;font-weight:700}
   @keyframes flashb{0%{border-color:var(--accent);box-shadow:0 0 0 2px rgba(55,224,196,.55)}100%{border-color:var(--line);box-shadow:none}}
   .card.flash{animation:flashb 1.6s ease}
 
@@ -194,6 +199,10 @@
     <div class="cfilter">
       <span class="thr-label">Países <a id="cAll" role="button" tabindex="0">todos</a> · <a id="cNone" role="button" tabindex="0">limpar</a></span>
       <div class="countries" id="countries"></div>
+    </div>
+    <div class="ctl-row" id="hiddenRow" style="margin-top:14px;display:none">
+      <label class="toggle"><input type="checkbox" id="showHidden"> 👁 Mostrar ocultos <span id="hiddenCount"></span></label>
+      <a id="clearHidden" class="linklike" role="button" tabindex="0" style="margin-left:auto">restaurar todos</a>
     </div>
   </div>
 
@@ -333,6 +342,7 @@ let map = null, mapBuilt = false;
 let markers = [];                 // [{cc, marker, latlng}]
 const enabled = new Set();        // códigos de país ligados no filtro
 const favs = new Set();           // spots favoritados (pelo nome)
+const hidden = new Set();          // spots ocultados pelo usuário (pelo nome)
 const STORE_KEY = "vaiventar.prefs";
 
 /* ordem dos países conforme aparecem nos spots */
@@ -347,6 +357,7 @@ function loadPrefs(){
     if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
     if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
     if(Array.isArray(p.favs)) p.favs.forEach(n=>favs.add(n));
+    if(Array.isArray(p.hidden)) p.hidden.forEach(n=>hidden.add(n));
     const of=document.getElementById("onlyFav"); if(of) of.checked=!!p.onlyFav;
   }catch(e){}
   if(enabled.size===0) countryOrder().forEach(c=>enabled.add(c)); // padrão: todos ligados
@@ -355,7 +366,7 @@ function savePrefs(){
   try{
     const of=document.getElementById("onlyFav");
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      countries:[...enabled], sort:sortMode, favs:[...favs], onlyFav: of?of.checked:false
+      countries:[...enabled], sort:sortMode, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
     }));
   }catch(e){}
 }
@@ -488,6 +499,7 @@ function render(){
   const thr=+document.getElementById("thr").value;
   const onlyGood=document.getElementById("onlyGood").checked;
   const onlyFav=document.getElementById("onlyFav").checked;
+  const showHidden=document.getElementById("showHidden").checked;
   let rows=derive(thr).filter(r=>enabled.has(ccode(r.spot.l)));
 
   if(sortMode==="pais"){
@@ -503,7 +515,7 @@ function render(){
   }
 
   // hero — sempre o melhor da semana
-  const top=[...rows].sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg)[0];
+  const top=rows.filter(r=>!hidden.has(r.spot.n)).sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg)[0];
   const hero=document.getElementById("hero");
   if(top && top.best.avg>=thr){
     hero.style.display="block";
@@ -515,6 +527,7 @@ function render(){
 
   if(onlyFav) rows=rows.filter(r=>favs.has(r.spot.n));
   if(onlyGood) rows=rows.filter(r=>r.goodDays>0);
+  if(!showHidden) rows=rows.filter(r=>!hidden.has(r.spot.n));
 
   const todayStr=RAW[0].days[0].date;
   const list=document.getElementById("list");
@@ -554,11 +567,14 @@ function render(){
       ? `<span class="sbadge b-good">${r.goodDays} ${r.goodDays===1?'dia':'dias'} ✓</span>`
       : `<span class="sbadge b-none">flat</span>`;
     const isFav=favs.has(r.spot.n);
-    const star=`<button class="fav ${isFav?'on':''}" data-fav="${r.spot.n.replace(/"/g,'&quot;')}" type="button" aria-pressed="${isFav}" aria-label="${isFav?'Remover dos favoritos':'Favoritar'} ${r.spot.n}" title="${isFav?'Remover dos favoritos':'Favoritar'}">${isFav?'★':'☆'}</button>`;
-    return pre + `<div class="card ${r.goodDays>0?'hot':''} ${isFav?'is-fav':''}" id="spot-${r.idx}" data-idx="${r.idx}">
+    const isHidden=hidden.has(r.spot.n);
+    const nm=r.spot.n.replace(/"/g,'&quot;');
+    const star=`<button class="fav ${isFav?'on':''}" data-fav="${nm}" type="button" aria-pressed="${isFav}" aria-label="${isFav?'Remover dos favoritos':'Favoritar'} ${r.spot.n}" title="${isFav?'Remover dos favoritos':'Favoritar'}">${isFav?'★':'☆'}</button>`;
+    const hideBtn=`<button class="xbtn ${isHidden?'on':''}" data-hide="${nm}" type="button" aria-label="${isHidden?'Restaurar':'Ocultar'} ${r.spot.n}" title="${isHidden?'Restaurar spot':'Ocultar spot'}">${isHidden?'↩':'✕'}</button>`;
+    return pre + `<div class="card ${r.goodDays>0?'hot':''} ${isFav?'is-fav':''} ${isHidden?'is-hidden':''}" id="spot-${r.idx}" data-idx="${r.idx}">
       <div class="card-top">
         <div><div class="sname">${r.spot.n}</div><div class="sloc">${r.spot.l}</div></div>
-        <div class="card-actions">${badge}${star}</div>
+        <div class="card-actions">${badge}${star}${hideBtn}</div>
       </div>
       <div class="days">${bars}</div>
     </div>`;
@@ -577,6 +593,12 @@ function render(){
       list.innerHTML=`<div class="card"><div class="sname">Nenhum spot nos países selecionados.</div><div class="sloc" style="margin-top:6px">Ligue mais países no filtro acima.</div></div>`;
     }
   }
+
+  // gerência de ocultos: mostra o controle só quando há algo oculto
+  const hr=document.getElementById("hiddenRow");
+  hr.style.display = hidden.size>0 ? "flex" : "none";
+  document.getElementById("hiddenCount").textContent = hidden.size>0 ? `(${hidden.size})` : "";
+  if(hidden.size===0) document.getElementById("showHidden").checked=false;
 }
 
 function buildMap(){
@@ -613,7 +635,7 @@ function buildMap(){
 function syncMap(){
   if(!map) return;
   const onlyFav=document.getElementById("onlyFav").checked;
-  const visible=o=> enabled.has(o.cc) && (!onlyFav || favs.has(o.name));
+  const visible=o=> enabled.has(o.cc) && !hidden.has(o.name) && (!onlyFav || favs.has(o.name));
   markers.forEach(o=>{
     const want=visible(o), has=map.hasLayer(o.marker);
     if(want && !has) o.marker.addTo(map);
@@ -630,14 +652,23 @@ document.getElementById("thr").addEventListener("input",e=>{
 document.getElementById("onlyGood").addEventListener("change",render);
 document.getElementById("onlyFav").addEventListener("change",()=>{ savePrefs(); render(); syncMap(); });
 
-/* favoritar: clique na estrela (delegação no container da lista) */
+/* favoritar / ocultar: clique nas ações do card (delegação no container) */
 document.getElementById("list").addEventListener("click",e=>{
-  const btn=e.target.closest(".fav");
-  if(!btn) return;
-  const name=btn.dataset.fav;
-  if(favs.has(name)) favs.delete(name); else favs.add(name);
-  savePrefs(); render(); syncMap();
+  const favBtn=e.target.closest(".fav");
+  if(favBtn){
+    const name=favBtn.dataset.fav;
+    if(favs.has(name)) favs.delete(name); else favs.add(name);
+    savePrefs(); render(); syncMap(); return;
+  }
+  const hideBtn=e.target.closest(".xbtn");
+  if(hideBtn){
+    const name=hideBtn.dataset.hide;
+    if(hidden.has(name)) hidden.delete(name); else hidden.add(name);
+    savePrefs(); render(); syncMap(); return;
+  }
 });
+document.getElementById("showHidden").addEventListener("change",render);
+document.getElementById("clearHidden").addEventListener("click",()=>{ hidden.clear(); savePrefs(); render(); syncMap(); });
 document.getElementById("seg").addEventListener("click",e=>{
   const b=e.target.closest("button");
   if(!b) return;

@@ -105,7 +105,7 @@ export function ProductsView({ onClose, onChange }: Props) {
             <div className="space-y-3 mb-6">
               <PhotoCapture
                 label="Adicionar por foto"
-                hint="Aponta a câmera pra embalagem"
+                hint="Câmera ou galeria do celular"
                 onCapture={async (dataUrl) => {
                   setEdit({ mode: "analyzing" });
                   try {

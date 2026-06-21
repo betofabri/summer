@@ -447,8 +447,8 @@ function DetailView({
         </div>
       ) : (
         <PhotoCapture
-          label={data.photos.length === 0 ? "Tirar primeira foto" : "Adicionar foto"}
-          hint="Câmera do iPhone se você estiver no mobile"
+          label={data.photos.length === 0 ? "Primeira foto" : "Adicionar foto"}
+          hint="Câmera ou galeria do celular"
           onCapture={handleCapture}
         />
       )}

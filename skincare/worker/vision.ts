@@ -68,7 +68,7 @@ export async function analyzeProductPhoto(
             items: { type: "STRING", enum: [...ACTIVES] },
             maxItems: 6,
           },
-          intensity: { type: "INTEGER", enum: [1, 2, 3] },
+          intensity: { type: "INTEGER" },
           notes: { type: "STRING" },
           confidence: {
             type: "STRING",

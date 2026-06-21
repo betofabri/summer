@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Vai ventar? — América do Sul</title>
-<meta name="description" content="Kite spots da América do Sul ordenados pelos dias com vento sustentado acima do seu limite.">
+<title>Vai ventar? — Américas</title>
+<meta name="description" content="Kite spots das Américas ordenados pelos dias com vento sustentado acima do seu limite.">
 <meta name="theme-color" content="#08131f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -167,8 +167,8 @@
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">Open-Meteo · 7 dias · América do Sul</p>
-  <h1>Vai ventar?<span class="sub">Kite spots da América do Sul ordenados pelos dias com vento sustentado acima do seu limite.</span></h1>
+  <p class="eyebrow">Open-Meteo · 7 dias · Américas</p>
+  <h1>Vai ventar?<span class="sub">Kite spots das Américas ordenados pelos dias com vento sustentado acima do seu limite.</span></h1>
 
   <div class="controls">
     <div class="ctl-row">
@@ -244,11 +244,49 @@ const SPOTS = [
   {n:"Pichilemu", l:"CL · O'Higgins", lat:-34.3833, lon:-72.0167},
   {n:"Adícora", l:"VE · Falcón", lat:11.9333, lon:-69.8167},
   {n:"El Yaque", l:"VE · Margarita", lat:10.9500, lon:-64.1667},
+  // Colômbia
+  {n:"Cabo de la Vela", l:"CO · La Guajira", lat:12.2206, lon:-72.1503},
+  {n:"Salinas del Rey", l:"CO · Atlántico", lat:10.8717, lon:-75.0300},
+  // Caribe — ABC, Barbados
+  {n:"Lac Bay", l:"BQ · Bonaire", lat:12.0500, lon:-68.2900},
+  {n:"Fisherman's Huts", l:"AW · Palm Beach", lat:12.5850, lon:-70.0450},
+  {n:"Boca Grandi", l:"AW · San Nicolas", lat:12.4300, lon:-69.8800},
+  {n:"Sint Joris", l:"CW · Curaçao", lat:12.1200, lon:-68.8800},
+  {n:"Silver Sands", l:"BB · Christ Church", lat:13.0500, lon:-59.5000},
+  // República Dominicana
+  {n:"Cabarete", l:"DO · Puerto Plata", lat:19.7580, lon:-70.4150},
+  {n:"Buen Hombre", l:"DO · Monte Cristi", lat:19.8800, lon:-71.4000},
+  {n:"Macao", l:"DO · Punta Cana", lat:18.7600, lon:-68.4300},
+  // Porto Rico
+  {n:"Isabela", l:"PR · Isabela", lat:18.5100, lon:-67.0500},
+  {n:"Ocean Park", l:"PR · San Juan", lat:18.4650, lon:-66.0700},
+  // Cuba
+  {n:"Cayo Guillermo", l:"CU · Ciego de Ávila", lat:22.5900, lon:-78.6600},
+  {n:"Varadero", l:"CU · Matanzas", lat:23.1800, lon:-81.2000},
+  // Costa Rica
+  {n:"Bahía Salinas", l:"CR · Guanacaste", lat:11.0380, lon:-85.7280},
+  {n:"Lago Arenal", l:"CR · Guanacaste", lat:10.4600, lon:-84.9500},
+  // México
+  {n:"Tulum", l:"MX · Quintana Roo", lat:20.2100, lon:-87.4600},
+  {n:"Isla Blanca", l:"MX · Quintana Roo", lat:21.2700, lon:-86.8100},
+  {n:"Progreso", l:"MX · Yucatán", lat:21.3000, lon:-89.6600},
+  {n:"La Ventana", l:"MX · Baja California Sur", lat:24.0520, lon:-109.9900},
+  {n:"Los Barriles", l:"MX · Baja California Sur", lat:23.6800, lon:-109.7000},
+  // Sul dos EUA
+  {n:"South Padre Island", l:"US · TX", lat:26.1100, lon:-97.1700},
+  {n:"Corpus Christi", l:"US · TX", lat:27.4300, lon:-97.3000},
+  {n:"Key Biscayne", l:"US · FL", lat:25.6900, lon:-80.1600},
+  {n:"Islamorada", l:"US · FL", lat:24.9200, lon:-80.6300},
+  {n:"Cape Hatteras", l:"US · NC", lat:35.2200, lon:-75.6400},
 ];
 
 const COUNTRIES = {
   BR:{n:"Brasil",f:"🇧🇷"}, AR:{n:"Argentina",f:"🇦🇷"}, UY:{n:"Uruguai",f:"🇺🇾"},
-  PE:{n:"Peru",f:"🇵🇪"}, EC:{n:"Equador",f:"🇪🇨"}, CL:{n:"Chile",f:"🇨🇱"}, VE:{n:"Venezuela",f:"🇻🇪"}
+  PE:{n:"Peru",f:"🇵🇪"}, EC:{n:"Equador",f:"🇪🇨"}, CL:{n:"Chile",f:"🇨🇱"}, VE:{n:"Venezuela",f:"🇻🇪"},
+  CO:{n:"Colômbia",f:"🇨🇴"}, CR:{n:"Costa Rica",f:"🇨🇷"}, BQ:{n:"Bonaire",f:"🇧🇶"},
+  AW:{n:"Aruba",f:"🇦🇼"}, CW:{n:"Curaçao",f:"🇨🇼"}, BB:{n:"Barbados",f:"🇧🇧"},
+  DO:{n:"Rep. Dominicana",f:"🇩🇴"}, PR:{n:"Porto Rico",f:"🇵🇷"}, CU:{n:"Cuba",f:"🇨🇺"},
+  MX:{n:"México",f:"🇲🇽"}, US:{n:"EUA",f:"🇺🇸"}
 };
 function ccode(l){ return l.split("·")[0].trim(); }
 

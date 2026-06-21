@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind Finder — América do Sul</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08131f;
+    --bg2:#0c1c2c;
+    --panel:#10243a;
+    --panel2:#14304a;
+    --line:#1f3e5c;
+    --ink:#e9f3f7;
+    --muted:#6f8ca3;
+    --muted2:#4f6c84;
+    /* escala de vento */
+    --w-weak:#385066;
+    --w-marg:#4f8fb8;
+    --w-good:#37e0c4;
+    --w-strong:#ffd24a;
+    --w-heavy:#ff7a45;
+    --accent:#37e0c4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #0f2e44 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, #0c2236 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:Inter,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:22px 16px 64px}
+
+  /* header */
+  .eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+  h1{font-family:"Bebas Neue",sans-serif;font-weight:400;font-size:clamp(40px,11vw,72px);line-height:.92;margin:0;letter-spacing:.01em}
+  h1 .sub{display:block;color:var(--muted);font-size:clamp(15px,3.4vw,20px);font-family:Inter;font-weight:500;letter-spacing:0;margin-top:8px}
+
+  /* controls */
+  .controls{
+    margin-top:22px;background:linear-gradient(180deg,var(--panel),var(--bg2));
+    border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;
+  }
+  .ctl-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .thr-label{font-family:"Space Mono",monospace;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .thr-val{font-family:"Bebas Neue";font-size:34px;color:var(--accent);line-height:1;min-width:64px}
+  .thr-val span{font-size:14px;color:var(--muted);font-family:"Space Mono"}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:160px;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--w-marg),var(--w-good),var(--w-strong),var(--w-heavy));outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--accent);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--accent);cursor:pointer}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;font-weight:500}
+  .toggle input{appearance:none;width:38px;height:22px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;transition:.2s;flex:none}
+  .toggle input:checked{background:var(--accent)}
+  .toggle input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+  .toggle input:checked::after{left:19px}
+
+  /* status */
+  .status{margin-top:18px;font-family:"Space Mono",monospace;font-size:13px;color:var(--muted)}
+  .status.err{color:var(--w-heavy);line-height:1.5}
+
+  /* hero best */
+  .hero{margin-top:20px;display:none;background:
+      radial-gradient(500px 200px at 100% 0%, rgba(55,224,196,.14), transparent 70%),
+      linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--accent);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden}
+  .hero .tag{font-family:"Space Mono";font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+  .hero .hname{font-family:"Bebas Neue";font-size:clamp(30px,7vw,46px);line-height:1;margin-top:4px}
+  .hero .hmeta{color:var(--muted);font-size:13px;margin-top:2px}
+  .hero .hbig{position:absolute;right:16px;top:50%;transform:translateY(-50%);text-align:right}
+  .hero .hbig b{font-family:"Bebas Neue";font-size:clamp(48px,15vw,96px);line-height:.8;color:var(--w-good);display:block}
+  .hero .hbig small{font-family:"Space Mono";font-size:12px;color:var(--muted)}
+
+  /* list */
+  .list{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:14px 14px 10px;transition:border-color .2s}
+  .card.hot{border-color:rgba(55,224,196,.45)}
+  .card-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+  .sname{font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .sloc{font-size:12px;color:var(--muted);font-family:"Space Mono"}
+  .sbadge{font-family:"Space Mono";font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:4px 9px;border-radius:20px;white-space:nowrap}
+  .sbadge.b-good{background:rgba(55,224,196,.14);color:var(--w-good);border:1px solid rgba(55,224,196,.3)}
+  .sbadge.b-none{background:rgba(111,140,163,.1);color:var(--muted2);border:1px solid var(--line)}
+
+  /* anemogram */
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .d-kn{font-family:"Bebas Neue";font-size:18px;line-height:.9}
+  .d-bar-track{width:100%;height:64px;display:flex;align-items:flex-end;background:rgba(255,255,255,.03);border-radius:5px;overflow:hidden}
+  .d-bar{width:100%;border-radius:5px 5px 0 0;transition:height .4s ease}
+  .day.is-good .d-bar{box-shadow:0 0 12px -1px var(--w-good)}
+  .d-dir{font-size:14px;line-height:1;color:var(--muted);transition:transform .3s}
+  .d-dd{font-family:"Space Mono";font-size:9px;color:var(--muted2);letter-spacing:.02em}
+  .d-day{font-family:"Space Mono";font-size:10px;color:var(--muted);text-transform:uppercase}
+  .day.is-good .d-day{color:var(--w-good)}
+  .day.today .d-day{color:var(--ink);font-weight:700}
+
+  .legend{margin-top:24px;display:flex;flex-wrap:wrap;gap:6px 16px;font-family:"Space Mono";font-size:11px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  footer{margin-top:22px;font-family:"Space Mono";font-size:11px;color:var(--muted2);line-height:1.6}
+  footer a{color:var(--muted)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Open-Meteo · 7 dias · América do Sul</p>
+  <h1>Onde venta<span class="sub">Kite spots ordenados por dias com vento sustentado acima do seu limite.</span></h1>
+
+  <div class="controls">
+    <div class="ctl-row">
+      <span class="thr-label">Limite</span>
+      <span class="thr-val" id="thrVal">18<span>kn</span></span>
+      <input type="range" id="thr" min="10" max="30" step="1" value="18" aria-label="Limite de vento em nós">
+    </div>
+    <div class="ctl-row" style="margin-top:12px">
+      <label class="toggle"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
+    </div>
+  </div>
+
+  <div class="status" id="status">Carregando previsão…</div>
+
+  <div class="hero" id="hero">
+    <div class="tag">Melhor da semana</div>
+    <div class="hname" id="heroName">—</div>
+    <div class="hmeta" id="heroMeta">—</div>
+    <div class="hbig"><b id="heroKn">—</b><small id="heroDay">—</small></div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="legend" id="legend">
+    <span><i style="background:var(--w-weak)"></i>&lt;12</span>
+    <span><i style="background:var(--w-marg)"></i>12–18</span>
+    <span><i style="background:var(--w-good)"></i>18–22</span>
+    <span><i style="background:var(--w-strong)"></i>22–28</span>
+    <span><i style="background:var(--w-heavy)"></i>28+ kn</span>
+  </div>
+
+  <footer>
+    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Rajadas no toque/hover de cada barra.<br>
+    Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — gratuito, sem chave.
+  </footer>
+</div>
+
+<script>
+const SPOTS = [
+  {n:"Jericoacoara", l:"BR · CE", lat:-2.7956, lon:-40.5137},
+  {n:"Preá", l:"BR · CE", lat:-2.8333, lon:-40.4167},
+  {n:"Ilha do Guajiru", l:"BR · CE", lat:-2.9167, lon:-39.9500},
+  {n:"Icaraí de Amontada", l:"BR · CE", lat:-3.0167, lon:-39.6667},
+  {n:"Taíba", l:"BR · CE", lat:-3.5167, lon:-38.9167},
+  {n:"Cumbuco", l:"BR · CE", lat:-3.6167, lon:-38.7333},
+  {n:"Pontal de Maceió", l:"BR · CE", lat:-4.4167, lon:-37.7833},
+  {n:"Barra Grande", l:"BR · PI", lat:-2.9000, lon:-41.5333},
+  {n:"Atins / Lençóis", l:"BR · MA", lat:-2.5667, lon:-42.7333},
+  {n:"São Miguel do Gostoso", l:"BR · RN", lat:-5.1167, lon:-35.6333},
+  {n:"Galinhos", l:"BR · RN", lat:-5.0833, lon:-36.2667},
+  {n:"Cabo Frio", l:"BR · RJ", lat:-22.8833, lon:-42.0167},
+  {n:"Búzios", l:"BR · RJ", lat:-22.7469, lon:-41.8817},
+  {n:"Ilhabela", l:"BR · SP", lat:-23.7781, lon:-45.3581},
+  {n:"Florianópolis", l:"BR · SC", lat:-27.6333, lon:-48.4500},
+  {n:"Garopaba", l:"BR · SC", lat:-28.0167, lon:-48.6167},
+  {n:"Praia do Cassino", l:"BR · RS", lat:-32.1833, lon:-52.1667},
+  {n:"Cuesta del Viento", l:"AR · San Juan", lat:-30.2167, lon:-68.8500},
+  {n:"Mar Chiquita", l:"AR · BA", lat:-37.7333, lon:-57.4167},
+  {n:"Necochea", l:"AR · BA", lat:-38.5545, lon:-58.7396},
+  {n:"La Paloma", l:"UY · Rocha", lat:-34.6667, lon:-54.1500},
+  {n:"José Ignacio", l:"UY · Maldonado", lat:-34.8333, lon:-54.6333},
+  {n:"Paracas", l:"PE · Ica", lat:-13.8333, lon:-76.2500},
+  {n:"Máncora", l:"PE · Piura", lat:-4.1056, lon:-81.0497},
+  {n:"Santa Marianita", l:"EC · Manabí", lat:-0.9500, lon:-80.7333},
+  {n:"Matanzas", l:"CL · O'Higgins", lat:-33.9667, lon:-71.8833},
+  {n:"Pichilemu", l:"CL · O'Higgins", lat:-34.3833, lon:-72.0167},
+  {n:"Adícora", l:"VE · Falcón", lat:11.9333, lon:-69.8167},
+  {n:"El Yaque", l:"VE · Margarita", lat:10.9500, lon:-64.1667},
+];
+
+const DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const DAY_START=9, DAY_END=18; // janela diurna inclusiva
+
+let RAW = null; // [{spot, days:[{date, dow, hours:[{h,spd,gust,dir}]}]}]
+
+function colorFor(kn){
+  if(kn<12) return "var(--w-weak)";
+  if(kn<18) return "var(--w-marg)";
+  if(kn<22) return "var(--w-good)";
+  if(kn<28) return "var(--w-strong)";
+  return "var(--w-heavy)";
+}
+function compass(deg){ return COMPASS[Math.round(deg/22.5)%16]; }
+
+async function load(){
+  const lats = SPOTS.map(s=>s.lat).join(",");
+  const lons = SPOTS.map(s=>s.lon).join(",");
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
+    + `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=kn&timezone=auto&forecast_days=7`;
+  let data;
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    data = await r.json();
+  }catch(e){
+    document.getElementById("status").className="status err";
+    document.getElementById("status").textContent =
+      "Não consegui buscar a previsão (" + e.message + "). Verifique a conexão e recarregue. Se estiver atrás de firewall/VPN, libere api.open-meteo.com.";
+    return;
+  }
+  const arr = Array.isArray(data) ? data : [data];
+  RAW = arr.map((d,i)=>{
+    const t=d.hourly.time, sp=d.hourly.wind_speed_10m, gu=d.hourly.wind_gusts_10m, di=d.hourly.wind_direction_10m;
+    const byDay={};
+    for(let k=0;k<t.length;k++){
+      const date=t[k].slice(0,10), h=parseInt(t[k].slice(11,13),10);
+      (byDay[date]=byDay[date]||[]).push({h,spd:sp[k],gust:gu[k],dir:di[k]});
+    }
+    const days=Object.keys(byDay).sort().map(date=>{
+      const dow=new Date(date+"T12:00:00").getDay();
+      return {date,dow,hours:byDay[date]};
+    });
+    return {spot:SPOTS[i], days};
+  });
+  document.getElementById("status").style.display="none";
+  render();
+}
+
+function derive(thr){
+  return RAW.map(item=>{
+    const days=item.days.map(d=>{
+      const day=d.hours.filter(x=>x.h>=DAY_START && x.h<=DAY_END);
+      const src=day.length?day:d.hours;
+      const avg=src.reduce((a,x)=>a+x.spd,0)/src.length;
+      let peak=src[0]; for(const x of src){ if(x.spd>peak.spd) peak=x; }
+      const goodHrs=src.filter(x=>x.spd>=thr).length;
+      return {date:d.date,dow:d.dow,avg,gust:peak.gust,dir:peak.dir,peak:peak.spd,goodHrs,good:avg>=thr};
+    });
+    const goodDays=days.filter(x=>x.good).length;
+    const best=days.reduce((a,b)=>b.avg>a.avg?b:a,days[0]);
+    return {spot:item.spot,days,goodDays,best};
+  });
+}
+
+function render(){
+  if(!RAW) return;
+  const thr=+document.getElementById("thr").value;
+  const onlyGood=document.getElementById("onlyGood").checked;
+  let rows=derive(thr);
+  rows.sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg);
+
+  // hero
+  const top=rows[0];
+  const hero=document.getElementById("hero");
+  if(top && top.best.avg>=thr){
+    hero.style.display="block";
+    document.getElementById("heroName").textContent=top.spot.n;
+    document.getElementById("heroMeta").textContent=`${top.spot.l} · ${top.goodDays} ${top.goodDays===1?"dia":"dias"} acima de ${thr}kn`;
+    document.getElementById("heroKn").textContent=Math.round(top.best.avg);
+    document.getElementById("heroKn").nextElementSibling.textContent=`${DOW[top.best.dow]} · ${compass(top.best.dir)} · rajada ${Math.round(top.best.gust)}kn`;
+  } else hero.style.display="none";
+
+  if(onlyGood) rows=rows.filter(r=>r.goodDays>0);
+
+  const todayStr=RAW[0].days[0].date;
+  const list=document.getElementById("list");
+  list.innerHTML = rows.map(r=>{
+    const maxScale=Math.max(28, ...r.days.map(d=>d.avg));
+    const bars=r.days.map(d=>{
+      const h=Math.max(8, Math.round(d.avg/maxScale*100));
+      const flow=(d.dir+180)%360; // direção do fluxo
+      return `<div class="day ${d.good?'is-good':''} ${d.date===todayStr?'today':''}" title="Médio ${Math.round(d.avg)}kn · pico ${Math.round(d.peak)}kn · rajada ${Math.round(d.gust)}kn · ${d.goodHrs}h acima de ${thr}kn">
+        <span class="d-kn" style="color:${colorFor(d.avg)}">${Math.round(d.avg)}</span>
+        <span class="d-bar-track"><span class="d-bar" style="height:${h}%;background:${colorFor(d.avg)}"></span></span>
+        <span class="d-dir" style="transform:rotate(${flow}deg)">↑</span>
+        <span class="d-dd">${compass(d.dir)}</span>
+        <span class="d-day">${DOW[d.dow]}</span>
+      </div>`;
+    }).join("");
+    const badge = r.goodDays>0
+      ? `<span class="sbadge b-good">${r.goodDays} ${r.goodDays===1?'dia':'dias'} ✓</span>`
+      : `<span class="sbadge b-none">flat</span>`;
+    return `<div class="card ${r.goodDays>0?'hot':''}">
+      <div class="card-top">
+        <div><div class="sname">${r.spot.n}</div><div class="sloc">${r.spot.l}</div></div>
+        ${badge}
+      </div>
+      <div class="days">${bars}</div>
+    </div>`;
+  }).join("");
+
+  if(!rows.length){
+    list.innerHTML=`<div class="card"><div class="sname">Nenhum spot acima de ${thr}kn nos próximos 7 dias.</div><div class="sloc" style="margin-top:6px">Baixe o limite no controle acima.</div></div>`;
+  }
+}
+
+document.getElementById("thr").addEventListener("input",e=>{
+  document.getElementById("thrVal").firstChild.textContent=e.target.value;
+  render();
+});
+document.getElementById("onlyGood").addEventListener("change",render);
+load();
+</script>
+</body>
+</html>

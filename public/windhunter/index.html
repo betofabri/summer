@@ -2,11 +2,22 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wind Finder — América do Sul</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vai ventar? — América do Sul</title>
+<meta name="description" content="Kite spots da América do Sul ordenados pelos dias com vento sustentado acima do seu limite.">
+<meta name="theme-color" content="#08131f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vai ventar?">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
   :root{
     --bg:#08131f;
@@ -37,7 +48,7 @@
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
   }
-  .wrap{max-width:880px;margin:0 auto;padding:22px 16px 64px}
+  .wrap{max-width:880px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 16px 64px}
 
   /* header */
   .eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
@@ -62,6 +73,22 @@
   .toggle input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
   .toggle input:checked::after{left:19px}
 
+  /* segmented (ordenar) */
+  .seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:"Space Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding:7px 13px;border-radius:7px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--accent);color:#04222b;font-weight:700}
+
+  /* mapa */
+  .mapwrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+  #map{height:300px;width:100%;background:var(--bg2);z-index:0}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--panel2);color:var(--ink);box-shadow:0 4px 18px rgba(0,0,0,.5)}
+  .leaflet-popup-content{font-family:Inter,sans-serif;font-size:13px;margin:10px 12px}
+  .leaflet-popup-content b{font-size:14px}
+  .leaflet-container{font-family:Inter,sans-serif}
+  .leaflet-container a{color:var(--accent)}
+  .leaflet-bar a{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+  .leaflet-control-attribution{background:rgba(8,19,31,.7)!important;color:var(--muted2)!important}
+
   /* status */
   .status{margin-top:18px;font-family:"Space Mono",monospace;font-size:13px;color:var(--muted)}
   .status.err{color:var(--w-heavy);line-height:1.5}
@@ -78,6 +105,12 @@
   .hero .hbig b{font-family:"Bebas Neue";font-size:clamp(48px,15vw,96px);line-height:.8;color:var(--w-good);display:block}
   .hero .hbig small{font-family:"Space Mono";font-size:12px;color:var(--muted)}
 
+  /* country group */
+  .grp{display:flex;align-items:center;gap:8px;margin:16px 2px 2px;font-family:"Space Mono";font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .grp:first-child{margin-top:4px}
+  .grp .flag{font-size:17px}
+  .grp .grp-c{color:var(--muted2);font-size:11px}
+
   /* list */
   .list{margin-top:8px;display:flex;flex-direction:column;gap:10px}
   .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:14px 14px 10px;transition:border-color .2s}
@@ -88,12 +121,14 @@
   .sbadge{font-family:"Space Mono";font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:4px 9px;border-radius:20px;white-space:nowrap}
   .sbadge.b-good{background:rgba(55,224,196,.14);color:var(--w-good);border:1px solid rgba(55,224,196,.3)}
   .sbadge.b-none{background:rgba(111,140,163,.1);color:var(--muted2);border:1px solid var(--line)}
+  @keyframes flashb{0%{border-color:var(--accent);box-shadow:0 0 0 2px rgba(55,224,196,.55)}100%{border-color:var(--line);box-shadow:none}}
+  .card.flash{animation:flashb 1.6s ease}
 
   /* anemogram */
   .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
   .day{display:flex;flex-direction:column;align-items:center;gap:5px}
   .d-kn{font-family:"Bebas Neue";font-size:18px;line-height:.9}
-  .d-bar-track{width:100%;height:64px;display:flex;align-items:flex-end;background:rgba(255,255,255,.03);border-radius:5px;overflow:hidden}
+  .d-bar-track{width:100%;height:60px;display:flex;align-items:flex-end;background:rgba(255,255,255,.03);border-radius:5px;overflow:hidden}
   .d-bar{width:100%;border-radius:5px 5px 0 0;transition:height .4s ease}
   .day.is-good .d-bar{box-shadow:0 0 12px -1px var(--w-good)}
   .d-dir{font-size:14px;line-height:1;color:var(--muted);transition:transform .3s}
@@ -101,20 +136,24 @@
   .d-day{font-family:"Space Mono";font-size:10px;color:var(--muted);text-transform:uppercase}
   .day.is-good .d-day{color:var(--w-good)}
   .day.today .d-day{color:var(--ink);font-weight:700}
+  .d-meta{display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;min-height:14px;line-height:1}
+  .d-wx{font-size:12px}
+  .d-temp{font-family:"Space Mono";font-size:10px;color:var(--ink)}
+  .d-precip{font-family:"Space Mono";font-size:9px;color:var(--w-marg)}
 
   .legend{margin-top:24px;display:flex;flex-wrap:wrap;gap:6px 16px;font-family:"Space Mono";font-size:11px;color:var(--muted)}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
   footer{margin-top:22px;font-family:"Space Mono";font-size:11px;color:var(--muted2);line-height:1.6}
   footer a{color:var(--muted)}
 
-  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <p class="eyebrow">Open-Meteo · 7 dias · América do Sul</p>
-  <h1>Onde venta<span class="sub">Kite spots ordenados por dias com vento sustentado acima do seu limite.</span></h1>
+  <h1>Vai ventar?<span class="sub">Kite spots da América do Sul ordenados pelos dias com vento sustentado acima do seu limite.</span></h1>
 
   <div class="controls">
     <div class="ctl-row">
@@ -122,10 +161,17 @@
       <span class="thr-val" id="thrVal">18<span>kn</span></span>
       <input type="range" id="thr" min="10" max="30" step="1" value="18" aria-label="Limite de vento em nós">
     </div>
-    <div class="ctl-row" style="margin-top:12px">
-      <label class="toggle"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
+    <div class="ctl-row" style="margin-top:14px">
+      <span class="thr-label">Ordenar</span>
+      <div class="seg" id="seg" role="group" aria-label="Ordenar spots">
+        <button data-sort="vento" class="on" type="button">Vento</button>
+        <button data-sort="pais" type="button">País</button>
+      </div>
+      <label class="toggle" style="margin-left:auto"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
     </div>
   </div>
+
+  <div class="mapwrap" id="mapwrap"><div id="map" aria-label="Mapa dos spots"></div></div>
 
   <div class="status" id="status">Carregando previsão…</div>
 
@@ -147,11 +193,13 @@
   </div>
 
   <footer>
-    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Rajadas no toque/hover de cada barra.<br>
-    Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — gratuito, sem chave.
+    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Temperatura máxima e tendência de céu/chuva por dia. Toque numa barra pra ver rajada e horas acima do limite; toque num pin do mapa pra pular ao spot.<br>
+    Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — gratuito, sem chave. Mapa: © OpenStreetMap · © CARTO.
   </footer>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 const SPOTS = [
   {n:"Jericoacoara", l:"BR · CE", lat:-2.7956, lon:-40.5137},
@@ -185,11 +233,19 @@ const SPOTS = [
   {n:"El Yaque", l:"VE · Margarita", lat:10.9500, lon:-64.1667},
 ];
 
+const COUNTRIES = {
+  BR:{n:"Brasil",f:"🇧🇷"}, AR:{n:"Argentina",f:"🇦🇷"}, UY:{n:"Uruguai",f:"🇺🇾"},
+  PE:{n:"Peru",f:"🇵🇪"}, EC:{n:"Equador",f:"🇪🇨"}, CL:{n:"Chile",f:"🇨🇱"}, VE:{n:"Venezuela",f:"🇻🇪"}
+};
+function ccode(l){ return l.split("·")[0].trim(); }
+
 const DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const DAY_START=9, DAY_END=18; // janela diurna inclusiva
 
-let RAW = null; // [{spot, days:[{date, dow, hours:[{h,spd,gust,dir}]}]}]
+let RAW = null; // [{spot, idx, days:[{date, dow, hours:[...], wx:{...}}]}]
+let sortMode = "vento";
+let map = null, mapBuilt = false;
 
 function colorFor(kn){
   if(kn<12) return "var(--w-weak)";
@@ -198,13 +254,39 @@ function colorFor(kn){
   if(kn<28) return "var(--w-strong)";
   return "var(--w-heavy)";
 }
+function colorHex(kn){
+  if(kn<12) return "#385066";
+  if(kn<18) return "#4f8fb8";
+  if(kn<22) return "#37e0c4";
+  if(kn<28) return "#ffd24a";
+  return "#ff7a45";
+}
 function compass(deg){ return COMPASS[Math.round(deg/22.5)%16]; }
+
+/* WMO weather code -> ícone + descrição (sol / nuvem / chuva) */
+function wxInfo(code){
+  if(code==null) return null;
+  if(code===0) return {e:"☀️", t:"sol"};
+  if(code===1) return {e:"🌤️", t:"poucas nuvens"};
+  if(code===2) return {e:"⛅", t:"parcialmente nublado"};
+  if(code===3) return {e:"☁️", t:"nublado"};
+  if(code===45||code===48) return {e:"🌫️", t:"névoa"};
+  if(code>=51&&code<=57) return {e:"🌦️", t:"garoa"};
+  if(code>=61&&code<=67) return {e:"🌧️", t:"chuva"};
+  if(code>=71&&code<=77) return {e:"🌨️", t:"neve"};
+  if(code>=80&&code<=82) return {e:"🌧️", t:"pancadas de chuva"};
+  if(code>=85&&code<=86) return {e:"🌨️", t:"pancadas de neve"};
+  if(code>=95) return {e:"⛈️", t:"tempestade"};
+  return {e:"·", t:""};
+}
 
 async function load(){
   const lats = SPOTS.map(s=>s.lat).join(",");
   const lons = SPOTS.map(s=>s.lon).join(",");
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
-    + `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&wind_speed_unit=kn&timezone=auto&forecast_days=7`;
+    + `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m`
+    + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum`
+    + `&wind_speed_unit=kn&timezone=auto&forecast_days=7`;
   let data;
   try{
     const r = await fetch(url);
@@ -224,14 +306,41 @@ async function load(){
       const date=t[k].slice(0,10), h=parseInt(t[k].slice(11,13),10);
       (byDay[date]=byDay[date]||[]).push({h,spd:sp[k],gust:gu[k],dir:di[k]});
     }
+    /* dados diários (temperatura, céu, chuva) indexados por data */
+    const wxByDate={};
+    const dd=d.daily;
+    if(dd && dd.time){
+      for(let k=0;k<dd.time.length;k++){
+        wxByDate[dd.time[k]]={
+          code: dd.weather_code ? dd.weather_code[k] : null,
+          tmax: dd.temperature_2m_max ? dd.temperature_2m_max[k] : null,
+          tmin: dd.temperature_2m_min ? dd.temperature_2m_min[k] : null,
+          pprob: dd.precipitation_probability_max ? dd.precipitation_probability_max[k] : null,
+          psum: dd.precipitation_sum ? dd.precipitation_sum[k] : null
+        };
+      }
+    }
     const days=Object.keys(byDay).sort().map(date=>{
       const dow=new Date(date+"T12:00:00").getDay();
-      return {date,dow,hours:byDay[date]};
+      return {date,dow,hours:byDay[date],wx:wxByDate[date]||null};
     });
-    return {spot:SPOTS[i], days};
+    return {spot:SPOTS[i], idx:i, days};
   });
   document.getElementById("status").style.display="none";
   render();
+  buildMap();
+}
+
+/* maior média diurna da semana (independe do limite) — usada para colorir os pins */
+function spotBestAvg(item){
+  let best=-1;
+  for(const d of item.days){
+    const day=d.hours.filter(x=>x.h>=DAY_START && x.h<=DAY_END);
+    const src=day.length?day:d.hours;
+    const avg=src.reduce((a,x)=>a+x.spd,0)/src.length;
+    if(avg>best) best=avg;
+  }
+  return best;
 }
 
 function derive(thr){
@@ -242,11 +351,11 @@ function derive(thr){
       const avg=src.reduce((a,x)=>a+x.spd,0)/src.length;
       let peak=src[0]; for(const x of src){ if(x.spd>peak.spd) peak=x; }
       const goodHrs=src.filter(x=>x.spd>=thr).length;
-      return {date:d.date,dow:d.dow,avg,gust:peak.gust,dir:peak.dir,peak:peak.spd,goodHrs,good:avg>=thr};
+      return {date:d.date,dow:d.dow,avg,gust:peak.gust,dir:peak.dir,peak:peak.spd,goodHrs,good:avg>=thr,wx:d.wx};
     });
     const goodDays=days.filter(x=>x.good).length;
     const best=days.reduce((a,b)=>b.avg>a.avg?b:a,days[0]);
-    return {spot:item.spot,days,goodDays,best};
+    return {spot:item.spot,idx:item.idx,days,goodDays,best};
   });
 }
 
@@ -255,10 +364,19 @@ function render(){
   const thr=+document.getElementById("thr").value;
   const onlyGood=document.getElementById("onlyGood").checked;
   let rows=derive(thr);
-  rows.sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg);
 
-  // hero
-  const top=rows[0];
+  if(sortMode==="pais"){
+    rows.sort((a,b)=>
+      ccode(a.spot.l).localeCompare(ccode(b.spot.l)) ||
+      b.goodDays-a.goodDays ||
+      a.spot.n.localeCompare(b.spot.n)
+    );
+  }else{
+    rows.sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg);
+  }
+
+  // hero — sempre o melhor da semana
+  const top=[...rows].sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg)[0];
   const hero=document.getElementById("hero");
   if(top && top.best.avg>=thr){
     hero.style.display="block";
@@ -272,23 +390,42 @@ function render(){
 
   const todayStr=RAW[0].days[0].date;
   const list=document.getElementById("list");
+  let lastC=null;
+
   list.innerHTML = rows.map(r=>{
+    let pre="";
+    if(sortMode==="pais"){
+      const c=ccode(r.spot.l);
+      if(c!==lastC){
+        lastC=c;
+        const ci=COUNTRIES[c]||{n:c,f:"🏳️"};
+        const cnt=rows.filter(x=>ccode(x.spot.l)===c).length;
+        pre=`<div class="grp"><span class="flag">${ci.f}</span>${ci.n}<span class="grp-c">${cnt} spot${cnt>1?"s":""}</span></div>`;
+      }
+    }
     const maxScale=Math.max(28, ...r.days.map(d=>d.avg));
     const bars=r.days.map(d=>{
       const h=Math.max(8, Math.round(d.avg/maxScale*100));
       const flow=(d.dir+180)%360; // direção do fluxo
-      return `<div class="day ${d.good?'is-good':''} ${d.date===todayStr?'today':''}" title="Médio ${Math.round(d.avg)}kn · pico ${Math.round(d.peak)}kn · rajada ${Math.round(d.gust)}kn · ${d.goodHrs}h acima de ${thr}kn">
+      const wx=d.wx?wxInfo(d.wx.code):null;
+      const tmax=(d.wx && d.wx.tmax!=null)?Math.round(d.wx.tmax)+"°":"";
+      const pp=(d.wx && d.wx.pprob!=null)?d.wx.pprob:null;
+      const precip=(pp!=null && pp>=30)?`<span class="d-precip">💧${pp}%</span>`:"";
+      const meta=`<span class="d-meta">${wx?`<span class="d-wx">${wx.e}</span>`:""}${tmax?`<span class="d-temp">${tmax}</span>`:""}${precip}</span>`;
+      const wxTitle=wx?` · ${wx.t}${tmax?" "+tmax:""}${pp!=null?" · chuva "+pp+"%":""}`:"";
+      return `<div class="day ${d.good?'is-good':''} ${d.date===todayStr?'today':''}" title="Médio ${Math.round(d.avg)}kn · pico ${Math.round(d.peak)}kn · rajada ${Math.round(d.gust)}kn · ${d.goodHrs}h acima de ${thr}kn${wxTitle}">
         <span class="d-kn" style="color:${colorFor(d.avg)}">${Math.round(d.avg)}</span>
         <span class="d-bar-track"><span class="d-bar" style="height:${h}%;background:${colorFor(d.avg)}"></span></span>
         <span class="d-dir" style="transform:rotate(${flow}deg)">↑</span>
         <span class="d-dd">${compass(d.dir)}</span>
         <span class="d-day">${DOW[d.dow]}</span>
+        ${meta}
       </div>`;
     }).join("");
     const badge = r.goodDays>0
       ? `<span class="sbadge b-good">${r.goodDays} ${r.goodDays===1?'dia':'dias'} ✓</span>`
       : `<span class="sbadge b-none">flat</span>`;
-    return `<div class="card ${r.goodDays>0?'hot':''}">
+    return pre + `<div class="card ${r.goodDays>0?'hot':''}" id="spot-${r.idx}" data-idx="${r.idx}">
       <div class="card-top">
         <div><div class="sname">${r.spot.n}</div><div class="sloc">${r.spot.l}</div></div>
         ${badge}
@@ -302,12 +439,55 @@ function render(){
   }
 }
 
+function buildMap(){
+  if(mapBuilt || !RAW) return;
+  if(typeof L==="undefined"){ document.getElementById("mapwrap").style.display="none"; return; }
+  mapBuilt=true;
+  map=L.map("map",{scrollWheelZoom:false,zoomControl:true});
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
+    attribution:'© OpenStreetMap · © CARTO', subdomains:"abcd", maxZoom:18
+  }).addTo(map);
+
+  const pts=[];
+  RAW.forEach(item=>{
+    const ba=spotBestAvg(item);
+    const m=L.circleMarker([item.spot.lat,item.spot.lon],{
+      radius:7, color:"#08131f", weight:1.5, fillColor:colorHex(ba), fillOpacity:.95
+    }).addTo(map);
+    m.bindPopup(`<b>${item.spot.n}</b><br>${item.spot.l}<br>pico médio ${Math.round(ba)}kn`);
+    m.on("click",()=>{
+      const el=document.getElementById("spot-"+item.idx);
+      if(el){
+        el.scrollIntoView({behavior:"smooth",block:"center"});
+        el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+      }
+    });
+    pts.push([item.spot.lat,item.spot.lon]);
+  });
+  if(pts.length) map.fitBounds(pts,{padding:[30,30]});
+}
+
 document.getElementById("thr").addEventListener("input",e=>{
   document.getElementById("thrVal").firstChild.textContent=e.target.value;
   render();
 });
 document.getElementById("onlyGood").addEventListener("change",render);
+document.getElementById("seg").addEventListener("click",e=>{
+  const b=e.target.closest("button");
+  if(!b) return;
+  sortMode=b.dataset.sort;
+  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+
 load();
+
+/* PWA — pronto para virar app no celular (Adicionar à tela inicial) */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>

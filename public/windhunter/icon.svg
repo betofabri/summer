@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vai ventar?">
+  <rect width="512" height="512" rx="112" fill="#08131f"/>
+  <rect width="512" height="512" rx="112" fill="url(#g)" opacity="0.5"/>
+  <defs>
+    <radialGradient id="g" cx="78%" cy="14%" r="80%">
+      <stop offset="0" stop-color="#0f2e44"/>
+      <stop offset="1" stop-color="#08131f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" stroke="#37e0c4" stroke-width="34" stroke-linecap="round">
+    <path d="M96 188 H300 a44 44 0 1 0 -44 -44"/>
+    <path d="M96 286 H372 a40 40 0 1 1 -40 40"/>
+    <path d="M96 384 H236 a34 34 0 1 0 -34 -34"/>
+  </g>
+</svg>

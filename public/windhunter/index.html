@@ -136,6 +136,12 @@
   .sbadge{font-family:"Space Mono";font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:4px 9px;border-radius:20px;white-space:nowrap}
   .sbadge.b-good{background:rgba(55,224,196,.14);color:var(--w-good);border:1px solid rgba(55,224,196,.3)}
   .sbadge.b-none{background:rgba(111,140,163,.1);color:var(--muted2);border:1px solid var(--line)}
+  .card-actions{display:flex;align-items:center;gap:10px}
+  .card.is-fav{border-color:rgba(255,210,74,.45)}
+  .fav{appearance:none;border:0;background:transparent;cursor:pointer;font-size:21px;line-height:1;color:var(--muted2);padding:0 2px;transition:transform .15s,color .15s}
+  .fav:hover{color:var(--w-strong)}
+  .fav.on{color:var(--w-strong);text-shadow:0 0 10px rgba(255,210,74,.5)}
+  .fav:active{transform:scale(1.3)}
   @keyframes flashb{0%{border-color:var(--accent);box-shadow:0 0 0 2px rgba(55,224,196,.55)}100%{border-color:var(--line);box-shadow:none}}
   .card.flash{animation:flashb 1.6s ease}
 
@@ -182,7 +188,8 @@
         <button data-sort="vento" class="on" type="button">Vento</button>
         <button data-sort="pais" type="button">País</button>
       </div>
-      <label class="toggle" style="margin-left:auto"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
+      <label class="toggle" style="margin-left:auto"><input type="checkbox" id="onlyFav"> ★ Só favoritos</label>
+      <label class="toggle"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
     </div>
     <div class="cfilter">
       <span class="thr-label">Países <a id="cAll" role="button" tabindex="0">todos</a> · <a id="cNone" role="button" tabindex="0">limpar</a></span>
@@ -289,6 +296,7 @@ let sortMode = "vento";
 let map = null, mapBuilt = false;
 let markers = [];                 // [{cc, marker, latlng}]
 const enabled = new Set();        // códigos de país ligados no filtro
+const favs = new Set();           // spots favoritados (pelo nome)
 const STORE_KEY = "vaiventar.prefs";
 
 /* ordem dos países conforme aparecem nos spots */
@@ -302,11 +310,18 @@ function loadPrefs(){
     const p=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
     if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
     if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
+    if(Array.isArray(p.favs)) p.favs.forEach(n=>favs.add(n));
+    const of=document.getElementById("onlyFav"); if(of) of.checked=!!p.onlyFav;
   }catch(e){}
   if(enabled.size===0) countryOrder().forEach(c=>enabled.add(c)); // padrão: todos ligados
 }
 function savePrefs(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify({countries:[...enabled], sort:sortMode})); }catch(e){}
+  try{
+    const of=document.getElementById("onlyFav");
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      countries:[...enabled], sort:sortMode, favs:[...favs], onlyFav: of?of.checked:false
+    }));
+  }catch(e){}
 }
 function buildCountryFilter(){
   const box=document.getElementById("countries");
@@ -436,6 +451,7 @@ function render(){
   if(!RAW) return;
   const thr=+document.getElementById("thr").value;
   const onlyGood=document.getElementById("onlyGood").checked;
+  const onlyFav=document.getElementById("onlyFav").checked;
   let rows=derive(thr).filter(r=>enabled.has(ccode(r.spot.l)));
 
   if(sortMode==="pais"){
@@ -446,6 +462,8 @@ function render(){
     );
   }else{
     rows.sort((a,b)=> b.goodDays-a.goodDays || b.best.avg-a.best.avg);
+    // favoritos flutuam pro topo (sort estável mantém a ordem de vento)
+    rows.sort((a,b)=> (favs.has(b.spot.n)?1:0) - (favs.has(a.spot.n)?1:0));
   }
 
   // hero — sempre o melhor da semana
@@ -459,6 +477,7 @@ function render(){
     document.getElementById("heroKn").nextElementSibling.textContent=`${DOW[top.best.dow]} · ${compass(top.best.dir)} · rajada ${Math.round(top.best.gust)}kn`;
   } else hero.style.display="none";
 
+  if(onlyFav) rows=rows.filter(r=>favs.has(r.spot.n));
   if(onlyGood) rows=rows.filter(r=>r.goodDays>0);
 
   const todayStr=RAW[0].days[0].date;
@@ -498,10 +517,12 @@ function render(){
     const badge = r.goodDays>0
       ? `<span class="sbadge b-good">${r.goodDays} ${r.goodDays===1?'dia':'dias'} ✓</span>`
       : `<span class="sbadge b-none">flat</span>`;
-    return pre + `<div class="card ${r.goodDays>0?'hot':''}" id="spot-${r.idx}" data-idx="${r.idx}">
+    const isFav=favs.has(r.spot.n);
+    const star=`<button class="fav ${isFav?'on':''}" data-fav="${r.spot.n.replace(/"/g,'&quot;')}" type="button" aria-pressed="${isFav}" aria-label="${isFav?'Remover dos favoritos':'Favoritar'} ${r.spot.n}" title="${isFav?'Remover dos favoritos':'Favoritar'}">${isFav?'★':'☆'}</button>`;
+    return pre + `<div class="card ${r.goodDays>0?'hot':''} ${isFav?'is-fav':''}" id="spot-${r.idx}" data-idx="${r.idx}">
       <div class="card-top">
         <div><div class="sname">${r.spot.n}</div><div class="sloc">${r.spot.l}</div></div>
-        ${badge}
+        <div class="card-actions">${badge}${star}</div>
       </div>
       <div class="days">${bars}</div>
     </div>`;
@@ -510,6 +531,10 @@ function render(){
   if(!rows.length){
     if(enabled.size===0){
       list.innerHTML=`<div class="card"><div class="sname">Nenhum país selecionado.</div><div class="sloc" style="margin-top:6px">Ligue ao menos um país no filtro acima.</div></div>`;
+    }else if(onlyFav && favs.size===0){
+      list.innerHTML=`<div class="card"><div class="sname">Nenhum favorito ainda.</div><div class="sloc" style="margin-top:6px">Toque na ☆ de um spot pra favoritar.</div></div>`;
+    }else if(onlyFav){
+      list.innerHTML=`<div class="card"><div class="sname">Nenhum favorito nos filtros atuais.</div><div class="sloc" style="margin-top:6px">Ajuste país/limite ou desligue "Só favoritos".</div></div>`;
     }else if(onlyGood){
       list.innerHTML=`<div class="card"><div class="sname">Nenhum spot acima de ${thr}kn nos próximos 7 dias.</div><div class="sloc" style="margin-top:6px">Baixe o limite ou desligue "Só spots que batem o limite".</div></div>`;
     }else{
@@ -542,21 +567,23 @@ function buildMap(){
         el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
       }
     });
-    markers.push({cc, marker:m, latlng});
+    markers.push({cc, name:item.spot.n, marker:m, latlng});
     if(enabled.has(cc)) m.addTo(map);
   });
   syncMap();
 }
 
-/* mostra/esconde pins conforme o filtro de países e reenquadra o mapa */
+/* mostra/esconde pins conforme país (e favoritos, se "só favoritos") e reenquadra */
 function syncMap(){
   if(!map) return;
+  const onlyFav=document.getElementById("onlyFav").checked;
+  const visible=o=> enabled.has(o.cc) && (!onlyFav || favs.has(o.name));
   markers.forEach(o=>{
-    const want=enabled.has(o.cc), has=map.hasLayer(o.marker);
+    const want=visible(o), has=map.hasLayer(o.marker);
     if(want && !has) o.marker.addTo(map);
     else if(!want && has) map.removeLayer(o.marker);
   });
-  const vis=markers.filter(o=>enabled.has(o.cc)).map(o=>o.latlng);
+  const vis=markers.filter(visible).map(o=>o.latlng);
   if(vis.length) map.fitBounds(vis,{padding:[30,30]});
 }
 
@@ -565,6 +592,16 @@ document.getElementById("thr").addEventListener("input",e=>{
   render();
 });
 document.getElementById("onlyGood").addEventListener("change",render);
+document.getElementById("onlyFav").addEventListener("change",()=>{ savePrefs(); render(); syncMap(); });
+
+/* favoritar: clique na estrela (delegação no container da lista) */
+document.getElementById("list").addEventListener("click",e=>{
+  const btn=e.target.closest(".fav");
+  if(!btn) return;
+  const name=btn.dataset.fav;
+  if(favs.has(name)) favs.delete(name); else favs.add(name);
+  savePrefs(); render(); syncMap();
+});
 document.getElementById("seg").addEventListener("click",e=>{
   const b=e.target.closest("button");
   if(!b) return;

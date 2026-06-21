@@ -2,7 +2,7 @@
    Sempre busca a versão fresca quando online (nunca serve conteúdo velho);
    o cache só entra como reserva quando o aparelho está offline.
    Respostas da API (open-meteo, cross-origin) nunca são cacheadas: previsão sempre atual. */
-const CACHE = "vaiventar-v1";
+const CACHE = "vaiventar-v2";
 const SHELL = ["./", "./index.html", "./icon.svg", "./manifest.json"];
 
 self.addEventListener("install", e => {

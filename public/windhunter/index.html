@@ -78,6 +78,21 @@
   .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:"Space Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding:7px 13px;border-radius:7px;cursor:pointer;transition:.15s}
   .seg button.on{background:var(--accent);color:#04222b;font-weight:700}
 
+  /* filtro de países (switches estilo iPhone) */
+  .cfilter{margin-top:16px}
+  .cfilter .thr-label{display:block;margin-bottom:10px}
+  .cfilter a{cursor:pointer;color:var(--accent);font-size:11px;text-transform:none;letter-spacing:0;font-weight:700}
+  .countries{display:flex;flex-wrap:wrap;gap:8px}
+  .ctry{display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:7px 10px;cursor:pointer;user-select:none;transition:opacity .15s}
+  .ctry .cflag{font-size:16px;line-height:1}
+  .ctry .cname{font-size:13px;color:var(--ink);font-weight:500}
+  .ctry input{appearance:none;width:34px;height:20px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;transition:.2s;flex:none}
+  .ctry input:checked{background:var(--accent)}
+  .ctry input::after{content:"";position:absolute;top:2.5px;left:2.5px;width:15px;height:15px;border-radius:50%;background:#fff;transition:.2s}
+  .ctry input:checked::after{left:16.5px}
+  .ctry.off{opacity:.5}
+  .ctry.off .cname{color:var(--muted)}
+
   /* mapa */
   .mapwrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
   #map{height:300px;width:100%;background:var(--bg2);z-index:0}
@@ -169,6 +184,10 @@
       </div>
       <label class="toggle" style="margin-left:auto"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
     </div>
+    <div class="cfilter">
+      <span class="thr-label">Países <a id="cAll" role="button" tabindex="0">todos</a> · <a id="cNone" role="button" tabindex="0">limpar</a></span>
+      <div class="countries" id="countries"></div>
+    </div>
   </div>
 
   <div class="mapwrap" id="mapwrap"><div id="map" aria-label="Mapa dos spots"></div></div>
@@ -193,7 +212,7 @@
   </div>
 
   <footer>
-    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Temperatura máxima e tendência de céu/chuva por dia. Toque numa barra pra ver rajada e horas acima do limite; toque num pin do mapa pra pular ao spot.<br>
+    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Temperatura máxima e tendência de céu/chuva por dia. No Brasil, só spots do Nordeste. Toque numa barra pra ver rajada e horas acima do limite; toque num pin do mapa pra pular ao spot.<br>
     Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — gratuito, sem chave. Mapa: © OpenStreetMap · © CARTO.
   </footer>
 </div>
@@ -213,12 +232,6 @@ const SPOTS = [
   {n:"Atins / Lençóis", l:"BR · MA", lat:-2.5667, lon:-42.7333},
   {n:"São Miguel do Gostoso", l:"BR · RN", lat:-5.1167, lon:-35.6333},
   {n:"Galinhos", l:"BR · RN", lat:-5.0833, lon:-36.2667},
-  {n:"Cabo Frio", l:"BR · RJ", lat:-22.8833, lon:-42.0167},
-  {n:"Búzios", l:"BR · RJ", lat:-22.7469, lon:-41.8817},
-  {n:"Ilhabela", l:"BR · SP", lat:-23.7781, lon:-45.3581},
-  {n:"Florianópolis", l:"BR · SC", lat:-27.6333, lon:-48.4500},
-  {n:"Garopaba", l:"BR · SC", lat:-28.0167, lon:-48.6167},
-  {n:"Praia do Cassino", l:"BR · RS", lat:-32.1833, lon:-52.1667},
   {n:"Cuesta del Viento", l:"AR · San Juan", lat:-30.2167, lon:-68.8500},
   {n:"Mar Chiquita", l:"AR · BA", lat:-37.7333, lon:-57.4167},
   {n:"Necochea", l:"AR · BA", lat:-38.5545, lon:-58.7396},
@@ -246,6 +259,38 @@ const DAY_START=9, DAY_END=18; // janela diurna inclusiva
 let RAW = null; // [{spot, idx, days:[{date, dow, hours:[...], wx:{...}}]}]
 let sortMode = "vento";
 let map = null, mapBuilt = false;
+let markers = [];                 // [{cc, marker, latlng}]
+const enabled = new Set();        // códigos de país ligados no filtro
+const STORE_KEY = "vaiventar.prefs";
+
+/* ordem dos países conforme aparecem nos spots */
+function countryOrder(){
+  const seen=[];
+  SPOTS.forEach(s=>{ const c=ccode(s.l); if(!seen.includes(c)) seen.push(c); });
+  return seen;
+}
+function loadPrefs(){
+  try{
+    const p=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+    if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
+    if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
+  }catch(e){}
+  if(enabled.size===0) countryOrder().forEach(c=>enabled.add(c)); // padrão: todos ligados
+}
+function savePrefs(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({countries:[...enabled], sort:sortMode})); }catch(e){}
+}
+function buildCountryFilter(){
+  const box=document.getElementById("countries");
+  box.innerHTML=countryOrder().map(c=>{
+    const ci=COUNTRIES[c]||{n:c,f:"🏳️"};
+    const on=enabled.has(c);
+    return `<label class="ctry ${on?'':'off'}" data-cc="${c}">
+      <span class="cflag">${ci.f}</span><span class="cname">${ci.n}</span>
+      <input type="checkbox" class="cf" ${on?'checked':''} aria-label="${ci.n}">
+    </label>`;
+  }).join("");
+}
 
 function colorFor(kn){
   if(kn<12) return "var(--w-weak)";
@@ -363,7 +408,7 @@ function render(){
   if(!RAW) return;
   const thr=+document.getElementById("thr").value;
   const onlyGood=document.getElementById("onlyGood").checked;
-  let rows=derive(thr);
+  let rows=derive(thr).filter(r=>enabled.has(ccode(r.spot.l)));
 
   if(sortMode==="pais"){
     rows.sort((a,b)=>
@@ -435,7 +480,13 @@ function render(){
   }).join("");
 
   if(!rows.length){
-    list.innerHTML=`<div class="card"><div class="sname">Nenhum spot acima de ${thr}kn nos próximos 7 dias.</div><div class="sloc" style="margin-top:6px">Baixe o limite no controle acima.</div></div>`;
+    if(enabled.size===0){
+      list.innerHTML=`<div class="card"><div class="sname">Nenhum país selecionado.</div><div class="sloc" style="margin-top:6px">Ligue ao menos um país no filtro acima.</div></div>`;
+    }else if(onlyGood){
+      list.innerHTML=`<div class="card"><div class="sname">Nenhum spot acima de ${thr}kn nos próximos 7 dias.</div><div class="sloc" style="margin-top:6px">Baixe o limite ou desligue "Só spots que batem o limite".</div></div>`;
+    }else{
+      list.innerHTML=`<div class="card"><div class="sname">Nenhum spot nos países selecionados.</div><div class="sloc" style="margin-top:6px">Ligue mais países no filtro acima.</div></div>`;
+    }
   }
 }
 
@@ -448,12 +499,13 @@ function buildMap(){
     attribution:'© OpenStreetMap · © CARTO', subdomains:"abcd", maxZoom:18
   }).addTo(map);
 
-  const pts=[];
   RAW.forEach(item=>{
     const ba=spotBestAvg(item);
-    const m=L.circleMarker([item.spot.lat,item.spot.lon],{
+    const cc=ccode(item.spot.l);
+    const latlng=[item.spot.lat,item.spot.lon];
+    const m=L.circleMarker(latlng,{
       radius:7, color:"#08131f", weight:1.5, fillColor:colorHex(ba), fillOpacity:.95
-    }).addTo(map);
+    });
     m.bindPopup(`<b>${item.spot.n}</b><br>${item.spot.l}<br>pico médio ${Math.round(ba)}kn`);
     m.on("click",()=>{
       const el=document.getElementById("spot-"+item.idx);
@@ -462,9 +514,22 @@ function buildMap(){
         el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
       }
     });
-    pts.push([item.spot.lat,item.spot.lon]);
+    markers.push({cc, marker:m, latlng});
+    if(enabled.has(cc)) m.addTo(map);
   });
-  if(pts.length) map.fitBounds(pts,{padding:[30,30]});
+  syncMap();
+}
+
+/* mostra/esconde pins conforme o filtro de países e reenquadra o mapa */
+function syncMap(){
+  if(!map) return;
+  markers.forEach(o=>{
+    const want=enabled.has(o.cc), has=map.hasLayer(o.marker);
+    if(want && !has) o.marker.addTo(map);
+    else if(!want && has) map.removeLayer(o.marker);
+  });
+  const vis=markers.filter(o=>enabled.has(o.cc)).map(o=>o.latlng);
+  if(vis.length) map.fitBounds(vis,{padding:[30,30]});
 }
 
 document.getElementById("thr").addEventListener("input",e=>{
@@ -477,8 +542,30 @@ document.getElementById("seg").addEventListener("click",e=>{
   if(!b) return;
   sortMode=b.dataset.sort;
   [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
+  savePrefs();
   render();
 });
+
+/* filtro de países */
+document.getElementById("countries").addEventListener("change",e=>{
+  const lab=e.target.closest(".ctry");
+  if(!lab) return;
+  const cc=lab.dataset.cc;
+  if(e.target.checked) enabled.add(cc); else enabled.delete(cc);
+  lab.classList.toggle("off",!e.target.checked);
+  savePrefs(); render(); syncMap();
+});
+function setAllCountries(on){
+  if(on) countryOrder().forEach(c=>enabled.add(c)); else enabled.clear();
+  buildCountryFilter(); savePrefs(); render(); syncMap();
+}
+document.getElementById("cAll").addEventListener("click",()=>setAllCountries(true));
+document.getElementById("cNone").addEventListener("click",()=>setAllCountries(false));
+
+/* init: restaura preferências, monta filtro e reflete a ordenação */
+loadPrefs();
+buildCountryFilter();
+document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on", b.dataset.sort===sortMode));
 
 load();
 

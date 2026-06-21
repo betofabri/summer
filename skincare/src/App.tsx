@@ -5,6 +5,10 @@ import { StateSelector } from "./components/StateSelector.tsx";
 import { Suggestion } from "./components/Suggestion.tsx";
 import { HistoryView } from "./components/HistoryView.tsx";
 import { ProductsView } from "./components/ProductsView.tsx";
+import { SituationsView } from "./components/SituationsView.tsx";
+import { AuthedImage } from "./components/AuthedImage.tsx";
+import { SITUATION_CATEGORY_LABELS } from "./lib/types.ts";
+import { formatTimeAgo } from "./lib/image.ts";
 import { bootstrap, getToken, logDaily, suggest } from "./lib/api.ts";
 import type {
   BootstrapResponse,
@@ -26,6 +30,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
+  const [showSituations, setShowSituations] = useState(false);
 
   const load = useCallback(async () => {
     setBootError(null);
@@ -124,6 +129,35 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowSituations(true)}
+              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] relative"
+              aria-label="Situações"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="6" width="18" height="14" rx="2" />
+                <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+              {boot.active_situations.length > 0 ? (
+                <span
+                  className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[--color-primary] text-[--color-primary-on] text-[10px] font-bold tabular-nums"
+                  aria-label={`${boot.active_situations.length} situações ativas`}
+                >
+                  {boot.active_situations.length}
+                </span>
+              ) : null}
+            </button>
+            <button
               onClick={() => setShowProducts(true)}
               className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
               aria-label="Produtos"
@@ -173,6 +207,62 @@ export default function App() {
           routine={boot.yesterday_routine}
           products={boot.products}
         />
+
+        {boot.active_situations.length > 0 ? (
+          <button
+            onClick={() => setShowSituations(true)}
+            className="press w-full mt-3 shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-4 flex items-center gap-3 text-left"
+          >
+            <div className="flex -space-x-3">
+              {boot.active_situations.slice(0, 3).map((s) => (
+                <div
+                  key={s.id}
+                  className="w-11 h-11 rounded-[--radius-sm] overflow-hidden border-2 border-[--color-surface] bg-[--color-surface-2] flex-shrink-0"
+                >
+                  {s.cover ? (
+                    <AuthedImage
+                      r2Key={s.cover.r2_key}
+                      alt={s.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-[--color-text-3]">
+                Acompanhando
+              </div>
+              <div className="text-sm font-bold text-[--color-text] truncate">
+                {boot.active_situations.length === 1
+                  ? boot.active_situations[0].title
+                  : `${boot.active_situations.length} situações ativas`}
+              </div>
+              {boot.active_situations.length === 1 ? (
+                <div className="text-xs text-[--color-text-3] font-medium">
+                  {SITUATION_CATEGORY_LABELS[boot.active_situations[0].category]}{" "}
+                  · {formatTimeAgo(boot.active_situations[0].started_at)}
+                </div>
+              ) : null}
+            </div>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-[--color-text-3] flex-shrink-0"
+              aria-hidden="true"
+            >
+              <path d="M6 4l4 4-4 4" />
+            </svg>
+          </button>
+        ) : null}
 
         <div className="mt-10 space-y-8">
           {phase === "input" ? (
@@ -295,6 +385,13 @@ export default function App() {
       {showProducts ? (
         <ProductsView
           onClose={() => setShowProducts(false)}
+          onChange={() => void load()}
+        />
+      ) : null}
+
+      {showSituations ? (
+        <SituationsView
+          onClose={() => setShowSituations(false)}
           onChange={() => void load()}
         />
       ) : null}

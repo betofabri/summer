@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  analyzeProductPhoto,
   createProduct as apiCreate,
   deleteProduct as apiDelete,
   listProducts,
@@ -12,10 +13,12 @@ import {
   CATEGORY_LABELS,
   INTENSITY_LABELS,
   type Active,
+  type AnalyzedProduct,
   type Category,
   type Product,
   type ProductInput,
 } from "../lib/types.ts";
+import { PhotoCapture } from "./PhotoCapture.tsx";
 
 interface Props {
   onClose: () => void;
@@ -24,7 +27,8 @@ interface Props {
 
 type EditState =
   | { mode: "list" }
-  | { mode: "new" }
+  | { mode: "new"; prefill?: Partial<ProductInput> }
+  | { mode: "analyzing" }
   | { mode: "edit"; product: Product };
 
 export function ProductsView({ onClose, onChange }: Props) {
@@ -70,18 +74,25 @@ export function ProductsView({ onClose, onChange }: Props) {
           </button>
         </div>
 
-        {edit.mode === "new" ? (
+        {edit.mode === "analyzing" ? (
+          <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] px-6 py-16 flex flex-col items-center gap-5">
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-2.5 h-2.5 rounded-full bg-[--color-primary] animate-glow-pulse"
+                  style={{ animationDelay: `${i * 200}ms` }}
+                />
+              ))}
+            </div>
+            <div className="text-[--color-text-2] text-sm font-medium text-center">
+              Lendo a embalagem…
+            </div>
+          </div>
+        ) : edit.mode === "new" || edit.mode === "edit" ? (
           <ProductForm
-            onCancel={() => setEdit({ mode: "list" })}
-            onSaved={async () => {
-              setEdit({ mode: "list" });
-              await load();
-              onChange();
-            }}
-          />
-        ) : edit.mode === "edit" ? (
-          <ProductForm
-            product={edit.product}
+            product={edit.mode === "edit" ? edit.product : undefined}
+            prefill={edit.mode === "new" ? edit.prefill : undefined}
             onCancel={() => setEdit({ mode: "list" })}
             onSaved={async () => {
               setEdit({ mode: "list" });
@@ -91,24 +102,55 @@ export function ProductsView({ onClose, onChange }: Props) {
           />
         ) : (
           <>
-            <button
-              onClick={() => setEdit({ mode: "new" })}
-              className="press w-full mb-6 min-h-[56px] inline-flex items-center justify-center gap-2 rounded-[--radius-md] bg-[--color-primary] text-[--color-primary-on] text-base font-bold tracking-tight shadow-glow"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                aria-hidden="true"
+            <div className="space-y-3 mb-6">
+              <PhotoCapture
+                label="Adicionar por foto"
+                hint="Aponta a câmera pra embalagem"
+                onCapture={async (dataUrl) => {
+                  setEdit({ mode: "analyzing" });
+                  try {
+                    const analyzed: AnalyzedProduct =
+                      await analyzeProductPhoto(dataUrl);
+                    setEdit({
+                      mode: "new",
+                      prefill: {
+                        name: analyzed.name,
+                        brand: analyzed.brand,
+                        category:
+                          (analyzed.category as Category) || "hidratacao",
+                        actives: analyzed.actives,
+                        intensity: analyzed.intensity,
+                        notes: analyzed.notes,
+                      },
+                    });
+                  } catch (e) {
+                    alert(
+                      "Não consegui ler a embalagem. " +
+                        (e instanceof Error ? e.message : ""),
+                    );
+                    setEdit({ mode: "list" });
+                  }
+                }}
+              />
+              <button
+                onClick={() => setEdit({ mode: "new" })}
+                className="press w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
               >
-                <path d="M8 3v10M3 8h10" />
-              </svg>
-              Adicionar produto
-            </button>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M8 3v10M3 8h10" />
+                </svg>
+                Adicionar manualmente
+              </button>
+            </div>
 
             {products === null ? (
               <div className="text-[--color-text-3] text-sm">Carregando…</div>
@@ -197,25 +239,28 @@ export function ProductsView({ onClose, onChange }: Props) {
 
 function ProductForm({
   product,
+  prefill,
   onCancel,
   onSaved,
 }: {
   product?: Product;
+  prefill?: Partial<ProductInput>;
   onCancel: () => void;
   onSaved: () => void;
 }) {
-  const [name, setName] = useState(product?.name ?? "");
-  const [brand, setBrand] = useState(product?.brand ?? "");
+  const source = product ?? prefill;
+  const [name, setName] = useState(source?.name ?? "");
+  const [brand, setBrand] = useState(source?.brand ?? "");
   const [category, setCategory] = useState<Category>(
-    product?.category ?? "hidratacao",
+    (source?.category as Category) ?? "hidratacao",
   );
   const [actives, setActives] = useState<Set<Active>>(
-    new Set((product?.actives as Active[]) ?? []),
+    new Set((source?.actives as Active[]) ?? []),
   );
   const [intensity, setIntensity] = useState<1 | 2 | 3>(
-    product?.intensity ?? 1,
+    (source?.intensity as 1 | 2 | 3) ?? 1,
   );
-  const [notes, setNotes] = useState(product?.notes ?? "");
+  const [notes, setNotes] = useState(source?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -274,7 +319,7 @@ function ProductForm({
     <div className="space-y-6">
       <div className="shadow-card bg-[--color-surface] border border-[--color-border] rounded-[--radius-lg] p-6 space-y-5">
         <div className="text-[11px] font-bold text-[--color-primary] uppercase tracking-[0.2em]">
-          {product ? "Editar produto" : "Novo produto"}
+          {product ? "Editar produto" : prefill ? "Confira e salve" : "Novo produto"}
         </div>
 
         <Field label="Nome">

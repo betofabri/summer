@@ -22,6 +22,12 @@
       "database_id": "a7b39351-4234-4bf8-ad3f-b3d17733eabb"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "skincare-photos"
+    }
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1

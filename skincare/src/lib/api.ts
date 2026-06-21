@@ -1,8 +1,14 @@
 import type {
+  AnalyzedProduct,
   BootstrapResponse,
   HistoryEntry,
   Product,
   ProductInput,
+  Situation,
+  SituationCategory,
+  SituationPhoto,
+  SituationStatus,
+  SituationWithCover,
   SkinState,
   SuggestResponse,
 } from "./types.ts";
@@ -107,4 +113,88 @@ export function deleteProduct(id: string): Promise<{ ok: true }> {
   return request(`/products/${id}`, {
     method: "DELETE",
   });
+}
+
+export function analyzeProductPhoto(
+  image: string,
+): Promise<AnalyzedProduct> {
+  return request("/products/analyze", {
+    method: "POST",
+    body: JSON.stringify({ image }),
+  });
+}
+
+export function listSituations(): Promise<{ situations: SituationWithCover[] }> {
+  return request("/situations");
+}
+
+export function getSituation(
+  id: number,
+): Promise<{ situation: Situation; photos: SituationPhoto[] }> {
+  return request(`/situations/${id}`);
+}
+
+export function createSituation(input: {
+  title: string;
+  category: SituationCategory;
+  notes?: string;
+}): Promise<{ id: number }> {
+  return request("/situations", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateSituation(
+  id: number,
+  updates: {
+    title?: string;
+    category?: SituationCategory;
+    status?: SituationStatus;
+    notes?: string | null;
+  },
+): Promise<{ ok: true }> {
+  return request(`/situations/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}
+
+export function deleteSituation(id: number): Promise<{ ok: true }> {
+  return request(`/situations/${id}`, { method: "DELETE" });
+}
+
+export function addPhoto(
+  situationId: number,
+  image: string,
+  caption?: string,
+): Promise<{ id: number; r2_key: string }> {
+  return request(`/situations/${situationId}/photos`, {
+    method: "POST",
+    body: JSON.stringify({ image, caption }),
+  });
+}
+
+export function deletePhoto(
+  situationId: number,
+  photoId: number,
+): Promise<{ ok: true }> {
+  return request(`/situations/${situationId}/photos/${photoId}`, {
+    method: "DELETE",
+  });
+}
+
+export function photoUrl(r2Key: string): string {
+  return `${import.meta.env.BASE_URL}api/photos/${encodeURIComponent(r2Key)}`;
+}
+
+export async function fetchPhotoBlob(r2Key: string): Promise<string> {
+  const token = getToken();
+  if (!token) throw new Error("No token");
+  const res = await fetch(photoUrl(r2Key), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }

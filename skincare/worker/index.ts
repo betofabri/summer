@@ -1,20 +1,33 @@
 import {
+  addSituationPhoto,
   createProduct,
+  createSituation,
   deleteProduct,
+  deleteSituation,
+  deleteSituationPhoto,
   getDailyLog,
   getHistory,
+  getLatestPhotoForSituation,
+  getSituation,
+  listActiveSituations,
   listAllProducts,
   listProducts,
+  listSituationPhotos,
+  listSituations,
   markRoutineApplied,
   saveRoutine,
   updateProduct,
+  updateSituation,
   upsertDailyLog,
 } from "./db.ts";
 import { suggest } from "./suggest.ts";
+import { analyzeProductPhoto } from "./vision.ts";
 import type {
   Active,
   Category,
   Product,
+  SituationCategory,
+  SituationStatus,
   SkinState,
   SuggestRequest,
 } from "./types.ts";
@@ -22,6 +35,7 @@ import type {
 interface AppEnv extends Env {
   GEMINI_API_KEY: string;
   ACCESS_TOKEN: string;
+  PHOTOS: R2Bucket;
 }
 
 function json(data: unknown, init: ResponseInit = {}): Response {
@@ -99,19 +113,30 @@ export default {
 
     try {
       if (path === "/api/bootstrap" && request.method === "GET") {
-        const [products, today, yesterday, history] = await Promise.all([
-          listProducts(env.DB),
-          getDailyLog(env.DB, todayDate()),
-          getDailyLog(env.DB, yesterdayDate()),
-          getHistory(env.DB, 7),
-        ]);
-        const yesterdayRoutine = history.find((h) => h.daily.date === yesterdayDate())?.routine ?? null;
+        const [products, today, yesterday, history, activeSituations] =
+          await Promise.all([
+            listProducts(env.DB),
+            getDailyLog(env.DB, todayDate()),
+            getDailyLog(env.DB, yesterdayDate()),
+            getHistory(env.DB, 7),
+            listActiveSituations(env.DB),
+          ]);
+        const yesterdayRoutine =
+          history.find((h) => h.daily.date === yesterdayDate())?.routine ??
+          null;
+        const situationsWithCover = await Promise.all(
+          activeSituations.map(async (s) => {
+            const cover = await getLatestPhotoForSituation(env.DB, s.id);
+            return { ...s, cover };
+          }),
+        );
         return json({
           today_date: todayDate(),
           products,
           today,
           yesterday,
           yesterday_routine: yesterdayRoutine,
+          active_situations: situationsWithCover,
         });
       }
 
@@ -218,6 +243,118 @@ export default {
         const id = path.slice("/api/products/".length);
         await deleteProduct(env.DB, id);
         return json({ ok: true });
+      }
+
+      if (path === "/api/products/analyze" && request.method === "POST") {
+        const body = (await request.json()) as { image?: string };
+        if (!body.image) return err(400, "imagem ausente");
+        const analyzed = await analyzeProductPhoto(
+          env.GEMINI_API_KEY,
+          body.image,
+        );
+        return json(analyzed);
+      }
+
+      if (path === "/api/situations" && request.method === "GET") {
+        const situations = await listSituations(env.DB);
+        const withCovers = await Promise.all(
+          situations.map(async (s) => {
+            const cover = await getLatestPhotoForSituation(env.DB, s.id);
+            return { ...s, cover };
+          }),
+        );
+        return json({ situations: withCovers });
+      }
+
+      if (path === "/api/situations" && request.method === "POST") {
+        const body = (await request.json()) as {
+          title?: string;
+          category?: SituationCategory;
+          notes?: string;
+        };
+        if (!body.title?.trim() || !body.category) {
+          return err(400, "campos obrigatórios faltando");
+        }
+        const id = await createSituation(env.DB, {
+          title: body.title.trim(),
+          category: body.category,
+          notes: body.notes?.trim() ?? null,
+        });
+        return json({ id });
+      }
+
+      const situationMatch = /^\/api\/situations\/(\d+)(\/photos(?:\/(\d+))?)?$/.exec(
+        path,
+      );
+      if (situationMatch) {
+        const id = Number(situationMatch[1]);
+        const isPhotos = Boolean(situationMatch[2]);
+        const photoId = situationMatch[3] ? Number(situationMatch[3]) : null;
+
+        if (!isPhotos) {
+          if (request.method === "GET") {
+            const situation = await getSituation(env.DB, id);
+            if (!situation) return err(404, "situação não encontrada");
+            const photos = await listSituationPhotos(env.DB, id);
+            return json({ situation, photos });
+          }
+          if (request.method === "PATCH") {
+            const body = (await request.json()) as {
+              title?: string;
+              category?: SituationCategory;
+              status?: SituationStatus;
+              notes?: string | null;
+            };
+            await updateSituation(env.DB, id, body);
+            return json({ ok: true });
+          }
+          if (request.method === "DELETE") {
+            const r2Keys = await deleteSituation(env.DB, id);
+            await Promise.all(r2Keys.map((k) => env.PHOTOS.delete(k)));
+            return json({ ok: true });
+          }
+        } else if (photoId !== null) {
+          if (request.method === "DELETE") {
+            const r2Key = await deleteSituationPhoto(env.DB, photoId);
+            if (r2Key) await env.PHOTOS.delete(r2Key);
+            return json({ ok: true });
+          }
+        } else {
+          if (request.method === "POST") {
+            const body = (await request.json()) as {
+              image?: string;
+              caption?: string;
+            };
+            if (!body.image) return err(400, "imagem ausente");
+            const m = /^data:(image\/[a-z+]+);base64,(.+)$/.exec(body.image);
+            if (!m) return err(400, "imagem inválida");
+            const [, mimeType, base64] = m;
+            const bytes = Uint8Array.from(atob(base64), (c) =>
+              c.charCodeAt(0),
+            );
+            const ext = mimeType.split("/")[1].split("+")[0];
+            const key = `situations/${id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+            await env.PHOTOS.put(key, bytes, {
+              httpMetadata: { contentType: mimeType },
+            });
+            const photoId = await addSituationPhoto(env.DB, {
+              situation_id: id,
+              r2_key: key,
+              caption: body.caption?.trim() ?? null,
+            });
+            return json({ id: photoId, r2_key: key });
+          }
+        }
+      }
+
+      if (path.startsWith("/api/photos/") && request.method === "GET") {
+        const key = decodeURIComponent(path.slice("/api/photos/".length));
+        const obj = await env.PHOTOS.get(key);
+        if (!obj) return err(404, "foto não encontrada");
+        const headers = new Headers();
+        obj.writeHttpMetadata(headers);
+        headers.set("Cache-Control", "private, max-age=3600");
+        return new Response(obj.body, { headers });
       }
 
       return err(404, "not found");

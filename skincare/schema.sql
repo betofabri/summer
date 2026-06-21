@@ -1,5 +1,7 @@
--- Skincare DB schema
+-- Skincare DB schema (full reset). For incremental changes use migrations/.
 
+DROP TABLE IF EXISTS situation_photos;
+DROP TABLE IF EXISTS situations;
 DROP TABLE IF EXISTS routine_log;
 DROP TABLE IF EXISTS daily_log;
 DROP TABLE IF EXISTS products;
@@ -33,6 +35,31 @@ CREATE TABLE routine_log (
 );
 
 CREATE INDEX idx_routine_log_date ON routine_log(date);
+
+CREATE TABLE situations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  notes TEXT,
+  started_at INTEGER NOT NULL,
+  resolved_at INTEGER,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX idx_situations_status_updated ON situations(status, updated_at DESC);
+
+CREATE TABLE situation_photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  situation_id INTEGER NOT NULL,
+  r2_key TEXT NOT NULL UNIQUE,
+  caption TEXT,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (situation_id) REFERENCES situations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_situation_photos_situation_created
+  ON situation_photos(situation_id, created_at DESC);
 
 INSERT INTO products (id, name, brand, category, actives, intensity, notes) VALUES
   ('effaclar', 'Effaclar Serum', 'La Roche-Posay', 'tratamento_acne', 'salicylic,glycolic,lha', 3, 'Trio de ácidos. Forte. Não combinar com retinol no mesmo dia.'),

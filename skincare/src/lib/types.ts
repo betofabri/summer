@@ -67,6 +67,7 @@ export interface BootstrapResponse {
   today: DailyLog | null;
   yesterday: DailyLog | null;
   yesterday_routine: RoutineLog | null;
+  active_situations: SituationWithCover[];
 }
 
 export interface SuggestResponse {
@@ -141,4 +142,62 @@ export const INTENSITY_LABELS: Record<1 | 2 | 3, string> = {
   1: "Suave",
   2: "Médio",
   3: "Forte",
+};
+
+export type SituationCategory =
+  | "acne"
+  | "pelo_encravado"
+  | "mancha"
+  | "vermelhidao"
+  | "outro";
+
+export type SituationStatus = "active" | "resolved";
+
+export interface Situation {
+  id: number;
+  title: string;
+  category: SituationCategory;
+  status: SituationStatus;
+  notes: string | null;
+  started_at: number;
+  resolved_at: number | null;
+  updated_at: number;
+}
+
+export interface SituationPhoto {
+  id: number;
+  situation_id: number;
+  r2_key: string;
+  caption: string | null;
+  created_at: number;
+}
+
+export interface SituationWithCover extends Situation {
+  cover: SituationPhoto | null;
+}
+
+export interface AnalyzedProduct {
+  name: string;
+  brand: string;
+  category: Category | "";
+  actives: Active[];
+  intensity: 1 | 2 | 3;
+  notes: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export const SITUATION_CATEGORIES: SituationCategory[] = [
+  "acne",
+  "pelo_encravado",
+  "mancha",
+  "vermelhidao",
+  "outro",
+];
+
+export const SITUATION_CATEGORY_LABELS: Record<SituationCategory, string> = {
+  acne: "Acne",
+  pelo_encravado: "Pelo encravado",
+  mancha: "Mancha",
+  vermelhidao: "Vermelhidão",
+  outro: "Outro",
 };

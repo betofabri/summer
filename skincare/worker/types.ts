@@ -61,3 +61,31 @@ export interface SuggestResponse {
   product_ids: string[];
   reasoning: string;
 }
+
+export type SituationCategory =
+  | "acne"
+  | "pelo_encravado"
+  | "mancha"
+  | "vermelhidao"
+  | "outro";
+
+export type SituationStatus = "active" | "resolved";
+
+export interface Situation {
+  id: number;
+  title: string;
+  category: SituationCategory;
+  status: SituationStatus;
+  notes: string | null;
+  started_at: number;
+  resolved_at: number | null;
+  updated_at: number;
+}
+
+export interface SituationPhoto {
+  id: number;
+  situation_id: number;
+  r2_key: string;
+  caption: string | null;
+  created_at: number;
+}

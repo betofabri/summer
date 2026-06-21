@@ -2,11 +2,16 @@ import type {
   Active,
   Product,
   RoutineLog,
+  Situation,
   SkinState,
   SuggestRequest,
   SuggestResponse,
 } from "./types.ts";
-import { getRecentRoutines, listProducts } from "./db.ts";
+import {
+  getRecentRoutines,
+  listActiveSituations,
+  listProducts,
+} from "./db.ts";
 
 const STRONG_ACIDS: Active[] = ["salicylic", "glycolic", "lha"];
 const RETINOIDS: Active[] = ["retinol"];
@@ -109,11 +114,50 @@ function filterCandidates(
   return { candidates, constraints };
 }
 
+const SITUATION_LABELS: Record<string, string> = {
+  acne: "acne",
+  pelo_encravado: "pelo encravado",
+  mancha: "mancha",
+  vermelhidao: "vermelhidão",
+  outro: "outro",
+};
+
+function summarizeYesterdayRoutine(
+  recent: RoutineLog[],
+  products: Product[],
+): string {
+  const productById = new Map(products.map((p) => [p.id, p]));
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const ymd = yesterday.toISOString().slice(0, 10);
+  const r = recent.find((x) => x.date === ymd);
+  if (!r || r.product_ids.length === 0) return "nada registrado";
+  const names = r.product_ids
+    .map((id) => productById.get(id)?.name)
+    .filter(Boolean);
+  return names.join(", ");
+}
+
+function summarizeSituations(situations: Situation[]): string {
+  if (situations.length === 0) return "nenhuma";
+  return situations
+    .map((s) => {
+      const daysActive = Math.max(
+        1,
+        Math.round((Date.now() - s.started_at) / (1000 * 60 * 60 * 24)),
+      );
+      return `${SITUATION_LABELS[s.category] ?? s.category} ("${s.title}", ${daysActive}d)`;
+    })
+    .join("; ");
+}
+
 function buildPrompt(
   candidates: Product[],
   ctx: FilterContext,
   constraints: string[],
   notes: string | undefined,
+  yesterdayRoutine: string,
+  activeSituations: Situation[],
 ): string {
   const productList = candidates
     .map(
@@ -123,13 +167,16 @@ function buildPrompt(
     .join("\n");
 
   const yesterdayActives = Array.from(ctx.usedYesterday).join(", ") || "nada";
+  const situationsLine = summarizeSituations(activeSituations);
 
   return `Você é um consultor de skincare. Recomende a rotina noturna de hoje para uma pele MASCULINA adulta, mista/oleosa, com tendência a acne leve e marcas pós-inflamatórias.
 
 ESTADO ATUAL DA PELE: ${ctx.state}
-PÓS-BARBA: ${ctx.postShave ? "sim" : "não"}
+PÓS-BARBA HOJE: ${ctx.postShave ? "sim" : "não"}
+ROTINA DE ONTEM: ${yesterdayRoutine}
 ATIVOS USADOS ONTEM: ${yesterdayActives}
-NOTAS DO USUÁRIO: ${notes || "—"}
+SITUAÇÕES SENDO ACOMPANHADAS: ${situationsLine}
+NOTAS DO USUÁRIO HOJE: ${notes || "—"}
 
 REGRAS APLICADAS (já filtradas):
 ${constraints.length > 0 ? constraints.map((c) => `- ${c}`).join("\n") : "- Nenhuma restrição forte"}
@@ -141,13 +188,11 @@ INSTRUÇÕES:
 1. Escolha 2 a 4 produtos da lista acima — APENAS desta lista.
 2. Ordene na sequência correta de aplicação (mais fluido → mais denso).
 3. NÃO combine ácido com retinol no mesmo dia.
-4. Priorize consistência sobre agressividade. "Menos é mais."
-5. Responda em JSON exato, nada além disso:
-
-{
-  "product_ids": ["id1", "id2", ...],
-  "reasoning": "uma frase curta explicando a escolha"
-}`;
+4. Considere o que foi feito ontem: alterne ativos, não empilhe tudo todo dia.
+5. Se há situações sendo acompanhadas, priorize produtos que ajudem a resolver (ex: acne → spot treatment ou tratamento focal; mancha → niacinamida; vermelhidão → calmantes).
+6. Pós-barba: foque em reparo e calmante; evite tudo que seja agressivo.
+7. Priorize consistência sobre agressividade. "Menos é mais."
+8. No reasoning, mencione brevemente POR QUE essa escolha agora — referenciando o que foi feito ontem ou as situações se relevante. Máximo 2 frases.`;
 }
 
 export async function suggest(
@@ -155,9 +200,10 @@ export async function suggest(
   apiKey: string,
   request: SuggestRequest,
 ): Promise<SuggestResponse> {
-  const [products, recent] = await Promise.all([
+  const [products, recent, activeSituations] = await Promise.all([
     listProducts(db),
     getRecentRoutines(db, 5),
+    listActiveSituations(db),
   ]);
 
   const ctx = buildContext(request, recent, products);
@@ -171,7 +217,15 @@ export async function suggest(
     };
   }
 
-  const prompt = buildPrompt(candidates, ctx, constraints, request.notes);
+  const yesterdayRoutine = summarizeYesterdayRoutine(recent, products);
+  const prompt = buildPrompt(
+    candidates,
+    ctx,
+    constraints,
+    request.notes,
+    yesterdayRoutine,
+    activeSituations,
+  );
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
 

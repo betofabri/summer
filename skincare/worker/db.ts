@@ -5,6 +5,10 @@ import type {
   DailyLog,
   RoutineLog,
   SkinState,
+  Situation,
+  SituationCategory,
+  SituationPhoto,
+  SituationStatus,
 } from "./types.ts";
 
 interface ProductRow {
@@ -156,6 +160,219 @@ export async function deleteProduct(
   id: string,
 ): Promise<void> {
   await db.prepare("DELETE FROM products WHERE id = ?").bind(id).run();
+}
+
+interface SituationRow {
+  id: number;
+  title: string;
+  category: string;
+  status: string;
+  notes: string | null;
+  started_at: number;
+  resolved_at: number | null;
+  updated_at: number;
+}
+
+interface SituationPhotoRow {
+  id: number;
+  situation_id: number;
+  r2_key: string;
+  caption: string | null;
+  created_at: number;
+}
+
+function rowToSituation(row: SituationRow): Situation {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category as SituationCategory,
+    status: row.status as SituationStatus,
+    notes: row.notes,
+    started_at: row.started_at,
+    resolved_at: row.resolved_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function rowToSituationPhoto(row: SituationPhotoRow): SituationPhoto {
+  return {
+    id: row.id,
+    situation_id: row.situation_id,
+    r2_key: row.r2_key,
+    caption: row.caption,
+    created_at: row.created_at,
+  };
+}
+
+export async function listSituations(
+  db: D1Database,
+): Promise<Situation[]> {
+  const result = await db
+    .prepare(
+      `SELECT * FROM situations
+       ORDER BY (status = 'active') DESC, updated_at DESC`,
+    )
+    .all<SituationRow>();
+  return result.results.map(rowToSituation);
+}
+
+export async function listActiveSituations(
+  db: D1Database,
+): Promise<Situation[]> {
+  const result = await db
+    .prepare(
+      `SELECT * FROM situations WHERE status = 'active' ORDER BY updated_at DESC`,
+    )
+    .all<SituationRow>();
+  return result.results.map(rowToSituation);
+}
+
+export async function getSituation(
+  db: D1Database,
+  id: number,
+): Promise<Situation | null> {
+  const row = await db
+    .prepare("SELECT * FROM situations WHERE id = ?")
+    .bind(id)
+    .first<SituationRow>();
+  return row ? rowToSituation(row) : null;
+}
+
+export async function createSituation(
+  db: D1Database,
+  input: {
+    title: string;
+    category: SituationCategory;
+    notes?: string | null;
+  },
+): Promise<number> {
+  const now = Date.now();
+  const result = await db
+    .prepare(
+      `INSERT INTO situations (title, category, status, notes, started_at, updated_at)
+       VALUES (?, ?, 'active', ?, ?, ?)`,
+    )
+    .bind(input.title, input.category, input.notes ?? null, now, now)
+    .run();
+  return result.meta.last_row_id as number;
+}
+
+export async function updateSituation(
+  db: D1Database,
+  id: number,
+  updates: {
+    title?: string;
+    category?: SituationCategory;
+    status?: SituationStatus;
+    notes?: string | null;
+  },
+): Promise<void> {
+  const sets: string[] = ["updated_at = ?"];
+  const values: unknown[] = [Date.now()];
+
+  if (updates.title !== undefined) {
+    sets.push("title = ?");
+    values.push(updates.title);
+  }
+  if (updates.category !== undefined) {
+    sets.push("category = ?");
+    values.push(updates.category);
+  }
+  if (updates.status !== undefined) {
+    sets.push("status = ?");
+    values.push(updates.status);
+    if (updates.status === "resolved") {
+      sets.push("resolved_at = ?");
+      values.push(Date.now());
+    } else {
+      sets.push("resolved_at = NULL");
+    }
+  }
+  if (updates.notes !== undefined) {
+    sets.push("notes = ?");
+    values.push(updates.notes);
+  }
+
+  values.push(id);
+  await db
+    .prepare(`UPDATE situations SET ${sets.join(", ")} WHERE id = ?`)
+    .bind(...values)
+    .run();
+}
+
+export async function deleteSituation(
+  db: D1Database,
+  id: number,
+): Promise<string[]> {
+  const photos = await db
+    .prepare("SELECT r2_key FROM situation_photos WHERE situation_id = ?")
+    .bind(id)
+    .all<{ r2_key: string }>();
+  await db.prepare("DELETE FROM situations WHERE id = ?").bind(id).run();
+  return photos.results.map((p) => p.r2_key);
+}
+
+export async function listSituationPhotos(
+  db: D1Database,
+  situationId: number,
+): Promise<SituationPhoto[]> {
+  const result = await db
+    .prepare(
+      `SELECT * FROM situation_photos WHERE situation_id = ? ORDER BY created_at DESC`,
+    )
+    .bind(situationId)
+    .all<SituationPhotoRow>();
+  return result.results.map(rowToSituationPhoto);
+}
+
+export async function addSituationPhoto(
+  db: D1Database,
+  input: {
+    situation_id: number;
+    r2_key: string;
+    caption?: string | null;
+  },
+): Promise<number> {
+  const now = Date.now();
+  const result = await db
+    .prepare(
+      `INSERT INTO situation_photos (situation_id, r2_key, caption, created_at)
+       VALUES (?, ?, ?, ?)`,
+    )
+    .bind(input.situation_id, input.r2_key, input.caption ?? null, now)
+    .run();
+  await db
+    .prepare("UPDATE situations SET updated_at = ? WHERE id = ?")
+    .bind(now, input.situation_id)
+    .run();
+  return result.meta.last_row_id as number;
+}
+
+export async function deleteSituationPhoto(
+  db: D1Database,
+  photoId: number,
+): Promise<string | null> {
+  const row = await db
+    .prepare("SELECT r2_key FROM situation_photos WHERE id = ?")
+    .bind(photoId)
+    .first<{ r2_key: string }>();
+  if (!row) return null;
+  await db.prepare("DELETE FROM situation_photos WHERE id = ?").bind(photoId).run();
+  return row.r2_key;
+}
+
+export async function getLatestPhotoForSituation(
+  db: D1Database,
+  situationId: number,
+): Promise<SituationPhoto | null> {
+  const row = await db
+    .prepare(
+      `SELECT * FROM situation_photos WHERE situation_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .bind(situationId)
+    .first<SituationPhotoRow>();
+  return row ? rowToSituationPhoto(row) : null;
 }
 
 export async function getDailyLog(

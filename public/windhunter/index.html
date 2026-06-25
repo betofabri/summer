@@ -181,9 +181,11 @@
   .dock-b{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:3px;min-width:54px;padding:7px 6px;border-radius:14px;
     font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.02em;text-transform:uppercase;transition:.15s;white-space:nowrap}
-  .dock-b .ic{font-size:18px;line-height:1}
+  .dock-b .ic{font-size:18px;line-height:1;display:flex}
+  .dock-b .ic svg{width:21px;height:21px;display:block}
   .dock-b.on{color:var(--accent);background:rgba(55,224,196,.13)}
   #dockFav.on{color:var(--w-strong);background:rgba(255,210,74,.13)}
+  #dockFav.on .ic svg{fill:var(--w-strong)}
   .dock-b:active{transform:scale(.93)}
 
   .sheet{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));z-index:1250;width:min(440px,92vw);
@@ -236,11 +238,11 @@
 
 <!-- ===== dock flutuante (glass) ===== -->
 <nav class="dock" aria-label="Ações">
-  <button class="dock-b" data-act="countries" type="button"><span class="ic">☰</span>Países</button>
-  <button class="dock-b" data-act="sort" type="button"><span class="ic">🧭</span><span id="sortLbl">Vento</span></button>
-  <button class="dock-b" id="dockFav" data-act="fav" type="button"><span class="ic">★</span>Favoritos</button>
-  <button class="dock-b" id="dockLimit" data-act="limit" type="button"><span class="ic">🎚️</span><span id="limitLbl">18kn</span></button>
-  <button class="dock-b on" id="dockMap" data-act="map" type="button"><span class="ic">🗺️</span>Mapa</button>
+  <button class="dock-b" data-act="countries" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3.2 3 14.8 0 18c-3-3.2-3-14.8 0-18z"/></svg></span>Países</button>
+  <button class="dock-b" data-act="sort" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10.5a2.5 2.5 0 1 0-2.4-3.2"/><path d="M3 12h15a2.6 2.6 0 1 0-2.5-3.3"/><path d="M3 16h7.5a2.2 2.2 0 1 1-2.1 2.9"/></svg></span><span id="sortLbl">Vento</span></button>
+  <button class="dock-b" id="dockFav" data-act="fav" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L12 16.77l-5.2 2.74.99-5.79-4.21-4.1 5.82-.85z"/></svg></span>Favoritos</button>
+  <button class="dock-b" id="dockLimit" data-act="limit" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12h5"/><path d="M16 12h5"/><circle cx="12" cy="12" r="3.2"/></svg></span><span id="limitLbl">18kn</span></button>
+  <button class="dock-b on" id="dockMap" data-act="map" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4.5-4.2 7-7.5 7-10.5a7 7 0 0 0-14 0c0 3 2.5 6.3 7 10.5z"/><circle cx="12" cy="10.5" r="2.4"/></svg></span>Mapa</button>
   <input type="checkbox" id="onlyFav" hidden>
 </nav>
 

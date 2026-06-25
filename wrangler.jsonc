@@ -6,6 +6,9 @@
   "observability": {
     "enabled": true
   },
+  "triggers": {
+    "crons": ["0 10 * * *"]
+  },
   "main": "src/index.js",
   "routes": [
     { "pattern": "betofabri.com/summer/*", "zone_name": "betofabri.com" }

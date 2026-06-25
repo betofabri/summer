@@ -62,6 +62,12 @@ export default {
       return handleStravaStatus(request, env);
     }
 
+    /* Vai ventar? — alertas de vento (Web Push) */
+    if (path === "/windhunter/api/subscribe")   return handleWHSubscribe(request, env);
+    if (path === "/windhunter/api/unsubscribe") return handleWHUnsubscribe(request, env);
+    if (path === "/windhunter/api/summary")     return handleWHSummary(request, env);
+    if (path === "/windhunter/api/test")        return handleWHTest(request, env);
+
     const response = await env.ASSETS.fetch(request);
 
     /* Se o ASSETS devolveu um redirect (ex.: trailing slash em diretório)
@@ -81,6 +87,10 @@ export default {
     }
 
     return response;
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runWindAlerts(env));
   }
 };
 
@@ -513,4 +523,215 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+}
+
+/* ============================================================
+ * Vai ventar? — alertas de vento via Web Push (sem payload)
+ *
+ * Fluxo: o frontend assina o PushManager com a chave VAPID pública e manda
+ * a inscrição + favoritos (com coords) + limite pra /windhunter/api/subscribe.
+ * Um cron diário roda runWindAlerts(): pra cada inscrição, consulta a
+ * Open-Meteo dos spots vigiados; se algum bater o limite nos próximos dias,
+ * guarda a mensagem em KV e dispara um push SEM corpo (só com Authorization
+ * VAPID). O service worker, ao receber o push, busca a mensagem em
+ * /windhunter/api/summary e mostra a notificação.
+ *
+ * Precisa do Secret VAPID_PRIVATE_KEY no Worker (e reusa o binding STRAVA_KV).
+ * ============================================================ */
+const VV_VAPID_PUBLIC = "BG4-YoSh08OSgu40Rn9AyfYCmeD1l8Rj2-yZqzudyoFO9aov1RWKRXZrC5cXfLu3C0n6kNLWH_--8wQewCNilp0";
+const VV_PREFIX = "vv:sub:";
+const VV_APP_URL = "https://betofabri.com/summer/windhunter";
+
+function vvB64url(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function vvB64urlDecode(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+  const bin = atob(str);
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+async function vvSubId(endpoint) {
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
+  return vvB64url(new Uint8Array(h)).slice(0, 32);
+}
+
+async function handleWHSubscribe(request, env) {
+  if (request.method !== "POST") return json({ error: "Use POST." }, 405);
+  if (!env.STRAVA_KV) return json({ error: "Armazenamento (KV) indisponível." }, 500);
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ error: "JSON inválido." }, 400); }
+  const sub = b.subscription;
+  if (!sub || !sub.endpoint) return json({ error: "Inscrição inválida." }, 400);
+  const spots = Array.isArray(b.spots)
+    ? b.spots.filter(s => s && typeof s.lat === "number" && typeof s.lon === "number").slice(0, 60)
+    : [];
+  const rec = {
+    subscription: sub,
+    threshold: Math.min(Math.max(parseInt(b.threshold, 10) || 18, 8), 40),
+    leadDays: Math.min(Math.max(parseInt(b.leadDays, 10) || 3, 1), 7),
+    spots,
+    updated: new Date().toISOString().slice(0, 10),
+    lastSent: ""
+  };
+  const id = await vvSubId(sub.endpoint);
+  await env.STRAVA_KV.put(VV_PREFIX + id, JSON.stringify(rec));
+  return json({ ok: true, watching: spots.length });
+}
+
+async function handleWHUnsubscribe(request, env) {
+  if (request.method !== "POST") return json({ error: "Use POST." }, 405);
+  if (!env.STRAVA_KV) return json({ ok: true });
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ error: "JSON inválido." }, 400); }
+  if (!b.endpoint) return json({ error: "Falta endpoint." }, 400);
+  const id = await vvSubId(b.endpoint);
+  await env.STRAVA_KV.delete(VV_PREFIX + id);
+  await env.STRAVA_KV.delete("vv:msg:" + id);
+  return json({ ok: true });
+}
+
+async function handleWHSummary(request, env) {
+  if (request.method !== "POST") return json({ error: "Use POST." }, 405);
+  let b;
+  try { b = await request.json(); } catch (e) { b = {}; }
+  let msg = null;
+  if (env.STRAVA_KV && b.endpoint) {
+    const id = await vvSubId(b.endpoint);
+    const raw = await env.STRAVA_KV.get("vv:msg:" + id);
+    if (raw) { msg = JSON.parse(raw); await env.STRAVA_KV.delete("vv:msg:" + id); }
+  }
+  if (!msg) msg = { title: "Vai ventar?", body: "Tem vento chegando nos seus spots.", url: VV_APP_URL };
+  return json(msg);
+}
+
+async function handleWHTest(request, env) {
+  if (request.method !== "POST") return json({ error: "Use POST." }, 405);
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ error: "JSON inválido." }, 400); }
+  if (!b.subscription || !b.subscription.endpoint) return json({ error: "Falta a inscrição." }, 400);
+  if (!env.VAPID_PRIVATE_KEY) return json({ error: "Falta o Secret VAPID_PRIVATE_KEY no Worker." }, 500);
+  const id = await vvSubId(b.subscription.endpoint);
+  if (env.STRAVA_KV) {
+    await env.STRAVA_KV.put("vv:msg:" + id, JSON.stringify({
+      title: "🔔 Teste — Vai ventar?",
+      body: "Notificações ativas. Vou te avisar quando ventar nos seus favoritos.",
+      url: VV_APP_URL
+    }));
+  }
+  try {
+    const res = await vvSendPush(b.subscription, env);
+    return json({ ok: res.status >= 200 && res.status < 300, status: res.status });
+  } catch (e) {
+    return json({ error: String(e.message || e) }, 500);
+  }
+}
+
+async function vvVapidJWT(aud, env) {
+  const enc = o => vvB64url(new TextEncoder().encode(JSON.stringify(o)));
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = `${enc({ typ: "JWT", alg: "ES256" })}.${enc({ aud, exp: now + 12 * 3600, sub: env.VAPID_SUBJECT || "mailto:roberto.fabri@gmail.com" })}`;
+  const pub = vvB64urlDecode(VV_VAPID_PUBLIC);
+  const jwk = {
+    kty: "EC", crv: "P-256",
+    x: vvB64url(pub.subarray(1, 33)),
+    y: vvB64url(pub.subarray(33, 65)),
+    d: env.VAPID_PRIVATE_KEY,
+    ext: true
+  };
+  const key = await crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(unsigned));
+  return `${unsigned}.${vvB64url(new Uint8Array(sig))}`;
+}
+
+async function vvSendPush(subscription, env) {
+  const aud = new URL(subscription.endpoint).origin;
+  const jwt = await vvVapidJWT(aud, env);
+  return fetch(subscription.endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": `vapid t=${jwt}, k=${VV_VAPID_PUBLIC}`,
+      "TTL": "86400"
+    }
+  });
+}
+
+async function vvComputeAlert(rec) {
+  const spots = rec.spots || [];
+  if (!spots.length) return null;
+  const lats = spots.map(s => s.lat).join(",");
+  const lons = spots.map(s => s.lon).join(",");
+  const days = Math.min(Math.max(rec.leadDays || 3, 1), 7);
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
+    + `&hourly=wind_speed_10m&wind_speed_unit=kn&timezone=auto&forecast_days=${days}`;
+  let data;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    data = await r.json();
+  } catch (e) { return null; }
+  const arr = Array.isArray(data) ? data : [data];
+  const DOW = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  const hits = [];
+  arr.forEach((d, i) => {
+    if (!d.hourly || !d.hourly.time) return;
+    const t = d.hourly.time, sp = d.hourly.wind_speed_10m, byDay = {};
+    for (let k = 0; k < t.length; k++) {
+      const h = parseInt(t[k].slice(11, 13), 10);
+      if (h >= 9 && h <= 18) {
+        const date = t[k].slice(0, 10);
+        (byDay[date] = byDay[date] || []).push(sp[k]);
+      }
+    }
+    let best = null;
+    for (const date in byDay) {
+      const a = byDay[date].reduce((x, y) => x + y, 0) / byDay[date].length;
+      if (a >= rec.threshold && (!best || a > best.avg)) best = { date, avg: a };
+    }
+    if (best) {
+      hits.push({ n: spots[i].n, avg: Math.round(best.avg), dow: DOW[new Date(best.date + "T12:00:00").getDay()] });
+    }
+  });
+  if (!hits.length) return null;
+  hits.sort((a, b) => b.avg - a.avg);
+  const parts = hits.slice(0, 4).map(h => `${h.n} ${h.dow} ${h.avg}kn`);
+  const more = hits.length > 4 ? ` +${hits.length - 4}` : "";
+  return {
+    title: `💨 Vai ventar (${hits.length} spot${hits.length > 1 ? "s" : ""})`,
+    body: parts.join(" · ") + more,
+    url: VV_APP_URL
+  };
+}
+
+async function runWindAlerts(env) {
+  if (!env.STRAVA_KV || !env.VAPID_PRIVATE_KEY) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let cursor;
+  do {
+    const list = await env.STRAVA_KV.list({ prefix: VV_PREFIX, cursor });
+    cursor = list.list_complete ? undefined : list.cursor;
+    for (const k of list.keys) {
+      try {
+        const raw = await env.STRAVA_KV.get(k.name);
+        if (!raw) continue;
+        const rec = JSON.parse(raw);
+        if (rec.lastSent === today) continue;
+        const alert = await vvComputeAlert(rec);
+        if (!alert) continue;
+        const id = k.name.slice(VV_PREFIX.length);
+        await env.STRAVA_KV.put("vv:msg:" + id, JSON.stringify(alert));
+        rec.lastSent = today;
+        await env.STRAVA_KV.put(k.name, JSON.stringify(rec));
+        const res = await vvSendPush(rec.subscription, env);
+        if (res.status === 404 || res.status === 410) {
+          await env.STRAVA_KV.delete(k.name);
+          await env.STRAVA_KV.delete("vv:msg:" + id);
+        }
+      } catch (e) { /* segue para a próxima inscrição */ }
+    }
+  } while (cursor);
 }

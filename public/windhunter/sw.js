@@ -2,7 +2,7 @@
    Sempre busca a versão fresca quando online (nunca serve conteúdo velho);
    o cache só entra como reserva quando o aparelho está offline.
    Respostas da API (open-meteo, cross-origin) nunca são cacheadas: previsão sempre atual. */
-const CACHE = "vaiventar-v8";
+const CACHE = "vaiventar-v9";
 const SHELL = ["./", "./index.html", "./icon.svg", "./icon-180.png", "./icon-192.png", "./icon-512.png", "./manifest.json"];
 
 self.addEventListener("install", e => {
@@ -33,4 +33,40 @@ self.addEventListener("fetch", e => {
       })
       .catch(() => caches.match(req).then(hit => hit || caches.match("./index.html")))
   );
+});
+
+/* ===== alertas de vento (Web Push sem payload) =====
+   O push chega sem corpo; buscamos o texto da notificação em /api/summary
+   (o Worker guardou a mensagem calculada no cron) e mostramos. */
+self.addEventListener("push", e => {
+  e.waitUntil((async () => {
+    let data = { title: "Vai ventar?", body: "Tem vento chegando nos seus spots." };
+    try {
+      const sub = await self.registration.pushManager.getSubscription();
+      const res = await fetch(new URL("api/summary", self.registration.scope), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: sub && sub.endpoint })
+      });
+      if (res.ok) data = await res.json();
+    } catch (_) { /* usa o texto padrão */ }
+    await self.registration.showNotification(data.title || "Vai ventar?", {
+      body: data.body || "",
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
+      tag: "vaiventar-wind",
+      data: { url: data.url || self.registration.scope }
+    });
+  })());
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || self.registration.scope;
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    for (const c of list) {
+      if (c.url.includes("/windhunter") && "focus" in c) return c.focus();
+    }
+    return clients.openWindow(url);
+  }));
 });

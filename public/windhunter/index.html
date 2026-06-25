@@ -270,6 +270,12 @@
     <div style="margin-top:10px"><a id="clearHidden" class="linklike" role="button" tabindex="0">restaurar todos</a></div>
   </div>
   <div class="dsec">
+    <h3>Alertas de vento</h3>
+    <label class="toggle"><input type="checkbox" id="alertsOn"> 🔔 Avisar quando ventar nos favoritos</label>
+    <p class="about" id="alertsHelp" style="margin-top:10px">Recebe uma notificação de manhã se algum spot favorito (★) passar do seu limite nos próximos 3 dias.</p>
+    <div id="alertsExtra" style="display:none;margin-top:8px"><a id="alertsTest" class="linklike" role="button" tabindex="0">enviar teste</a></div>
+  </div>
+  <div class="dsec">
     <h3>Escala de vento</h3>
     <div class="legend" id="legend">
       <span><i style="background:var(--w-weak)"></i>&lt;12</span>
@@ -394,7 +400,9 @@ const DAY_START=9, DAY_END=18; // janela diurna inclusiva
 let RAW = null; // [{spot, idx, days:[{date, dow, hours:[...], wx:{...}}]}]
 let sortMode = "vento";
 let showMap = true;
+let alertsState = false;
 let map = null, mapBuilt = false;
+const VAPID_PUBLIC = "BG4-YoSh08OSgu40Rn9AyfYCmeD1l8Rj2-yZqzudyoFO9aov1RWKRXZrC5cXfLu3C0n6kNLWH_--8wQewCNilp0";
 let markers = [];                 // [{cc, marker, latlng}]
 const enabled = new Set();        // códigos de país ligados no filtro
 const favs = new Set();           // spots favoritados (pelo nome)
@@ -413,6 +421,7 @@ function loadPrefs(){
     if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
     if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
     if(typeof p.showMap==="boolean") showMap=p.showMap;
+    if(typeof p.alerts==="boolean") alertsState=p.alerts;
     if(Array.isArray(p.favs)) p.favs.forEach(n=>favs.add(n));
     if(Array.isArray(p.hidden)) p.hidden.forEach(n=>hidden.add(n));
     const of=document.getElementById("onlyFav"); if(of) of.checked=!!p.onlyFav;
@@ -423,7 +432,7 @@ function savePrefs(){
   try{
     const of=document.getElementById("onlyFav");
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      countries:[...enabled], sort:sortMode, showMap, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
+      countries:[...enabled], sort:sortMode, showMap, alerts:alertsState, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
     }));
   }catch(e){}
 }
@@ -736,7 +745,7 @@ document.getElementById("list").addEventListener("click",e=>{
   if(favBtn){
     const name=favBtn.dataset.fav;
     if(favs.has(name)) favs.delete(name); else favs.add(name);
-    savePrefs(); render(); syncMap(); return;
+    savePrefs(); render(); syncMap(); resyncAlerts(); return;
   }
   const hideBtn=e.target.closest(".xbtn");
   if(hideBtn){
@@ -802,11 +811,73 @@ function setAllCountries(on){
 document.getElementById("cAll").addEventListener("click",()=>setAllCountries(true));
 document.getElementById("cNone").addEventListener("click",()=>setAllCountries(false));
 
+/* ===== alertas de vento (Web Push) ===== */
+function api(path){ return new URL(path, document.baseURI).href; }
+function urlB64ToU8(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); s+="=".repeat((4-s.length%4)%4); const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+function favSpotsCoords(){ return SPOTS.filter(s=>favs.has(s.n)).map(s=>({n:s.n,lat:s.lat,lon:s.lon})); }
+function pushSupported(){ return ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window); }
+function setAlertsHelp(t){ document.getElementById("alertsHelp").textContent=t; }
+async function getReg(){ return navigator.serviceWorker.ready; }
+
+async function enableAlerts(){
+  if(!pushSupported()){ setAlertsHelp("Seu navegador não suporta notificações push."); document.getElementById("alertsOn").checked=false; return; }
+  const fav=favSpotsCoords();
+  if(!fav.length){ setAlertsHelp("Favorite ao menos um spot (★) antes de ligar os alertas."); document.getElementById("alertsOn").checked=false; return; }
+  let perm;
+  try{ perm=await Notification.requestPermission(); }catch(e){ perm="denied"; }
+  if(perm!=="granted"){ setAlertsHelp("Permissão negada. Libere as notificações nas configurações do navegador."); document.getElementById("alertsOn").checked=false; return; }
+  try{
+    const reg=await getReg();
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToU8(VAPID_PUBLIC)});
+    const thr=document.getElementById("thr").value;
+    const r=await fetch(api("api/subscribe"),{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({subscription:sub, threshold:+thr, leadDays:3, spots:fav})});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    alertsState=true; savePrefs();
+    document.getElementById("alertsExtra").style.display="block";
+    setAlertsHelp(`Alertas ligados para ${fav.length} favorito(s). Aviso de manhã se passar de ${thr}kn nos próximos 3 dias.`);
+  }catch(e){ setAlertsHelp("Falha ao registrar alertas ("+e.message+"). Tente de novo."); document.getElementById("alertsOn").checked=false; alertsState=false; savePrefs(); }
+}
+async function disableAlerts(){
+  alertsState=false; savePrefs();
+  document.getElementById("alertsExtra").style.display="none";
+  setAlertsHelp("Alertas desligados.");
+  try{ const reg=await getReg(); const sub=await reg.pushManager.getSubscription();
+    if(sub){ await fetch(api("api/unsubscribe"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}); await sub.unsubscribe(); }
+  }catch(e){}
+}
+async function resyncAlerts(){
+  if(!alertsState || !pushSupported()) return;
+  try{ const reg=await getReg(); const sub=await reg.pushManager.getSubscription(); if(!sub) return;
+    await fetch(api("api/subscribe"),{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({subscription:sub, threshold:+document.getElementById("thr").value, leadDays:3, spots:favSpotsCoords()})});
+  }catch(e){}
+}
+document.getElementById("alertsOn").addEventListener("change",e=>{ if(e.target.checked) enableAlerts(); else disableAlerts(); });
+document.getElementById("alertsTest").addEventListener("click",async()=>{
+  try{ const reg=await getReg(); const sub=await reg.pushManager.getSubscription();
+    if(!sub){ setAlertsHelp("Ative os alertas primeiro."); return; }
+    setAlertsHelp("Enviando teste…");
+    const r=await fetch(api("api/test"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subscription:sub})});
+    const d=await r.json().catch(()=>({}));
+    setAlertsHelp(r.ok ? "Teste enviado — deve chegar uma notificação em instantes." : ("Falha no teste: "+(d.error||("HTTP "+r.status))));
+  }catch(e){ setAlertsHelp("Falha no teste: "+e.message); }
+});
+/* re-sincroniza a inscrição quando favoritos/limite mudam */
+document.getElementById("thr").addEventListener("change",resyncAlerts);
+
 /* init: restaura preferências, monta filtro, reflete dock e mapa */
 loadPrefs();
 buildCountryFilter();
 applyMapVisibility();
 updateDock();
+/* reflete estado dos alertas no painel */
+(function(){
+  if(!pushSupported()){ document.getElementById("alertsOn").disabled=true; setAlertsHelp("Notificações push não são suportadas neste navegador."); return; }
+  document.getElementById("alertsOn").checked=alertsState;
+  document.getElementById("alertsExtra").style.display=alertsState?"block":"none";
+})();
 
 load();
 

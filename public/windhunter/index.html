@@ -405,6 +405,8 @@ let map = null, mapBuilt = false;
 const VAPID_PUBLIC = "BG4-YoSh08OSgu40Rn9AyfYCmeD1l8Rj2-yZqzudyoFO9aov1RWKRXZrC5cXfLu3C0n6kNLWH_--8wQewCNilp0";
 let markers = [];                 // [{cc, marker, latlng}]
 const enabled = new Set();        // códigos de país ligados no filtro
+const DEFAULT_COUNTRIES = ["BR","MX","CO","VE"]; // ligados por padrão
+const PREFS_VER = 2;              // bump força a migração do padrão de países
 const favs = new Set();           // spots favoritados (pelo nome)
 const hidden = new Set();          // spots ocultados pelo usuário (pelo nome)
 const STORE_KEY = "vaiventar.prefs";
@@ -416,9 +418,15 @@ function countryOrder(){
   return seen;
 }
 function loadPrefs(){
+  let migrated=false;
   try{
     const p=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
-    if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
+    if((p.ver||1)>=PREFS_VER && Array.isArray(p.countries)){
+      p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
+    }else{
+      DEFAULT_COUNTRIES.forEach(c=>{ if(countryOrder().includes(c)) enabled.add(c); });
+      migrated=true; // primeira vez com o novo padrão de países
+    }
     if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
     if(typeof p.showMap==="boolean") showMap=p.showMap;
     if(typeof p.alerts==="boolean") alertsState=p.alerts;
@@ -426,13 +434,14 @@ function loadPrefs(){
     if(Array.isArray(p.hidden)) p.hidden.forEach(n=>hidden.add(n));
     const of=document.getElementById("onlyFav"); if(of) of.checked=!!p.onlyFav;
   }catch(e){}
-  if(enabled.size===0) countryOrder().forEach(c=>enabled.add(c)); // padrão: todos ligados
+  if(enabled.size===0) DEFAULT_COUNTRIES.forEach(c=>enabled.add(c));
+  if(migrated) savePrefs();
 }
 function savePrefs(){
   try{
     const of=document.getElementById("onlyFav");
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      countries:[...enabled], sort:sortMode, showMap, alerts:alertsState, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
+      ver:PREFS_VER, countries:[...enabled], sort:sortMode, showMap, alerts:alertsState, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
     }));
   }catch(e){}
 }

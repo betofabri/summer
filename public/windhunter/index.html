@@ -107,6 +107,8 @@
   /* status */
   .status{margin-top:18px;font-family:"Space Mono",monospace;font-size:13px;color:var(--muted)}
   .status.err{color:var(--w-heavy);line-height:1.5}
+  .retry-btn{margin-top:12px;display:inline-block;appearance:none;cursor:pointer;padding:10px 18px;border-radius:11px;border:1px solid var(--accent);background:rgba(55,224,196,.14);color:var(--accent);font-family:Inter,sans-serif;font-weight:700;font-size:14px}
+  .retry-btn:active{transform:scale(.97)}
 
   /* hero best */
   .hero{margin-top:20px;display:none;background:
@@ -492,6 +494,22 @@ function wxInfo(code){
   return {e:"·", t:""};
 }
 
+function showLoadError(msg){
+  const st=document.getElementById("status");
+  st.className="status err";
+  st.style.display="";
+  st.innerHTML =
+    "Não consegui buscar a previsão (" + msg + "). Verifique a conexão. "
+    + "Se estiver atrás de firewall/VPN, libere api.open-meteo.com.<br>"
+    + '<button id="retryBtn" class="retry-btn" type="button">Tentar novamente</button>';
+  document.getElementById("retryBtn").addEventListener("click",()=>{
+    st.className="status";
+    st.style.display="";
+    st.textContent="Carregando previsão…";
+    load();
+  });
+}
+
 async function load(){
   /* lota a chamada em blocos — uma única requisição com dezenas de
      coordenadas é recusada pela Open-Meteo (e no iOS isso vira "Load failed"). */
@@ -514,9 +532,7 @@ async function load(){
     }));
     arr = results.flat();   // mantém a ordem de SPOTS (blocos contíguos em ordem)
   }catch(e){
-    document.getElementById("status").className="status err";
-    document.getElementById("status").textContent =
-      "Não consegui buscar a previsão (" + e.message + "). Verifique a conexão e recarregue. Se estiver atrás de firewall/VPN, libere api.open-meteo.com.";
+    showLoadError(e.message);
     return;
   }
   RAW = arr.map((d,i)=>{

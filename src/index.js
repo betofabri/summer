@@ -663,18 +663,23 @@ async function vvSendPush(subscription, env) {
 async function vvComputeAlert(rec) {
   const spots = rec.spots || [];
   if (!spots.length) return null;
-  const lats = spots.map(s => s.lat).join(",");
-  const lons = spots.map(s => s.lon).join(",");
   const days = Math.min(Math.max(rec.leadDays || 3, 1), 7);
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
-    + `&hourly=wind_speed_10m&wind_speed_unit=kn&timezone=auto&forecast_days=${days}`;
-  let data;
-  try {
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    data = await r.json();
-  } catch (e) { return null; }
-  const arr = Array.isArray(data) ? data : [data];
+  /* lota a chamada em blocos de 20 (a Open-Meteo recusa requisições com
+     dezenas de coordenadas de uma vez) */
+  const arr = [];
+  for (let i = 0; i < spots.length; i += 20) {
+    const chunk = spots.slice(i, i + 20);
+    const lats = chunk.map(s => s.lat).join(",");
+    const lons = chunk.map(s => s.lon).join(",");
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
+      + `&hourly=wind_speed_10m&wind_speed_unit=kn&timezone=auto&forecast_days=${days}`;
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const d = await r.json();
+      (Array.isArray(d) ? d : [d]).forEach(x => arr.push(x));
+    } catch (e) { return null; }
+  }
   const DOW = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
   const hits = [];
   arr.forEach((d, i) => {

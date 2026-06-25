@@ -482,24 +482,32 @@ function wxInfo(code){
 }
 
 async function load(){
-  const lats = SPOTS.map(s=>s.lat).join(",");
-  const lons = SPOTS.map(s=>s.lon).join(",");
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
-    + `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m`
-    + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum`
-    + `&wind_speed_unit=kn&timezone=auto&forecast_days=7`;
-  let data;
+  /* lota a chamada em blocos — uma única requisição com dezenas de
+     coordenadas é recusada pela Open-Meteo (e no iOS isso vira "Load failed"). */
+  const CHUNK = 20;
+  const chunks = [];
+  for(let i=0;i<SPOTS.length;i+=CHUNK) chunks.push(SPOTS.slice(i,i+CHUNK));
+  let arr;
   try{
-    const r = await fetch(url);
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    data = await r.json();
+    const results = await Promise.all(chunks.map(async chunk=>{
+      const lats = chunk.map(s=>s.lat).join(",");
+      const lons = chunk.map(s=>s.lon).join(",");
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}`
+        + `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m`
+        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum`
+        + `&wind_speed_unit=kn&timezone=auto&forecast_days=7`;
+      const r = await fetch(url);
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const d = await r.json();
+      return Array.isArray(d) ? d : [d];
+    }));
+    arr = results.flat();   // mantém a ordem de SPOTS (blocos contíguos em ordem)
   }catch(e){
     document.getElementById("status").className="status err";
     document.getElementById("status").textContent =
       "Não consegui buscar a previsão (" + e.message + "). Verifique a conexão e recarregue. Se estiver atrás de firewall/VPN, libere api.open-meteo.com.";
     return;
   }
-  const arr = Array.isArray(data) ? data : [data];
   RAW = arr.map((d,i)=>{
     const t=d.hourly.time, sp=d.hourly.wind_speed_10m, gu=d.hourly.wind_gusts_10m, di=d.hourly.wind_direction_10m;
     const byDay={};

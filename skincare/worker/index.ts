@@ -2,6 +2,7 @@ import {
   addSituationPhoto,
   createProduct,
   createSituation,
+  deletePushSubscription,
   deleteProduct,
   deleteSituation,
   deleteSituationPhoto,
@@ -12,16 +13,20 @@ import {
   listActiveSituations,
   listAllProducts,
   listProducts,
+  listPushSubscriptions,
   listSituationPhotos,
   listSituations,
+  markPushFailure,
   markRoutineApplied,
   saveRoutine,
   updateProduct,
   updateSituation,
   upsertDailyLog,
+  upsertPushSubscription,
 } from "./db.ts";
 import { suggest } from "./suggest.ts";
 import { analyzeProductPhoto } from "./vision.ts";
+import { sendPush, type VapidConfig } from "./push.ts";
 import type {
   Active,
   Category,
@@ -36,6 +41,9 @@ interface AppEnv extends Env {
   GEMINI_API_KEY: string;
   ACCESS_TOKEN: string;
   PHOTOS: R2Bucket;
+  VAPID_PUBLIC_KEY: string;
+  VAPID_PRIVATE_KEY: string;
+  VAPID_SUBJECT: string;
 }
 
 function json(data: unknown, init: ResponseInit = {}): Response {
@@ -357,6 +365,39 @@ export default {
         return new Response(obj.body, { headers });
       }
 
+      if (path === "/api/push/config" && request.method === "GET") {
+        return json({ public_key: env.VAPID_PUBLIC_KEY ?? null });
+      }
+
+      if (path === "/api/push/subscribe" && request.method === "POST") {
+        const body = (await request.json()) as {
+          endpoint?: string;
+          keys?: { p256dh?: string; auth?: string };
+        };
+        if (!body.endpoint || !body.keys?.p256dh || !body.keys?.auth) {
+          return err(400, "subscription inválida");
+        }
+        await upsertPushSubscription(
+          env.DB,
+          body.endpoint,
+          body.keys.p256dh,
+          body.keys.auth,
+        );
+        return json({ ok: true });
+      }
+
+      if (path === "/api/push/unsubscribe" && request.method === "POST") {
+        const body = (await request.json()) as { endpoint?: string };
+        if (!body.endpoint) return err(400, "endpoint ausente");
+        await deletePushSubscription(env.DB, body.endpoint);
+        return json({ ok: true });
+      }
+
+      if (path === "/api/push/test" && request.method === "POST") {
+        await dispatchDailyPush(env);
+        return json({ ok: true });
+      }
+
       return err(404, "not found");
     } catch (e) {
       const message = e instanceof Error ? e.message : "internal error";
@@ -376,4 +417,42 @@ export default {
       return err(500, message);
     }
   },
+
+  async scheduled(_event, env): Promise<void> {
+    await dispatchDailyPush(env);
+  },
 } satisfies ExportedHandler<AppEnv>;
+
+async function dispatchDailyPush(env: AppEnv): Promise<void> {
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
+    console.warn("VAPID keys not configured; skipping push dispatch");
+    return;
+  }
+  const vapid: VapidConfig = {
+    publicKey: env.VAPID_PUBLIC_KEY,
+    privateKey: env.VAPID_PRIVATE_KEY,
+    subject: env.VAPID_SUBJECT || "mailto:no-reply@betofabri.com",
+  };
+  const subs = await listPushSubscriptions(env.DB);
+  const payload = {
+    title: "Skin",
+    body: "Hora do tratamento. Como tá sua pele hoje?",
+    tag: "skin-daily",
+    url: "/summer/skincare/",
+  };
+
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        const r = await sendPush(s, payload, vapid);
+        if (r.gone) await markPushFailure(env.DB, s.endpoint, true);
+        else if (!r.ok) await markPushFailure(env.DB, s.endpoint, false);
+      } catch (e) {
+        console.error("push error", {
+          endpoint: s.endpoint,
+          err: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }),
+  );
+}

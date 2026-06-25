@@ -5,15 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#07080c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Skin" />
+    <meta name="application-name" content="Skin" />
+
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%BASE_URL%favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="%BASE_URL%icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="%BASE_URL%icon-512.png" />
+
     <link rel="preconnect" href="https://rsms.me" crossorigin />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
     <title>Skin</title>
+
+    <!-- Paint the dark background immediately so there's no white flash
+         between the browser opening and the React app booting. -->
+    <style>
+      html, body {
+        background: #07080c;
+        color: #ecedf3;
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .boot__orb {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        background: #00d4ff;
+        box-shadow:
+          0 0 0 1px rgba(0, 212, 255, 0.4),
+          0 0 24px rgba(0, 212, 255, 0.6);
+        animation: boot-pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.85); }
+        50%      { opacity: 1;   transform: scale(1.1); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot__orb { animation: none; opacity: 0.7; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" aria-hidden="true">
+        <div class="boot__orb"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -7,6 +7,7 @@ import { HistoryView } from "./components/HistoryView.tsx";
 import { ProductsView } from "./components/ProductsView.tsx";
 import { SituationsView } from "./components/SituationsView.tsx";
 import { AuthedImage } from "./components/AuthedImage.tsx";
+import { NotificationsButton } from "./components/NotificationsButton.tsx";
 import { SITUATION_CATEGORY_LABELS } from "./lib/types.ts";
 import { formatTimeAgo } from "./lib/image.ts";
 import { bootstrap, getToken, logDaily, suggest } from "./lib/api.ts";
@@ -128,6 +129,7 @@ export default function App() {
             <div className="text-[--color-text-3] text-sm">Boa noite.</div>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationsButton />
             <button
               onClick={() => setShowSituations(true)}
               className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] relative"

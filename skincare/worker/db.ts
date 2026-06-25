@@ -375,6 +375,70 @@ export async function getLatestPhotoForSituation(
   return row ? rowToSituationPhoto(row) : null;
 }
 
+export interface DbPushSubscription {
+  id: number;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export async function upsertPushSubscription(
+  db: D1Database,
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+): Promise<void> {
+  const now = Date.now();
+  await db
+    .prepare(
+      `INSERT INTO push_subscriptions (endpoint, p256dh, auth, created_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(endpoint) DO UPDATE SET
+         p256dh = excluded.p256dh,
+         auth = excluded.auth,
+         last_seen_at = excluded.last_seen_at,
+         failure_count = 0`,
+    )
+    .bind(endpoint, p256dh, auth, now, now)
+    .run();
+}
+
+export async function deletePushSubscription(
+  db: D1Database,
+  endpoint: string,
+): Promise<void> {
+  await db
+    .prepare("DELETE FROM push_subscriptions WHERE endpoint = ?")
+    .bind(endpoint)
+    .run();
+}
+
+export async function listPushSubscriptions(
+  db: D1Database,
+): Promise<DbPushSubscription[]> {
+  const r = await db
+    .prepare("SELECT id, endpoint, p256dh, auth FROM push_subscriptions")
+    .all<DbPushSubscription>();
+  return r.results;
+}
+
+export async function markPushFailure(
+  db: D1Database,
+  endpoint: string,
+  remove: boolean,
+): Promise<void> {
+  if (remove) {
+    await deletePushSubscription(db, endpoint);
+    return;
+  }
+  await db
+    .prepare(
+      "UPDATE push_subscriptions SET failure_count = failure_count + 1 WHERE endpoint = ?",
+    )
+    .bind(endpoint)
+    .run();
+}
+
 export async function getDailyLog(
   db: D1Database,
   date: string,

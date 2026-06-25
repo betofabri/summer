@@ -175,17 +175,17 @@
   /* ===== app shell: dock + sheet + drawer (glass) ===== */
   .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:1200;
     display:flex;gap:3px;padding:7px;border-radius:22px;max-width:calc(100vw - 18px);
-    background:rgba(14,32,52,.6);border:1px solid rgba(125,175,205,.22);
-    -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
-    box-shadow:0 12px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07)}
-  .dock-b{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;
+    background:rgba(236,245,249,.82);border:1px solid rgba(255,255,255,.7);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);
+    box-shadow:0 14px 38px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.85)}
+  .dock-b{appearance:none;border:0;background:transparent;color:#4a657c;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:3px;min-width:54px;padding:7px 6px;border-radius:14px;
     font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.02em;text-transform:uppercase;transition:.15s;white-space:nowrap}
   .dock-b .ic{font-size:18px;line-height:1;display:flex}
   .dock-b .ic svg{width:21px;height:21px;display:block}
-  .dock-b.on{color:var(--accent);background:rgba(55,224,196,.13)}
-  #dockFav.on{color:var(--w-strong);background:rgba(255,210,74,.13)}
-  #dockFav.on .ic svg{fill:var(--w-strong)}
+  .dock-b.on{color:#0a8e76;background:rgba(55,224,196,.22)}
+  #dockFav.on{color:#b6820a;background:rgba(255,200,40,.26)}
+  #dockFav.on .ic svg{fill:#efb400}
   .dock-b:active{transform:scale(.93)}
 
   .sheet{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));z-index:1250;width:min(440px,92vw);
@@ -220,7 +220,7 @@
 <body>
 <div class="wrap">
   <p class="eyebrow">Open-Meteo · 7 dias · Américas</p>
-  <h1>Vai ventar?<span class="sub">Kite spots das Américas ordenados pelos dias com vento sustentado acima do seu limite.</span></h1>
+  <h1>Vai ventar?</h1>
 
   <div class="mapwrap" id="mapwrap"><div id="map" aria-label="Mapa dos spots"></div></div>
 

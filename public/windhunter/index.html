@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Vai ventar?">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -48,7 +48,7 @@
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
   }
-  .wrap{max-width:880px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 16px 64px}
+  .wrap{max-width:880px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 16px calc(120px + env(safe-area-inset-bottom))}
 
   /* header */
   .eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
@@ -172,6 +172,45 @@
   footer{margin-top:22px;font-family:"Space Mono";font-size:11px;color:var(--muted2);line-height:1.6}
   footer a{color:var(--muted)}
 
+  /* ===== app shell: dock + sheet + drawer (glass) ===== */
+  .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:1200;
+    display:flex;gap:3px;padding:7px;border-radius:22px;max-width:calc(100vw - 18px);
+    background:rgba(14,32,52,.6);border:1px solid rgba(125,175,205,.22);
+    -webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);
+    box-shadow:0 12px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07)}
+  .dock-b{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;min-width:54px;padding:7px 6px;border-radius:14px;
+    font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.02em;text-transform:uppercase;transition:.15s;white-space:nowrap}
+  .dock-b .ic{font-size:18px;line-height:1}
+  .dock-b.on{color:var(--accent);background:rgba(55,224,196,.13)}
+  #dockFav.on{color:var(--w-strong);background:rgba(255,210,74,.13)}
+  .dock-b:active{transform:scale(.93)}
+
+  .sheet{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));z-index:1250;width:min(440px,92vw);
+    transform:translateX(-50%) translateY(18px);opacity:0;pointer-events:none;
+    background:rgba(14,32,52,.95);border:1px solid rgba(125,175,205,.22);border-radius:20px;padding:16px;
+    -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 18px 44px rgba(0,0,0,.55);
+    transition:transform .24s cubic-bezier(.4,0,.2,1),opacity .24s}
+  .sheet.open{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+  .sheet-grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+
+  .scrim{position:fixed;inset:0;background:rgba(4,12,20,.5);z-index:1300;opacity:0;pointer-events:none;transition:opacity .25s;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(430px,87vw);z-index:1400;
+    background:rgba(11,26,42,.92);border-left:1px solid rgba(125,175,205,.22);
+    -webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);
+    box-shadow:-24px 0 60px rgba(0,0,0,.5);transform:translateX(101%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow-y:auto;
+    padding:max(16px,env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom))}
+  .drawer.open{transform:none}
+  .drawer h3{font-family:"Bebas Neue",sans-serif;font-weight:400;font-size:22px;letter-spacing:.02em;margin:0 0 10px}
+  .drawer-x{position:sticky;top:0;align-self:flex-end;appearance:none;border:0;background:transparent;color:var(--muted);font-size:21px;cursor:pointer;padding:2px 4px;margin:-4px -4px 2px}
+  .dsec{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+  .about{font-family:"Space Mono",monospace;font-size:11px;color:var(--muted2);line-height:1.6;margin:0}
+  .about a{color:var(--muted)}
+  .install-btn{margin-top:12px;appearance:none;cursor:pointer;width:100%;padding:12px;border-radius:12px;
+    border:1px solid var(--accent);background:rgba(55,224,196,.12);color:var(--accent);font-weight:700;font-size:14px}
+
   @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
@@ -180,31 +219,6 @@
 <div class="wrap">
   <p class="eyebrow">Open-Meteo · 7 dias · Américas</p>
   <h1>Vai ventar?<span class="sub">Kite spots das Américas ordenados pelos dias com vento sustentado acima do seu limite.</span></h1>
-
-  <div class="controls">
-    <div class="ctl-row">
-      <span class="thr-label">Limite</span>
-      <span class="thr-val" id="thrVal">18<span>kn</span></span>
-      <input type="range" id="thr" min="10" max="30" step="1" value="18" aria-label="Limite de vento em nós">
-    </div>
-    <div class="ctl-row" style="margin-top:14px">
-      <span class="thr-label">Ordenar</span>
-      <div class="seg" id="seg" role="group" aria-label="Ordenar spots">
-        <button data-sort="vento" class="on" type="button">Vento</button>
-        <button data-sort="pais" type="button">País</button>
-      </div>
-      <label class="toggle" style="margin-left:auto"><input type="checkbox" id="onlyFav"> ★ Só favoritos</label>
-      <label class="toggle"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
-    </div>
-    <div class="cfilter">
-      <span class="thr-label">Países <a id="cAll" role="button" tabindex="0">todos</a> · <a id="cNone" role="button" tabindex="0">limpar</a></span>
-      <div class="countries" id="countries"></div>
-    </div>
-    <div class="ctl-row" id="hiddenRow" style="margin-top:14px;display:none">
-      <label class="toggle"><input type="checkbox" id="showHidden"> 👁 Mostrar ocultos <span id="hiddenCount"></span></label>
-      <a id="clearHidden" class="linklike" role="button" tabindex="0" style="margin-left:auto">restaurar todos</a>
-    </div>
-  </div>
 
   <div class="mapwrap" id="mapwrap"><div id="map" aria-label="Mapa dos spots"></div></div>
 
@@ -218,20 +232,61 @@
   </div>
 
   <div class="list" id="list"></div>
-
-  <div class="legend" id="legend">
-    <span><i style="background:var(--w-weak)"></i>&lt;12</span>
-    <span><i style="background:var(--w-marg)"></i>12–18</span>
-    <span><i style="background:var(--w-good)"></i>18–22</span>
-    <span><i style="background:var(--w-strong)"></i>22–28</span>
-    <span><i style="background:var(--w-heavy)"></i>28+ kn</span>
-  </div>
-
-  <footer>
-    Vento médio na janela diurna (9h–18h local). Seta = direção do fluxo no pico do dia. Temperatura máxima e tendência de céu/chuva por dia. No Brasil, só spots do Nordeste. Toque numa barra pra ver rajada e horas acima do limite; toque num pin do mapa pra pular ao spot.<br>
-    Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — gratuito, sem chave. Mapa: © OpenStreetMap · © CARTO.
-  </footer>
 </div>
+
+<!-- ===== dock flutuante (glass) ===== -->
+<nav class="dock" aria-label="Ações">
+  <button class="dock-b" data-act="countries" type="button"><span class="ic">☰</span>Países</button>
+  <button class="dock-b" data-act="sort" type="button"><span class="ic">🧭</span><span id="sortLbl">Vento</span></button>
+  <button class="dock-b" id="dockFav" data-act="fav" type="button"><span class="ic">★</span>Favoritos</button>
+  <button class="dock-b" id="dockLimit" data-act="limit" type="button"><span class="ic">🎚️</span><span id="limitLbl">18kn</span></button>
+  <button class="dock-b on" id="dockMap" data-act="map" type="button"><span class="ic">🗺️</span>Mapa</button>
+  <input type="checkbox" id="onlyFav" hidden>
+</nav>
+
+<!-- limite (bottom sheet) -->
+<div class="sheet" id="limitSheet" role="dialog" aria-label="Limite de vento">
+  <div class="sheet-grab"></div>
+  <div class="ctl-row">
+    <span class="thr-label">Limite</span>
+    <span class="thr-val" id="thrVal">18<span>kn</span></span>
+    <input type="range" id="thr" min="10" max="30" step="1" value="18" aria-label="Limite de vento em nós">
+  </div>
+  <label class="toggle" style="margin-top:14px"><input type="checkbox" id="onlyGood"> Só spots que batem o limite</label>
+</div>
+
+<!-- drawer: países + ajustes (menu sanduíche) -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Países e ajustes">
+  <button class="drawer-x" id="drawerX" type="button" aria-label="Fechar">✕</button>
+  <h3>Países</h3>
+  <div class="cfilter">
+    <span class="thr-label"><a id="cAll" role="button" tabindex="0">todos</a> · <a id="cNone" role="button" tabindex="0">limpar</a></span>
+    <div class="countries" id="countries" style="margin-top:10px"></div>
+  </div>
+  <div class="dsec" id="hiddenSec" style="display:none">
+    <h3>Ocultos <span id="hiddenCount" class="thr-label"></span></h3>
+    <label class="toggle"><input type="checkbox" id="showHidden"> 👁 Mostrar ocultos na lista</label>
+    <div style="margin-top:10px"><a id="clearHidden" class="linklike" role="button" tabindex="0">restaurar todos</a></div>
+  </div>
+  <div class="dsec">
+    <h3>Escala de vento</h3>
+    <div class="legend" id="legend">
+      <span><i style="background:var(--w-weak)"></i>&lt;12</span>
+      <span><i style="background:var(--w-marg)"></i>12–18</span>
+      <span><i style="background:var(--w-good)"></i>18–22</span>
+      <span><i style="background:var(--w-strong)"></i>22–28</span>
+      <span><i style="background:var(--w-heavy)"></i>28+ kn</span>
+    </div>
+  </div>
+  <div class="dsec">
+    <h3>Sobre</h3>
+    <p class="about">Vento médio na janela diurna (9h–18h local). Seta = fluxo no pico do dia. Temperatura máxima e céu/chuva por dia. No Brasil, só spots do Nordeste.<br>
+      Dados: <a href="https://open-meteo.com" target="_blank" rel="noopener">open-meteo.com</a> — grátis, sem chave. Mapa: © OpenStreetMap · © CARTO.</p>
+    <p class="about" id="iosHint" hidden style="margin-top:10px">No iPhone: toque em <b>Compartilhar</b> ▸ <b>Adicionar à Tela de Início</b> pra instalar.</p>
+    <button class="install-btn" id="installBtn" type="button" hidden>📲 Instalar app</button>
+  </div>
+</aside>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -338,6 +393,7 @@ const DAY_START=9, DAY_END=18; // janela diurna inclusiva
 
 let RAW = null; // [{spot, idx, days:[{date, dow, hours:[...], wx:{...}}]}]
 let sortMode = "vento";
+let showMap = true;
 let map = null, mapBuilt = false;
 let markers = [];                 // [{cc, marker, latlng}]
 const enabled = new Set();        // códigos de país ligados no filtro
@@ -356,6 +412,7 @@ function loadPrefs(){
     const p=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
     if(Array.isArray(p.countries)) p.countries.forEach(c=>{ if(COUNTRIES[c]||countryOrder().includes(c)) enabled.add(c); });
     if(p.sort==="vento"||p.sort==="pais") sortMode=p.sort;
+    if(typeof p.showMap==="boolean") showMap=p.showMap;
     if(Array.isArray(p.favs)) p.favs.forEach(n=>favs.add(n));
     if(Array.isArray(p.hidden)) p.hidden.forEach(n=>hidden.add(n));
     const of=document.getElementById("onlyFav"); if(of) of.checked=!!p.onlyFav;
@@ -366,7 +423,7 @@ function savePrefs(){
   try{
     const of=document.getElementById("onlyFav");
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      countries:[...enabled], sort:sortMode, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
+      countries:[...enabled], sort:sortMode, showMap, favs:[...favs], hidden:[...hidden], onlyFav: of?of.checked:false
     }));
   }catch(e){}
 }
@@ -594,11 +651,33 @@ function render(){
     }
   }
 
-  // gerência de ocultos: mostra o controle só quando há algo oculto
-  const hr=document.getElementById("hiddenRow");
-  hr.style.display = hidden.size>0 ? "flex" : "none";
+  // gerência de ocultos: mostra a seção só quando há algo oculto
+  const hs=document.getElementById("hiddenSec");
+  hs.style.display = hidden.size>0 ? "block" : "none";
   document.getElementById("hiddenCount").textContent = hidden.size>0 ? `(${hidden.size})` : "";
   if(hidden.size===0) document.getElementById("showHidden").checked=false;
+
+  updateDock();
+}
+
+/* reflete o estado atual nos botões do dock */
+function updateDock(){
+  document.getElementById("sortLbl").textContent = sortMode==="pais" ? "País" : "Vento";
+  document.getElementById("dockFav").classList.toggle("on", document.getElementById("onlyFav").checked);
+  document.getElementById("limitLbl").textContent = document.getElementById("thr").value + "kn";
+  document.getElementById("dockMap").classList.toggle("on", showMap);
+}
+function applyMapVisibility(){
+  document.getElementById("mapwrap").style.display = showMap ? "" : "none";
+  if(showMap && map) setTimeout(()=>map.invalidateSize(),60);
+}
+function openDrawer(){ document.getElementById("scrim").classList.add("open"); document.getElementById("drawer").classList.add("open"); }
+function closeDrawer(){ document.getElementById("scrim").classList.remove("open"); document.getElementById("drawer").classList.remove("open"); }
+function toggleSheet(force){
+  const s=document.getElementById("limitSheet");
+  const open = force!==undefined ? force : !s.classList.contains("open");
+  s.classList.toggle("open", open);
+  document.getElementById("dockLimit").classList.toggle("on", open);
 }
 
 function buildMap(){
@@ -650,7 +729,6 @@ document.getElementById("thr").addEventListener("input",e=>{
   render();
 });
 document.getElementById("onlyGood").addEventListener("change",render);
-document.getElementById("onlyFav").addEventListener("change",()=>{ savePrefs(); render(); syncMap(); });
 
 /* favoritar / ocultar: clique nas ações do card (delegação no container) */
 document.getElementById("list").addEventListener("click",e=>{
@@ -669,14 +747,44 @@ document.getElementById("list").addEventListener("click",e=>{
 });
 document.getElementById("showHidden").addEventListener("change",render);
 document.getElementById("clearHidden").addEventListener("click",()=>{ hidden.clear(); savePrefs(); render(); syncMap(); });
-document.getElementById("seg").addEventListener("click",e=>{
-  const b=e.target.closest("button");
+
+/* ===== dock flutuante ===== */
+document.querySelector(".dock").addEventListener("click",e=>{
+  const b=e.target.closest(".dock-b");
   if(!b) return;
-  sortMode=b.dataset.sort;
-  [...e.currentTarget.children].forEach(x=>x.classList.toggle("on",x===b));
-  savePrefs();
-  render();
+  const act=b.dataset.act;
+  if(act==="countries"){ toggleSheet(false); openDrawer(); }
+  else if(act==="sort"){ sortMode = sortMode==="vento" ? "pais" : "vento"; savePrefs(); render(); }
+  else if(act==="fav"){ const f=document.getElementById("onlyFav"); f.checked=!f.checked; savePrefs(); render(); syncMap(); }
+  else if(act==="limit"){ toggleSheet(); }
+  else if(act==="map"){ showMap=!showMap; savePrefs(); applyMapVisibility(); updateDock(); }
 });
+/* drawer */
+document.getElementById("scrim").addEventListener("click",closeDrawer);
+document.getElementById("drawerX").addEventListener("click",closeDrawer);
+/* fecha o sheet de limite ao tocar fora dele */
+document.addEventListener("click",e=>{
+  const s=document.getElementById("limitSheet");
+  if(!s.classList.contains("open")) return;
+  if(s.contains(e.target) || e.target.closest('[data-act="limit"]')) return;
+  toggleSheet(false);
+});
+/* fecha drawer/sheet com Esc */
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); toggleSheet(false); } });
+
+/* PWA: botão Instalar (Android/desktop) + dica iOS */
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; document.getElementById("installBtn").hidden=false; });
+document.getElementById("installBtn").addEventListener("click",async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null;
+  document.getElementById("installBtn").hidden=true;
+});
+(function(){
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if(isIOS && !standalone) document.getElementById("iosHint").hidden=false;
+})();
 
 /* filtro de países */
 document.getElementById("countries").addEventListener("change",e=>{
@@ -694,10 +802,11 @@ function setAllCountries(on){
 document.getElementById("cAll").addEventListener("click",()=>setAllCountries(true));
 document.getElementById("cNone").addEventListener("click",()=>setAllCountries(false));
 
-/* init: restaura preferências, monta filtro e reflete a ordenação */
+/* init: restaura preferências, monta filtro, reflete dock e mapa */
 loadPrefs();
 buildCountryFilter();
-document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on", b.dataset.sort===sortMode));
+applyMapVisibility();
+updateDock();
 
 load();
 

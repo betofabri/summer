@@ -18,6 +18,7 @@ import {
   type SituationWithCover,
 } from "../lib/types.ts";
 import { AuthedImage } from "./AuthedImage.tsx";
+import { ConfirmSheet } from "./ConfirmSheet.tsx";
 import { PhotoCapture } from "./PhotoCapture.tsx";
 
 interface Props {
@@ -55,9 +56,9 @@ export function SituationsView({ onClose, onChange }: Props) {
     <div
       role="dialog"
       aria-label="Situações"
-      className="fixed inset-0 bg-gradient-aurora z-50 overflow-y-auto"
+      className="anim-backdrop fixed inset-0 bg-gradient-aurora z-50 overflow-y-auto"
     >
-      <div className="max-w-md mx-auto px-6 pt-14 pb-20">
+      <div className="anim-sheet max-w-md mx-auto px-6 pt-14 pb-20">
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={view.mode === "list" ? onClose : backToList}
@@ -150,7 +151,7 @@ function ListView({
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="stagger space-y-3">
           {situations.map((s) => (
             <li key={s.id}>
               <button
@@ -332,6 +333,8 @@ function DetailView({
   const [caption, setCaption] = useState("");
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmPhotoId, setConfirmPhotoId] = useState<number | null>(null);
 
   async function load() {
     const r = await getSituation(situationId);
@@ -367,16 +370,24 @@ function DetailView({
   }
 
   async function handleDelete() {
-    if (!data) return;
-    if (!confirm(`Excluir "${data.situation.title}" e todas as fotos?`)) return;
-    await deleteSituation(situationId);
-    onClose();
+    setSaving(true);
+    try {
+      await deleteSituation(situationId);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDeletePhoto(photoId: number) {
-    if (!confirm("Excluir esta foto?")) return;
-    await deletePhoto(situationId, photoId);
-    await load();
+    setSaving(true);
+    try {
+      await deletePhoto(situationId, photoId);
+      setConfirmPhotoId(null);
+      await load();
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!data) {
@@ -458,7 +469,7 @@ function DetailView({
           <div className="text-[11px] font-bold text-[--color-text-3] uppercase tracking-[0.2em]">
             Linha do tempo · {data.photos.length}
           </div>
-          <ul className="space-y-4">
+          <ul className="stagger space-y-4">
             {data.photos.map((p, i) => {
               const previous = data.photos[i + 1];
               const sinceDays =
@@ -509,7 +520,7 @@ function DetailView({
                       ) : null}
                     </div>
                     <button
-                      onClick={() => handleDeletePhoto(p.id)}
+                      onClick={() => setConfirmPhotoId(p.id)}
                       className="press text-xs text-[--color-text-3] font-semibold"
                       aria-label="Excluir foto"
                     >
@@ -531,12 +542,33 @@ function DetailView({
           {isResolved ? "Reabrir situação" : "Marcar como resolvida"}
         </button>
         <button
-          onClick={handleDelete}
+          onClick={() => setConfirmDelete(true)}
           className="press w-full min-h-11 text-[--color-danger] text-sm font-semibold"
         >
           Excluir situação
         </button>
       </div>
+
+      {confirmDelete ? (
+        <ConfirmSheet
+          title={`Excluir "${s.title}"?`}
+          message="Todas as fotos da linha do tempo serão apagadas. Não dá pra desfazer."
+          confirmLabel="Excluir"
+          busy={saving}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      ) : null}
+
+      {confirmPhotoId !== null ? (
+        <ConfirmSheet
+          title="Excluir esta foto?"
+          confirmLabel="Excluir"
+          busy={saving}
+          onConfirm={() => handleDeletePhoto(confirmPhotoId)}
+          onCancel={() => setConfirmPhotoId(null)}
+        />
+      ) : null}
     </div>
   );
 }

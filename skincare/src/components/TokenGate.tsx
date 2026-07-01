@@ -2,10 +2,11 @@ import { useState, type FormEvent } from "react";
 import { setToken } from "../lib/api.ts";
 
 interface Props {
+  error?: string | null;
   onUnlock: () => void;
 }
 
-export function TokenGate({ onUnlock }: Props) {
+export function TokenGate({ error, onUnlock }: Props) {
   const [value, setValue] = useState("");
 
   function handleSubmit(e: FormEvent) {
@@ -17,7 +18,7 @@ export function TokenGate({ onUnlock }: Props) {
 
   return (
     <div className="min-h-dvh flex items-center justify-center px-6 bg-gradient-aurora">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-10">
+      <form onSubmit={handleSubmit} className="anim-fade-up w-full max-w-sm space-y-10">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.2em] font-bold">
             <span className="relative flex items-center justify-center w-2 h-2">
@@ -33,6 +34,15 @@ export function TokenGate({ onUnlock }: Props) {
             Digite seu token para continuar.
           </p>
         </div>
+
+        {error ? (
+          <div
+            role="alert"
+            className="anim-fade-up glass border-[--color-danger]/40 rounded-[--radius-md] px-4 py-3 text-sm text-[--color-danger] font-medium"
+          >
+            {error}
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <label

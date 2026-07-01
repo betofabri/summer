@@ -27,6 +27,7 @@ import {
 import { suggest } from "./suggest.ts";
 import { analyzeProductPhoto } from "./vision.ts";
 import { sendPush, type VapidConfig } from "./push.ts";
+import { todayDate, yesterdayDate } from "./dates.ts";
 import type {
   Active,
   Category,
@@ -58,16 +59,6 @@ function json(data: unknown, init: ResponseInit = {}): Response {
 
 function err(status: number, message: string): Response {
   return json({ error: message }, { status });
-}
-
-function todayDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function yesterdayDate(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
 }
 
 async function authorized(

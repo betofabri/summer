@@ -21,6 +21,7 @@ type Phase = "input" | "suggesting" | "review" | "done";
 
 export default function App() {
   const [authed, setAuthed] = useState(() => Boolean(getToken()));
+  const [authError, setAuthError] = useState<string | null>(null);
   const [boot, setBoot] = useState<BootstrapResponse | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("input");
@@ -46,6 +47,7 @@ export default function App() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro";
       if (msg === "No token" || msg === "unauthorized") {
+        if (msg === "unauthorized") setAuthError("Token inválido. Tenta de novo.");
         setAuthed(false);
       } else {
         setBootError(msg);
@@ -88,7 +90,15 @@ export default function App() {
   }
 
   if (!authed) {
-    return <TokenGate onUnlock={() => setAuthed(true)} />;
+    return (
+      <TokenGate
+        error={authError}
+        onUnlock={() => {
+          setAuthError(null);
+          setAuthed(true);
+        }}
+      />
+    );
   }
 
   if (!boot) {
@@ -113,7 +123,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-dvh bg-gradient-aurora">
-      <div className="max-w-md mx-auto px-6 pt-14 pb-20">
+      <div className="anim-fade-up max-w-md mx-auto px-6 pt-14 pb-20">
         <header className="flex items-start justify-between mb-12">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 text-[--color-primary] text-[11px] uppercase tracking-[0.2em] font-bold">
@@ -132,7 +142,7 @@ export default function App() {
             <NotificationsButton />
             <button
               onClick={() => setShowSituations(true)}
-              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] relative"
+              className="press glass flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] text-[--color-text-2] relative"
               aria-label="Situações"
             >
               <svg
@@ -161,7 +171,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setShowProducts(true)}
-              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
+              className="press glass flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] text-[--color-text-2]"
               aria-label="Produtos"
             >
               <svg
@@ -181,7 +191,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setShowHistory(true)}
-              className="press shadow-card flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2]"
+              className="press glass flex-shrink-0 min-w-12 min-h-12 inline-flex items-center justify-center rounded-[--radius-md] text-[--color-text-2]"
               aria-label="Histórico"
             >
               <svg
@@ -266,7 +276,7 @@ export default function App() {
           </button>
         ) : null}
 
-        <div className="mt-10 space-y-8">
+        <div key={phase} className="anim-fade-up mt-10 space-y-8">
           {phase === "input" ? (
             <>
               <StateSelector
@@ -342,7 +352,7 @@ export default function App() {
           ) : phase === "done" ? (
             <div className="space-y-6">
               <div className="glass shadow-glass rounded-[--radius-lg] px-6 py-12 text-center space-y-4">
-                <div className="inline-flex w-14 h-14 items-center justify-center rounded-full bg-[--color-success] text-[--color-success-on] shadow-soft-glow-success">
+                <div className="anim-pop inline-flex w-14 h-14 items-center justify-center rounded-full bg-[--color-success] text-[--color-success-on] shadow-soft-glow-success">
                   <svg
                     width="24"
                     height="24"

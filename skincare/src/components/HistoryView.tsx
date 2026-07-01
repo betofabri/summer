@@ -35,9 +35,9 @@ export function HistoryView({ products, onClose }: Props) {
     <div
       role="dialog"
       aria-label="Histórico"
-      className="fixed inset-0 bg-[--color-bg] bg-gradient-aurora z-50 overflow-y-auto"
+      className="anim-backdrop fixed inset-0 bg-gradient-aurora z-50 overflow-y-auto"
     >
-      <div className="max-w-md mx-auto px-6 pt-14 pb-20">
+      <div className="anim-sheet max-w-md mx-auto px-6 pt-14 pb-20">
         <div className="flex items-center justify-between mb-10">
           <h2 className="font-display text-3xl font-bold text-[--color-text] tracking-tight">
             Histórico
@@ -59,7 +59,7 @@ export function HistoryView({ products, onClose }: Props) {
             </p>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="stagger space-y-3">
             {entries.map((e) => {
               const usedProducts =
                 e.routine?.product_ids

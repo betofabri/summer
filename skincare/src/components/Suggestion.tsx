@@ -66,7 +66,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
           </p>
         </div>
 
-        <ul className="p-3" aria-label="Produtos sugeridos">
+        <ul className="stagger p-3" aria-label="Produtos sugeridos">
           {orderedSuggestion.map((p, i) => {
             const isSelected = selected.has(p.id);
             return (
@@ -123,7 +123,7 @@ export function Suggestion({ suggestion, products, onApplied }: Props) {
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="text-[--color-primary-on]"
+                        className="anim-pop text-[--color-primary-on]"
                       >
                         <path d="M3 8.5l3.5 3.5L13 4.5" />
                       </svg>

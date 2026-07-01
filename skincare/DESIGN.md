@@ -80,9 +80,19 @@ Spacing follows an 8pt rhythm but is varied for emphasis: 24px between primary b
 
 ## Motion
 
-150–250ms transitions on all `press` interactives (transform scale-down + color change). Spring-curve via `cubic-bezier(0.34, 1.56, 0.64, 1)` for the rebound. A `glow-pulse` keyframe (1.4s) is used on the wordmark dot and loading indicators.
+Motion conveys state; nothing decorative. The vocabulary:
 
-`@media (prefers-reduced-motion: reduce)`: collapse to instant transitions; suppress pulse animations.
+- **`.press`** — 240ms spring (`cubic-bezier(0.32, 1.4, 0.5, 1)`) scale-down on every interactive.
+- **`.anim-fade-up`** — 480ms ease-out-quint entrance (opacity + 14px rise). Applied to the app shell on boot and to each phase view on transition (keyed remount replays it).
+- **`.anim-sheet`** — 380ms slide-up + slight scale for full-screen modals (Situações, Produtos, Histórico) and the ConfirmSheet.
+- **`.anim-backdrop`** — 240ms fade for modal backdrops.
+- **`.anim-pop`** — 320ms overshoot pop (`cubic-bezier(0.34, 1.56, 0.64, 1)`) on check badges the moment a selection lands, and on the success badge in the done state.
+- **`.stagger`** — children enter with 45ms cascading delays (capped at 8 steps). Used on the suggestion list, situations, products, and history.
+- **`glow-pulse`** (1.6s loop) — wordmark dot and loading indicators only.
+
+`@media (prefers-reduced-motion: reduce)` disables every animation above; state changes become instant.
+
+Native `confirm()`/`alert()` are banned — destructive actions use the glass ConfirmSheet (bottom sheet, backdrop blur, explicit destructive button with `danger-on` ink).
 
 ## Iconography
 

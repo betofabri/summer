@@ -12,6 +12,7 @@ import {
   listActiveSituations,
   listProducts,
 } from "./db.ts";
+import { ymdDaysAgo } from "./dates.ts";
 
 const STRONG_ACIDS: Active[] = ["salicylic", "glycolic", "lha"];
 const RETINOIDS: Active[] = ["retinol"];
@@ -41,16 +42,8 @@ function buildContext(
     activesByDate.set(routine.date, actives);
   }
 
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(today.getDate() - 2);
-
-  const ymd = (d: Date) => d.toISOString().slice(0, 10);
-
-  const yesterdayActives = activesByDate.get(ymd(yesterday)) ?? new Set();
-  const twoDaysActives = activesByDate.get(ymd(twoDaysAgo)) ?? new Set();
+  const yesterdayActives = activesByDate.get(ymdDaysAgo(1)) ?? new Set();
+  const twoDaysActives = activesByDate.get(ymdDaysAgo(2)) ?? new Set();
 
   const hasAcid = (s: Set<Active>) => STRONG_ACIDS.some((a) => s.has(a));
   const hasRetinol = (s: Set<Active>) => RETINOIDS.some((a) => s.has(a));
@@ -127,10 +120,7 @@ function summarizeYesterdayRoutine(
   products: Product[],
 ): string {
   const productById = new Map(products.map((p) => [p.id, p]));
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const ymd = yesterday.toISOString().slice(0, 10);
-  const r = recent.find((x) => x.date === ymd);
+  const r = recent.find((x) => x.date === ymdDaysAgo(1));
   if (!r || r.product_ids.length === 0) return "nada registrado";
   const names = r.product_ids
     .map((id) => productById.get(id)?.name)

@@ -18,6 +18,7 @@ import {
   type Product,
   type ProductInput,
 } from "../lib/types.ts";
+import { ConfirmSheet } from "./ConfirmSheet.tsx";
 import { PhotoCapture } from "./PhotoCapture.tsx";
 
 interface Props {
@@ -34,6 +35,7 @@ type EditState =
 export function ProductsView({ onClose, onChange }: Props) {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [edit, setEdit] = useState<EditState>({ mode: "list" });
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
 
   async function load() {
     const r = await listProducts();
@@ -59,9 +61,9 @@ export function ProductsView({ onClose, onChange }: Props) {
     <div
       role="dialog"
       aria-label="Produtos"
-      className="fixed inset-0 bg-gradient-aurora z-50 overflow-y-auto"
+      className="anim-backdrop fixed inset-0 bg-gradient-aurora z-50 overflow-y-auto"
     >
-      <div className="max-w-md mx-auto px-6 pt-14 pb-20">
+      <div className="anim-sheet max-w-md mx-auto px-6 pt-14 pb-20">
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display text-3xl font-bold text-[--color-text] tracking-tight">
             Produtos
@@ -103,10 +105,19 @@ export function ProductsView({ onClose, onChange }: Props) {
         ) : (
           <>
             <div className="space-y-3 mb-6">
+              {analyzeError ? (
+                <div
+                  role="alert"
+                  className="anim-fade-up glass border-[--color-danger]/40 rounded-[--radius-md] px-4 py-3 text-sm text-[--color-danger] font-medium"
+                >
+                  {analyzeError}
+                </div>
+              ) : null}
               <PhotoCapture
                 label="Adicionar por foto"
                 hint="Câmera ou galeria do celular"
                 onCapture={async (dataUrl) => {
+                  setAnalyzeError(null);
                   setEdit({ mode: "analyzing" });
                   try {
                     const analyzed: AnalyzedProduct =
@@ -124,9 +135,10 @@ export function ProductsView({ onClose, onChange }: Props) {
                       },
                     });
                   } catch (e) {
-                    alert(
-                      "Não consegui ler a embalagem. " +
-                        (e instanceof Error ? e.message : ""),
+                    setAnalyzeError(
+                      e instanceof Error && e.message.length < 80
+                        ? `Não consegui ler a embalagem (${e.message}). Tenta outra foto ou adiciona manualmente.`
+                        : "Não consegui ler a embalagem. Tenta outra foto ou adiciona manualmente.",
                     );
                     setEdit({ mode: "list" });
                   }
@@ -134,7 +146,7 @@ export function ProductsView({ onClose, onChange }: Props) {
               />
               <button
                 onClick={() => setEdit({ mode: "new" })}
-                className="press w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-[--radius-md] bg-[--color-surface] border border-[--color-border] text-[--color-text-2] text-sm font-semibold"
+                className="press w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-[--radius-md] glass text-[--color-text-2] text-sm font-semibold"
               >
                 <svg
                   width="16"
@@ -161,7 +173,7 @@ export function ProductsView({ onClose, onChange }: Props) {
                 </p>
               </div>
             ) : (
-              <ul className="space-y-3">
+              <ul className="stagger space-y-3">
                 {products.map((p) => (
                   <li
                     key={p.id}
@@ -261,6 +273,7 @@ function ProductForm({
   const [notes, setNotes] = useState(source?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function toggleActive(a: Active) {
     setActives((prev) => {
@@ -302,7 +315,6 @@ function ProductForm({
 
   async function handleDelete() {
     if (!product) return;
-    if (!confirm(`Excluir "${product.name}"? Não dá pra desfazer.`)) return;
     setSaving(true);
     try {
       await apiDelete(product.id);
@@ -310,6 +322,7 @@ function ProductForm({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao excluir");
       setSaving(false);
+      setConfirmDelete(false);
     }
   }
 
@@ -440,7 +453,7 @@ function ProductForm({
         </button>
         {product ? (
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             disabled={saving}
             className="press w-full min-h-11 text-[--color-danger] text-sm font-semibold disabled:opacity-50"
           >
@@ -448,6 +461,17 @@ function ProductForm({
           </button>
         ) : null}
       </div>
+
+      {confirmDelete && product ? (
+        <ConfirmSheet
+          title={`Excluir "${product.name}"?`}
+          message="O produto sai do catálogo e das próximas sugestões. Não dá pra desfazer."
+          confirmLabel="Excluir"
+          busy={saving}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      ) : null}
     </div>
   );
 }
